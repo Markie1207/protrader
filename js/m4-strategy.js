@@ -233,4 +233,18 @@ async function initKbar(code) {
   // 嘗試從 API 取真實日線
   try {
     const result = await API.getStockHistory(code, 1);
-    if (result?.candl
+    if (result?.candles && result.candles.length > 0) {
+      drawCandlestick(canvas, result.candles.slice(-30));
+      return;
+    }
+  } catch (e) { console.warn('[M4] API K棒失敗，使用 mock', e); }
+
+  // 降級：產生模擬資料
+  drawCandlestick(canvas, genKbarData(code));
+}
+
+function initStrategy() {
+  const sel = document.getElementById('strategy-stock-select');
+  const defaultCode = sel ? sel.value : '2330';
+  loadStrategyCard(defaultCode);
+}

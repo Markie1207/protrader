@@ -231,4 +231,44 @@ function renderFocusList() {
 
 /* ─────────────────────────────────────────
    模組初始化入口
-─────────────────────────────────
+────────────────────────────────────────────────────────────────────────── */
+
+/* API 資料更新 Dashboard */
+async function fetchAndUpdateDashboard() {
+  try {
+    const taiex = await API.getTaiex();
+    if (taiex) {
+      const idxEl  = document.getElementById('taiex-val');
+      const chgEl  = document.getElementById('taiex-chg');
+      if (idxEl) idxEl.textContent = Number(taiex.index).toLocaleString();
+      if (chgEl) {
+        const sign = taiex.change >= 0 ? '+' : '';
+        chgEl.textContent = `${sign}${taiex.change} (${sign}${taiex.change_pct}%)`;
+        chgEl.className = taiex.change >= 0 ? 'up' : 'dn';
+      }
+    }
+  } catch (e) { console.warn('[M1] taiex 更新失敗', e); }
+
+  try {
+    const inst = await API.getInstitutional();
+    if (inst) {
+      const fmt = v => (v >= 0 ? '+' : '') + (v / 1e8).toFixed(0) + '億';
+      const fEl = document.getElementById('inst-foreign');
+      const iEl = document.getElementById('inst-invest');
+      const dEl = document.getElementById('inst-dealer');
+      if (fEl) fEl.textContent = fmt(inst.foreign?.net ?? 0);
+      if (iEl) iEl.textContent = fmt(inst.investment?.net ?? 0);
+      if (dEl) dEl.textContent = fmt(inst.dealer?.net ?? 0);
+    }
+  } catch (e) { console.warn('[M1] institutional 更新失敗', e); }
+}
+
+function initDashboard() {
+  renderIndexChart('1d');
+  renderGauge(73);
+  renderFocusList();
+  renderHoldings();
+  fetchAndUpdateDashboard();
+  // 每 60 秒更新一次
+  setInterval(fetchAndUpdateDashboard, 60000);
+}
