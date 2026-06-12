@@ -157,4 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 啟動時查詢一次後端狀態
   API.getStatus().then(s => {
-    setDataSourceBadge(s?.primary_source || '
+    setDataSourceBadge(s?.primary_source || 'mock');
+  });
+});
