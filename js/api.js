@@ -87,7 +87,7 @@ const Mock = {
       const close = Math.max(base * 0.7, open + (Math.random() - 0.45) * base * 0.02);
       const high  = Math.max(open, close) + Math.random() * base * 0.01;
       const low   = Math.min(open, close) - Math.random() * base * 0.01;
-      const d     = new Date(2026, 2, i + 1);
+      const d     = new Date(Date.now() - (59 - i) * 86400000);
       price = close;
       return {
         date: d.toISOString().slice(0, 10),

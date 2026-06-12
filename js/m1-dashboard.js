@@ -32,7 +32,7 @@ let indexChartInstance = null;
 function genTimeLabels(period) {
   const days = ['週一', '週二', '週三', '週四', '週五'];
   const months = Array.from({length: 22}, (_, i) => {
-    const d = new Date(2026, 4, i + 1); // 2026-05
+    const d = new Date(Date.now() - (21 - i) * 86400000);
     return `${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}`;
   });
 
@@ -261,6 +261,13 @@ async function fetchAndUpdateDashboard() {
       if (dEl) dEl.textContent = fmt(inst.dealer?.net ?? 0);
     }
   } catch (e) { console.warn('[M1] institutional 更新失敗', e); }
+
+  // 更新「今日焦點」時間顯示
+  const timeEl = document.getElementById('focus-update-time');
+  if (timeEl) {
+    const now = new Date();
+    timeEl.textContent = `更新 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  }
 }
 
 function initDashboard() {
@@ -272,3 +279,4 @@ function initDashboard() {
   // 每 60 秒更新一次
   setInterval(fetchAndUpdateDashboard, 60000);
 }
+     
