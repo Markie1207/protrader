@@ -424,16 +424,6 @@ async function fetchAndUpdateDashboard() {
 function initDashboard() {
   renderHoldings();
   renderFocusList();
-  renderThermometer();
+  renderGauge();
   fetchAndUpdateDashboard();
-}
-��組初始化入口
-───────────────────────────────────────── */
-function initDashboard() {
-  renderIndexChart('1d');
-  renderGauge(73);
-  renderFocusList();
-  renderHoldings();
-  fetchAndUpdateDashboard();
-  setInterval(fetchAndUpdateDashboard, 60000);
 }
