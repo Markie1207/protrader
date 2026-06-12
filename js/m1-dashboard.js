@@ -279,4 +279,3 @@ function initDashboard() {
   // 每 60 秒更新一次
   setInterval(fetchAndUpdateDashboard, 60000);
 }
-     

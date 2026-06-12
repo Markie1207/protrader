@@ -20,6 +20,7 @@ _ready = False
 
 
 def _is_market_open():
+    """判斷台股是否在盤中（週一~五 09:00~13:30）"""
     now = datetime.now()
     if now.weekday() >= 5:
         return False
@@ -27,7 +28,13 @@ def _is_market_open():
     return dtime(9, 0) <= t <= dtime(13, 30)
 
 
+def _is_weekday():
+    """是否為交易日（週一~五）"""
+    return datetime.now().weekday() < 5
+
+
 def _init_shioaji():
+    """嘗試初始化 Shioaji，成功回傳 True（模擬帳號隨時可登入）"""
     global _api, _ready
     if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE:
         return False
@@ -43,17 +50,25 @@ def _init_shioaji():
         return False
 
 
+def _ensure_ready():
+    """確保 Shioaji 已登入"""
+    global _ready
+    if not _ready:
+        _init_shioaji()
+    return _ready
+
+
 def get_realtime_quote(code):
+    """即時報價：僅盤中有效"""
     global _api, _ready
     if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE or not _is_market_open():
         return None
-    cache_key = f'sj_{code}'
+    cache_key = f'sj_rt_{code}'
     with _lock:
         if cache_key in _cache:
             return _cache[cache_key]
-    if not _ready:
-        if not _init_shioaji():
-            return None
+    if not _ensure_ready():
+        return None
     try:
         contract = _api.Contracts.Stocks[code]
         snapshot = _api.snapshots([contract])[0]
@@ -76,8 +91,10 @@ def get_realtime_quote(code):
 
 
 def get_intraday_ticks(code):
-    global _api, _ready
-    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE or not _ready:
+    """今日分時 K 棒：盤中或盤後皆可取得"""
+    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE:
+        return []
+    if not _ensure_ready():
         return []
     try:
         contract = _api.Contracts.Stocks[code]
@@ -94,7 +111,38 @@ def get_intraday_ticks(code):
         return []
 
 
+def get_historical_kbars(code, start_date, end_date=None):
+    """歷史日線：任何時間皆可取得"""
+    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE:
+        return []
+    if not _ensure_ready():
+        return []
+    try:
+        if end_date is None:
+            end_date = datetime.today().strftime('%Y-%m-%d')
+        contract = _api.Contracts.Stocks[code]
+        kbars    = _api.kbars(contract, start=start_date, end=end_date,
+                              resolution='1D')
+        df       = kbars.to_df()
+        return [
+            {'date': str(row.ts)[:10],
+             'open': float(row.Open), 'high': float(row.High),
+             'low': float(row.Low), 'close': float(row.Close),
+             'volume': int(row.Volume)}
+            for _, row in df.iterrows()
+        ]
+    except Exception as e:
+        print(f'[Shioaji] 歷史日線失敗 {code}: {e}')
+        return []
+
+
 def is_available():
+    """回傳 Shioaji 目前是否可用（登入狀態）"""
+    return _ready
+
+
+def is_realtime_available():
+    """即時報價是否可用（需盤中）"""
     return _ready and _is_market_open()
 
 
