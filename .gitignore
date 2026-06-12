@@ -1,0 +1,10 @@
+# 後端 Python（不進前端 repo）
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.pyc
+backend/.env
+
+# 雜項
+.DS_Store
+*.log

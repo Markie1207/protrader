@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProTrader Decision Platform v1.1</title>
+<link rel="stylesheet" href="css/main.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- NAVBAR | BUG-003 修正：onclick 改傳 this，不再使用全域 event -->
+<nav class="navbar">
+  <div class="logo">Pro<span>Trader</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchPage('dashboard',this)">📊 戰情中心</button>
+    <button class="nav-tab" onclick="switchPage('global',this)">🌐 全球情報站</button>
+    <button class="nav-tab" onclick="switchPage('supply',this)">🔗 產業鏈地圖</button>
+    <button class="nav-tab" onclick="switchPage('strategy',this)">📋 交易策略室</button>
+    <button class="nav-tab" onclick="switchPage('backtest',this)">🧪 回測實驗室</button>
+    <button class="nav-tab" onclick="switchPage('portfolio',this)">💼 持倉管理</button>
+  </div>
+  <div class="nav-right">
+    <div class="market-status">
+      <div class="status-dot" id="market-dot"></div>
+      <!-- BUG-024 修正：市場狀態動態更新（含開市/盤前/盤後） -->
+      <span id="market-label" style="font-size:12px;font-weight:600;"></span>
+    </div>
+    <div class="time-display" id="clock">--:--:--</div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════
+     M1 ─ 戰情中心
+══════════════════════════════════════════════════════ -->
+<div id="page-dashboard" class="page active">
+  <!-- 指標卡片列 -->
+  <div class="grid-4" style="margin-bottom:16px;">
+    <div class="card card-sm">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📈</span>加權指數</div>
+        <span class="badge" id="taiex-badge">▲</span>
+      </div>
+      <div class="card-value" id="taiex-val">22,847</div>
+      <div class="card-sub"><span id="taiex-chg" class="up">+312 (+1.38%)</span></div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-header"><div class="card-title"><span class="icon">💱</span>外資今日</div></div>
+      <div class="card-value up">+186億</div>
+      <div class="card-sub">連續買超 <span class="up">8日</span></div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-header"><div class="card-title"><span class="icon">🏦</span>投信今日</div></div>
+      <div class="card-value up">+42億</div>
+      <div class="card-sub">本週累計 <span class="up">+187億</span></div>
+    </div>
+    <div class="card card-sm">
+      <div class="card-header"><div class="card-title"><span class="icon">🌡️</span>大盤溫度</div></div>
+      <div class="card-value" style="color:var(--orange)">73°</div>
+      <div class="card-sub"><span style="color:var(--orange)">偏熱</span> ─ 注意短線過熱</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:16px;">
+    <!-- 溫度計 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🌡️</span>大盤溫度計</div>
+        <span class="badge badge-yellow">偏熱</span>
+      </div>
+      <canvas id="gaugeChart" height="160" style="display:block;margin:0 auto;"></canvas>
+      <div style="display:flex;gap:24px;margin-top:8px;justify-content:center;">
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">外資</div><div class="up" style="font-weight:700">+186億</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">投信</div><div class="up" style="font-weight:700">+42億</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">自營</div><div class="dn" style="font-weight:700">-8億</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">成交量</div><div style="font-weight:700">4,821億</div></div>
+      </div>
+      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+        <div class="card-title" style="margin-bottom:10px;"><span class="icon">📊</span>法人籌碼儀表</div>
+        <div class="chip-row">
+          <div class="chip-label">外資</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" style="width:78%;background:var(--green)"></div></div>
+          <div class="chip-val up">+186億</div>
+        </div>
+        <div class="chip-row">
+          <div class="chip-label">投信</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" style="width:42%;background:var(--blue)"></div></div>
+          <div class="chip-val up">+42億</div>
+        </div>
+        <div class="chip-row">
+          <div class="chip-label">自營</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" style="width:15%;background:var(--red)"></div></div>
+          <div class="chip-val dn">-8億</div>
+        </div>
+      </div>
+    </div>
+    <!-- 今日焦點 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🎯</span>今日焦點 AI 排序</div>
+        <span style="font-size:11px;color:var(--text3)">更新 09:15</span>
+      </div>
+      <div id="focus-list"></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- 指數走勢 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📉</span>加權指數走勢</div>
+        <!-- BUG-008 修正：獨立 class period-btn，不干擾其他 .btn-ghost -->
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm period-btn active-period" onclick="setChartPeriod('1d',this)">日</button>
+          <button class="btn btn-ghost btn-sm period-btn" onclick="setChartPeriod('5d',this)">週</button>
+          <button class="btn btn-ghost btn-sm period-btn" onclick="setChartPeriod('1m',this)">月</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="indexChart" height="200"></canvas></div>
+    </div>
+    <!-- 持股快報 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">💼</span>我的持股快報</div>
+        <!-- BUG-013 修正：警示數量動態計算 -->
+        <span class="badge badge-red" id="alert-badge">0 警示</span>
+      </div>
+      <table class="holdings-table">
+        <thead><tr><th>股票</th><th>成本</th><th>現價</th><th>損益%</th><th>狀態</th></tr></thead>
+        <tbody id="holdings-body"></tbody>
+      </table>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:12px;color:var(--text2)">總未實現損益</div>
+        <!-- BUG-020 修正：損益動態計算，不再寫死 -->
+        <div id="total-pnl" style="font-size:18px;font-weight:700">+$0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     M2 ─ 全球情報站
+══════════════════════════════════════════════════════ -->
+<div id="page-global" class="page">
+  <div class="section-title">🌐 全球情報站</div>
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">📅</span>重大事件日曆</div></div>
+      <div id="event-calendar"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📰</span>即時新聞 AI 摘要</div>
+        <span style="font-size:11px;color:var(--green)">● Live</span>
+      </div>
+      <div id="news-feed"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title"><span class="icon">🚀</span>全球發表追蹤 → 台股受惠族群</div></div>
+    <!-- BUG-025 修正：外層加水平捲動容器 -->
+    <div style="overflow-x:auto;">
+      <div id="launch-tracker"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     M3 ─ 產業鏈地圖
+══════════════════════════════════════════════════════ -->
+<div id="page-supply" class="page">
+  <div class="section-title">🔗 產業鏈地圖</div>
+  <!-- BUG-001 修正：5 個鏈的切換按鈕 -->
+  <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+    <button class="btn btn-primary btn-sm chain-btn" onclick="selectChain('GPU_AI',this)">GPU / AI Server</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Memory',this)">Memory / HBM</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('CPO',this)">CPO 共封裝光學</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Cooling',this)">散熱</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('PCB',this)">PCB</button>
+  </div>
+  <div class="card" style="margin-bottom:16px;">
+    <div id="chain-svg-wrap"><svg id="chain-svg" class="chain" style="width:100%;height:420px;"></svg></div>
+  </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">⚡</span>事前佈局訊號卡</div>
+      <span class="badge badge-red" id="signal-count">3 機會</span>
+    </div>
+    <div id="preposition-signals"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     M4 ─ 交易策略室
+══════════════════════════════════════════════════════ -->
+<div id="page-strategy" class="page">
+  <div class="section-title">📋 交易策略室</div>
+  <!-- BUG-021 修正：移除冗餘的「載入」按鈕，onchange 直接觸發 -->
+  <div style="margin-bottom:12px;">
+    <select class="form-select" id="strategy-stock-select" onchange="loadStrategyCard(this.value)" style="width:220px;">
+      <option value="2330">2330 台積電</option>
+      <option value="2317">2317 鴻海</option>
+      <option value="2308">2308 台達電</option>
+      <option value="3711">3711 日月光</option>
+      <option value="2303">2303 聯電</option>
+    </select>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="icon">🎯</span>個股策略卡
+          <span id="strategy-stock-title" style="color:var(--blue);margin-left:6px;"></span>
+        </div>
+        <span class="badge" id="strategy-signal"></span>
+      </div>
+      <!-- BUG-017 修正：策略卡格包含壓力位欄位 -->
+      <div class="strategy-grid" id="strategy-grid"></div>
+    </div>
+    <div class="card">
+      <!-- BUG-004 修正：改用 canvas 自繪真實 OHLC K棒（含影線）-->
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🕯️</span>K棒型態辨識</div>
+        <span id="kbar-stock-label" style="font-size:11px;color:var(--text2)"></span>
+      </div>
+      <div class="chart-wrap" style="margin-bottom:12px;">
+        <canvas id="kbarChart" height="200" style="width:100%;"></canvas>
+      </div>
+      <div id="pattern-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     M5 ─ 回測實驗室
+══════════════════════════════════════════════════════ -->
+<div id="page-backtest" class="page">
+  <div class="section-title">🧪 回測實驗室</div>
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="switchInner('bt','builder',this)">策略建構器</div>
+    <!-- BUG-006 修正：切換到報告 tab 才渲染圖表 -->
+    <div class="inner-tab" onclick="switchInnerBtReport(this)">回測報告</div>
+    <div class="inner-tab" onclick="switchInner('bt','optimizer',this)">參數優化器</div>
+  </div>
+
+  <div id="bt-builder" class="inner-panel active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">🔧</span>進場條件</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="form-group"><div class="form-label">進場訊號</div>
+            <select class="form-select" id="bt-entry" onchange="updateStrategyJSON()">
+              <option>MA5 上穿 MA20</option><option>RSI 突破 50</option>
+              <option>外資連買 3日</option><option>成交量放大 1.5x</option>
+            </select>
+          </div>
+          <div class="form-group"><div class="form-label">條件邏輯</div>
+            <select class="form-select" id="bt-logic" onchange="updateStrategyJSON()">
+              <option>AND（全部成立）</option><option>OR（任一成立）</option>
+            </select>
+          </div>
+          <div class="form-group"><div class="form-label">止損設定</div>
+            <select class="form-select" id="bt-sl" onchange="updateStrategyJSON()">
+              <option>MA20 下方 2%</option><option>前低 -0.5%</option>
+              <option>固定 -5%</option><option>缺口下緣</option>
+            </select>
+          </div>
+          <div class="form-group"><div class="form-label">停利設定</div>
+            <select class="form-select" id="bt-tp" onchange="updateStrategyJSON()">
+              <option>MA5 下穿 MA20</option><option>固定 +15%</option><option>移動止盈 MA5</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <div class="form-group" style="flex:1"><div class="form-label">回測起始</div><input class="form-input" type="date" value="2023-01-01" id="bt-start"></div>
+            <div class="form-group" style="flex:1"><div class="form-label">回測結束</div><input class="form-input" type="date" value="2026-06-12" id="bt-end"></div>
+          </div>
+          <button class="btn btn-primary" onclick="runBacktest()">▶ 執行回測</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">📄</span>策略 JSON 預覽</div></div>
+        <pre id="strategy-json" style="background:var(--bg3);padding:12px;border-radius:8px;font-size:11px;color:var(--green);overflow:auto;max-height:320px;white-space:pre-wrap;word-break:break-all;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <div id="bt-report" class="inner-panel">
+    <div class="metric-grid" id="bt-metrics"></div>
+    <div class="grid-2" style="margin-top:16px;">
+      <!-- BUG-005/006 修正：canvas 在 panel 顯示後才建立 Chart 實例 -->
+      <div class="card"><div class="card-header"><div class="card-title">權益曲線</div></div><canvas id="equityChart" height="220"></canvas></div>
+      <div class="card"><div class="card-header"><div class="card-title">月度報酬熱圖</div></div><div id="heatmap-wrap" style="overflow-x:auto;"></div></div>
+    </div>
+  </div>
+
+  <div id="bt-optimizer" class="inner-panel">
+    <div class="card">
+      <div class="card-header"><div class="card-title"><span class="icon">🔍</span>均線參數掃描</div></div>
+      <div id="optimizer-table" style="overflow:auto;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     M6 ─ 持倉管理
+══════════════════════════════════════════════════════ -->
+<div id="page-portfolio" class="page">
+  <div class="section-title">💼 持倉管理</div>
+  <div class="inner-tabs">
+    <div class="inner-tab active" onclick="switchInner('pf','watchlist',this)">觀察清單</div>
+    <div class="inner-tab" onclick="switchInner('pf','real',this)">真實持倉</div>
+    <div class="inner-tab" onclick="switchInner('pf','paper',this)">虛擬建倉</div>
+    <div class="inner-tab" onclick="switchInner('pf','replay',this)">歷史回放</div>
+  </div>
+
+  <!-- 觀察清單 -->
+  <div id="pf-watchlist" class="inner-panel active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title"><span class="icon">👁</span>觀察清單</div>
+          <!-- BUG-014 修正：補上 onclick -->
+          <button class="btn btn-ghost btn-sm" onclick="openAddWatchlist()">+ 新增</button>
+        </div>
+        <div id="watchlist-content"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">🔔</span>觸價警示設定</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="form-group"><div class="form-label">選擇股票</div>
+            <select class="form-select" id="alert-stock">
+              <option>2330 台積電</option><option>2317 鴻海</option><option>2454 聯發科</option>
+            </select>
+          </div>
+          <div class="form-group"><div class="form-label">警示類型</div>
+            <select class="form-select">
+              <option>價格突破</option><option>成交量異常</option><option>法人買超</option><option>型態完成</option>
+            </select>
+          </div>
+          <div class="form-group"><div class="form-label">觸發價位</div>
+            <input class="form-input" type="number" placeholder="例：1050" id="alert-price">
+          </div>
+          <!-- BUG-014 修正：補上 onclick -->
+          <button class="btn btn-primary" onclick="setAlertHandler()">設定警示</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 真實持倉 -->
+  <div id="pf-real" class="inner-panel">
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">💰</span>真實持倉總覽</div>
+        <!-- BUG-014 修正：補上 onclick -->
+        <button class="btn btn-primary btn-sm" onclick="openAddHolding()">+ 新增持倉</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="holdings-table">
+          <thead><tr>
+            <th>股票</th><th>均成本</th><th>股數(張)</th><th>現價</th>
+            <th>未實現損益</th><th>損益%</th><th>止損位</th><th>停利位</th><th>狀態</th>
+          </tr></thead>
+          <tbody id="real-holdings-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 虛擬建倉 -->
+  <div id="pf-paper" class="inner-panel">
+    <!-- BUG-016 修正：帳戶數字動態 id，下單後更新 -->
+    <div class="grid-4" style="margin-bottom:16px;">
+      <div class="card card-sm">
+        <div class="card-title">虛擬資金</div>
+        <div class="card-value" style="font-size:20px;margin-top:6px;" id="paper-capital-display">$1,000,000</div>
+      </div>
+      <div class="card card-sm">
+        <div class="card-title">可用現金</div>
+        <div class="card-value up" style="font-size:20px;margin-top:6px;" id="paper-cash-display">$1,000,000</div>
+      </div>
+      <div class="card card-sm">
+        <div class="card-title">總市值</div>
+        <div class="card-value" style="font-size:20px;margin-top:6px;" id="paper-mktval-display">$0</div>
+      </div>
+      <div class="card card-sm">
+        <div class="card-title">報酬率</div>
+        <div class="card-value" style="font-size:20px;margin-top:6px;" id="paper-return-display">0.00%</div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">📝</span>虛擬下單</div></div>
+        <div class="order-form">
+          <div class="form-group"><div class="form-label">股票代碼</div><input class="form-input" placeholder="例：2330" id="paper-stock"></div>
+          <div class="form-group"><div class="form-label">方向</div>
+            <select class="form-select" id="paper-dir"><option>買進</option><option>賣出</option></select>
+          </div>
+          <!-- BUG-015 修正：id="paper-shares" 確保 placePaperOrder 能正確讀取 -->
+          <div class="form-group"><div class="form-label">股數（張）</div>
+            <input class="form-input" type="number" placeholder="1" id="paper-shares" min="1" value="1">
+          </div>
+          <div class="form-group"><div class="form-label">委託類型</div>
+            <select class="form-select"><option>市價</option><option>限價</option></select>
+          </div>
+          <div class="form-group" style="grid-column:span 2">
+            <div class="form-label" style="color:var(--red)">⚠️ 止損位（必填）</div>
+            <input class="form-input" id="paper-stoploss" placeholder="請輸入止損價格" style="border-color:var(--red)">
+          </div>
+          <div class="form-group"><div class="form-label">進場理由</div>
+            <input class="form-input" placeholder="例：MA20突破+外資買超" id="paper-reason">
+          </div>
+          <div class="form-group"><div class="form-label">情緒標籤</div>
+            <select class="form-select" id="paper-emotion">
+              <option>冷靜分析</option><option>追漲衝動</option><option>恐慌賣出</option><option>計畫執行</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-green" style="flex:1" onclick="placePaperOrder()">確認下單</button>
+          <!-- BUG-014 修正：取消按鈕補上 onclick -->
+          <button class="btn btn-ghost" style="flex:1" onclick="cancelPaperOrder()">取消</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">📊</span>虛擬績效</div></div>
+        <canvas id="paperChart" height="180"></canvas>
+        <div style="margin-top:12px;" id="paper-trades"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 歷史回放 -->
+  <div id="pf-replay" class="inner-panel">
+    <div class="grid-2" style="margin-bottom:16px;" id="replay-setup">
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">⚙️</span>回放設定</div></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="form-group"><div class="form-label">回放日期</div>
+            <input class="form-input" type="date" id="replay-date" value="2025-08-05">
+          </div>
+          <div class="form-group"><div class="form-label">選擇標的</div>
+            <select class="form-select" id="replay-stock">
+              <option>2330 台積電</option><option>2454 聯發科</option><option>2317 鴻海</option>
+            </select>
+          </div>
+          <div class="form-group"><div class="form-label">虛擬資金</div>
+            <input class="form-input" type="number" value="1000000" id="replay-capital">
+          </div>
+          <div class="form-group"><div class="form-label">情境標記（選填）</div>
+            <select class="form-select" id="replay-scenario">
+              <option>─ 選擇 ─</option><option>崩盤日</option><option>噴出日</option>
+              <option>盤整日</option><option>除權息</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="startReplay()">▶ 開始回放</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title"><span class="icon">📖</span>操作說明</div></div>
+        <div style="font-size:13px;color:var(--text2);line-height:2;">
+          <div>📌 <strong style="color:var(--text)">歷史分時回放</strong>嚴格隱藏未來K棒，確保練習真實有效。</div>
+          <div>🕹️ 可控制播放速度 1x / 2x / 5x / 10x。</div>
+          <div>📝 每筆下單須填入 <strong style="color:var(--red)">止損位</strong>（紀律強制）。</div>
+          <div>🤖 收盤後依實際交易計算績效並給予 AI 建議。</div>
+          <div>🔄 可沿用相同設定反覆練習同一天。</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="replay-screen" style="display:none;">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" id="replay-title">⏮ 回放中</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="badge badge-red" id="replay-state-badge">PLAYING</span>
+            <button class="btn btn-ghost btn-sm" onclick="stopReplay()">✕ 結束回放</button>
+          </div>
+        </div>
+        <canvas id="replayChart" height="260" style="width:100%;"></canvas>
+        <div class="replay-controls">
+          <button class="btn btn-ghost btn-sm" id="replay-pause-btn" onclick="togglePause()">⏸ 暫停</button>
+          <button class="replay-speed-btn" onclick="setReplaySpeed(1,this)">1x</button>
+          <button class="replay-speed-btn active" onclick="setReplaySpeed(2,this)">2x</button>
+          <button class="replay-speed-btn" onclick="setReplaySpeed(5,this)">5x</button>
+          <button class="replay-speed-btn" onclick="setReplaySpeed(10,this)">10x</button>
+          <div class="replay-progress"><div class="replay-progress-fill" id="replay-prog" style="width:0%"></div></div>
+          <!-- BUG-002 修正：時間顯示對應 09:00~13:30 -->
+          <div class="replay-time" id="replay-time-display">09:00</div>
+          <button class="btn btn-green btn-sm" onclick="openReplayOrder()">📝 下單</button>
+        </div>
+      </div>
+
+      <!-- BUG-010/011 修正：order panel 預設 none，開單暫停，關閉還原狀態 -->
+      <div id="replay-order-panel" style="display:none;margin-top:12px;">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📝 虛擬下單（回放）</div>
+            <span style="font-size:11px;color:var(--text2)" id="replay-current-price"></span>
+          </div>
+          <div class="order-form">
+            <div class="form-group"><div class="form-label">方向</div>
+              <select class="form-select" id="ro-dir"><option>買進</option><option>賣出</option></select>
+            </div>
+            <div class="form-group"><div class="form-label">股數（張）</div>
+              <input class="form-input" type="number" value="1" id="ro-shares" min="1">
+            </div>
+            <div class="form-group" style="grid-column:span 2">
+              <div class="form-label" style="color:var(--red)">⚠️ 止損位（必填）</div>
+              <input class="form-input" id="ro-stoploss" placeholder="必填，否則無法送出">
+            </div>
+            <div class="form-group"><div class="form-label">進場理由</div>
+              <input class="form-input" id="ro-reason" placeholder="說明理由">
+            </div>
+            <div class="form-group"><div class="form-label">情緒標籤</div>
+              <select class="form-select" id="ro-emotion">
+                <option>冷靜分析</option><option>追漲衝動</option><option>恐慌賣出</option><option>計畫執行</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="btn btn-green" style="flex:1" onclick="submitReplayOrder()">確認送出</button>
+            <button class="btn btn-ghost" style="flex:1" onclick="closeReplayOrder()">取消</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 回放結算 -->
+      <div id="replay-settlement" style="display:none;margin-top:16px;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏆 本次回放成績</div></div>
+          <div class="metric-grid" id="replay-result-metrics"></div>
+          <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:8px;" id="replay-ai-feedback"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- api.js 最先載入，其餘模組依賴它 -->
+<script src="js/api.js"></script>
+<!-- 載入順序：各模組 JS → 最後 main.js 初始化 -->
+<script src="js/m1-dashboard.js"></script>
+<script src="js/m2-global.js"></script>
+<script src="js/m3-supply.js"></script>
+<script src="js/m4-strategy.js"></script>
+<script src="js/m5-backtest.js"></script>
+<script
