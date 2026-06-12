@@ -59,7 +59,11 @@ async function renderHoldings() {
   /* 先顯示骨架 */
   tbody.innerHTML = holdings.map(h => `
     <tr>
-      <td><strong>${h.code}</strong> <span style="color:var(--text2)">${h.name}</span></td>
+      <td>
+        <strong>${h.code}</strong>
+        <span style="color:var(--text2)">${h.name}</span>
+        <span style="color:var(--text3);font-size:10px;margin-left:4px;">${h.shares}${h.unit || '張'}</span>
+      </td>
       <td>$${Number(h.cost).toLocaleString()}</td>
       <td id="hp-${h.code}" style="color:var(--text3)">—</td>
       <td id="hpct-${h.code}" style="color:var(--text3)">—</td>
@@ -72,12 +76,14 @@ async function renderHoldings() {
   let alertCount = 0, pnlTotal = 0;
   await Promise.all(holdings.map(async h => {
     try {
-      const q     = await API.getStockQuote(h.code);
-      const price = (q?.price && q.price > 0) ? q.price : h.cost;
-      const pnl   = (price - h.cost) * h.shares * 1000;
-      const pct   = ((price - h.cost) / h.cost * 100).toFixed(2);
-      const isUp  = price >= h.cost;
-      const nearSL = price <= h.sl * 1.05;
+      const q          = await API.getStockQuote(h.code);
+      const price      = (q?.price && q.price > 0) ? q.price : h.cost;
+      /* 張 = 1000 股；股（零股）= 1 股 */
+      const multiplier = (h.unit === '股') ? 1 : 1000;
+      const pnl        = (price - h.cost) * h.shares * multiplier;
+      const pct        = ((price - h.cost) / h.cost * 100).toFixed(2);
+      const isUp       = price >= h.cost;
+      const nearSL     = price <= h.sl * 1.05;
       if (nearSL) alertCount++;
       pnlTotal += pnl;
 
@@ -106,7 +112,26 @@ async function renderHoldings() {
 
 /* ─────────────────────────────────────────
    新增持倉（Inline form）
+   支援：張 / 股（零股），輸入代號自動帶名稱
 ───────────────────────────────────────── */
+let _autoNameTimer = null;
+
+function autoFetchStockName(code) {
+  code = (code || '').trim().toUpperCase();
+  clearTimeout(_autoNameTimer);
+  if (code.length < 4) return;
+  const nameEl = document.getElementById('ah-name');
+  const loadEl = document.getElementById('ah-name-load');
+  _autoNameTimer = setTimeout(async () => {
+    if (loadEl) loadEl.style.display = 'inline';
+    try {
+      const q = await API.getStockQuote(code);
+      if (q?.name && nameEl && !nameEl.value) nameEl.value = q.name;
+    } catch (e) { /* silent */ }
+    finally { if (loadEl) loadEl.style.display = 'none'; }
+  }, 500);
+}
+
 function openAddHoldingForm() {
   const existing = document.getElementById('add-holding-form');
   if (existing) { existing.remove(); return; }
@@ -118,14 +143,26 @@ function openAddHoldingForm() {
     margin-top:8px; display:grid; grid-template-columns:repeat(3,1fr);
     gap:8px; border:1px solid var(--border);`;
   wrap.innerHTML = `
-    <input id="ah-code"   class="input-sm" placeholder="股票代號 (2330)" maxlength="6">
-    <input id="ah-name"   class="input-sm" placeholder="名稱 (台積電)">
-    <input id="ah-cost"   class="input-sm" type="number" placeholder="成本價" min="0">
-    <input id="ah-shares" class="input-sm" type="number" placeholder="張數" min="1">
-    <input id="ah-sl"     class="input-sm" type="number" placeholder="止損價 (選填)" min="0">
-    <input id="ah-tp"     class="input-sm" type="number" placeholder="停利價 (選填)" min="0">
+    <input id="ah-code" class="input-sm" placeholder="股票代號 (2330)" maxlength="6"
+           oninput="autoFetchStockName(this.value)">
+    <div style="position:relative;">
+      <input id="ah-name" class="input-sm" placeholder="名稱（自動帶入）">
+      <span id="ah-name-load" style="position:absolute;right:8px;top:6px;
+            font-size:10px;color:var(--blue);display:none;">…</span>
+    </div>
+    <input id="ah-cost" class="input-sm" type="number" placeholder="成本價" min="0" step="0.01">
+    <div style="display:flex;gap:4px;">
+      <input id="ah-shares" class="input-sm" type="number" placeholder="數量" min="1" style="flex:1;min-width:0;">
+      <select id="ah-unit" class="input-sm" style="width:52px;padding:6px 2px;flex-shrink:0;"
+              title="張 = 1000股；股 = 零股">
+        <option value="張">張</option>
+        <option value="股">股</option>
+      </select>
+    </div>
+    <input id="ah-sl" class="input-sm" type="number" placeholder="止損價 (選填)" min="0" step="0.01">
+    <input id="ah-tp" class="input-sm" type="number" placeholder="停利價 (選填)" min="0" step="0.01">
     <button class="btn btn-primary btn-sm" onclick="saveNewHolding()" style="grid-column:span 2">確認新增</button>
-    <button class="btn btn-ghost btn-sm"   onclick="document.getElementById('add-holding-form').remove()">取消</button>`;
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('add-holding-form').remove()">取消</button>`;
 
   const card = document.querySelector('#holdings-body')?.closest('.card');
   if (card) card.appendChild(wrap);
@@ -133,24 +170,25 @@ function openAddHoldingForm() {
 }
 
 function saveNewHolding() {
-  const code   = (document.getElementById('ah-code')?.value   || '').trim().toUpperCase();
-  const name   = (document.getElementById('ah-name')?.value   || '').trim() || code;
+  const code   = (document.getElementById('ah-code')?.value  || '').trim().toUpperCase();
+  const name   = (document.getElementById('ah-name')?.value  || '').trim() || code;
   const cost   = parseFloat(document.getElementById('ah-cost')?.value   || '0');
-  const shares = parseInt(document.getElementById('ah-shares')?.value   || '0', 10);
-  const slVal  = parseFloat(document.getElementById('ah-sl')?.value    || '0');
-  const tpVal  = parseFloat(document.getElementById('ah-tp')?.value    || '0');
+  const shares = parseFloat(document.getElementById('ah-shares')?.value || '0');
+  const unit   = document.getElementById('ah-unit')?.value || '張';
+  const slVal  = parseFloat(document.getElementById('ah-sl')?.value     || '0');
+  const tpVal  = parseFloat(document.getElementById('ah-tp')?.value     || '0');
 
   if (!code || cost <= 0 || shares <= 0) {
-    alert('請填入股票代號、成本價、張數（張數 ≥ 1）');
+    alert(`請填入股票代號、成本價、數量（${unit} ≥ 1）`);
     return;
   }
 
-  const sl = slVal > 0 ? slVal : +(cost * 0.9).toFixed(1);
-  const tp = tpVal > 0 ? tpVal : +(cost * 1.2).toFixed(1);
+  const sl = slVal > 0 ? slVal : +(cost * 0.9).toFixed(2);
+  const tp = tpVal > 0 ? tpVal : +(cost * 1.2).toFixed(2);
 
   const holdings = loadHoldings();
-  const idx = holdings.findIndex(h => h.code === code);
-  const entry = { code, name, cost, shares, sl, tp };
+  const idx   = holdings.findIndex(h => h.code === code);
+  const entry = { code, name, cost, shares, unit, sl, tp };
   if (idx >= 0) holdings[idx] = entry; else holdings.push(entry);
 
   saveHoldings(holdings);

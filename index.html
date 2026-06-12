@@ -183,13 +183,18 @@
 ══════════════════════════════════════════════════════ -->
 <div id="page-supply" class="page">
   <div class="section-title">🔗 產業鏈地圖</div>
-  <!-- BUG-001 修正：5 個鏈的切換按鈕 -->
-  <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
-    <button class="btn btn-primary btn-sm chain-btn" onclick="selectChain('GPU_AI',this)">GPU / AI Server</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Memory',this)">Memory / HBM</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('CPO',this)">CPO 共封裝光學</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Cooling',this)">散熱</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('PCB',this)">PCB</button>
+  <!-- 10 條熱門產業鏈切換按鈕 -->
+  <div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;">
+    <button class="btn btn-primary btn-sm chain-btn" onclick="selectChain('GPU_AI',this)">🖥 GPU/AI</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Memory',this)">💾 HBM記憶體</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('CPO',this)">🔆 CPO光學</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Cooling',this)">❄️ 液冷散熱</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('PCB',this)">📐 PCB載板</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Robot',this)">🤖 人形機器人</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('EV',this)">🚗 電動車</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Solar',this)">☀️ 太陽能</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Satellite',this)">🛰 衛星通訊</button>
+    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Apple',this)">🍎 蘋果供應鏈</button>
   </div>
   <div class="card" style="margin-bottom:16px;">
     <div id="chain-svg-wrap"><svg id="chain-svg" class="chain" style="width:100%;height:420px;"></svg></div>
@@ -204,31 +209,24 @@
 </div>
 
 <!-- ══════════════════════════════════════════════════════
-     M4 ─ 交易策略室
+     M4 ─ 交易策略篩選器
 ══════════════════════════════════════════════════════ -->
 <div id="page-strategy" class="page">
-  <div class="section-title">📋 交易策略室</div>
-  <!-- BUG-021 修正：移除冗餘的「載入」按鈕，onchange 直接觸發 -->
-  <div style="margin-bottom:12px;">
-    <select class="form-select" id="strategy-stock-select" onchange="loadStrategyCard(this.value)" style="width:220px;">
-      <option value="2330">2330 台積電</option>
-      <option value="2317">2317 鴻海</option>
-      <option value="2308">2308 台達電</option>
-      <option value="3711">3711 日月光</option>
-      <option value="2303">2303 聯電</option>
-    </select>
-  </div>
+  <div class="section-title">📋 交易策略篩選器</div>
+  <!-- 6 種規則策略卡 -->
+  <div id="screener-cards"
+       style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;"></div>
   <div class="grid-2">
     <div class="card">
       <div class="card-header">
         <div class="card-title">
-          <span class="icon">🎯</span>個股策略卡
+          <span class="icon">🎯</span>篩選條件
           <span id="strategy-stock-title" style="color:var(--blue);margin-left:6px;"></span>
         </div>
         <span class="badge" id="strategy-signal"></span>
       </div>
-      <!-- BUG-017 修正：策略卡格包含壓力位欄位 -->
-      <div class="strategy-grid" id="strategy-grid"></div>
+      <div id="screener-rules" style="margin-bottom:4px;"></div>
+      <div id="strategy-grid"></div>
     </div>
     <div class="card">
       <!-- BUG-004 修正：改用 canvas 自繪真實 OHLC K棒（含影線）-->

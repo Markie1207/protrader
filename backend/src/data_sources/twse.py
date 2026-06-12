@@ -147,49 +147,76 @@ def _get_institutional_t86(today: str, fallback: dict) -> dict:
 def get_futures_oi() -> dict:
     """
     外資期貨未平倉口數（台指期 TX，TAIFEX Open API）
-    回傳：{ source, date, foreign_net, foreign_long, foreign_short, unit }
+    依序嘗試：今日 / 昨日 / 前日，格式 YYYYMMDD 與 YYYY-MM-DD 各試一次
     """
+    from datetime import timedelta
+
     key = 'futures_oi'
     if key in _cache_daily:
         return _cache_daily[key]
 
-    today_str = date.today().strftime('%Y-%m-%d')
     result = {
         'source':        'mock',
-        'date':          today_str,
+        'date':          date.today().isoformat(),
         'foreign_net':   0,
         'foreign_long':  0,
         'foreign_short': 0,
         'unit':          '口',
     }
 
-    url  = 'https://openapi.taifex.com.tw/v1/DailyForeignInvestorsPositions'
-    data = _get(url, {'queryDate': today_str},
-                headers={'User-Agent': 'Mozilla/5.0 (ProTrader/1.1)',
-                         'Accept': 'application/json'})
+    url     = 'https://openapi.taifex.com.tw/v1/DailyForeignInvestorsPositions'
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept':     'application/json',
+        'Referer':    'https://www.taifex.com.tw/',
+    }
 
-    if data and isinstance(data, list):
-        try:
-            for row in data:
-                name = str(row.get('ContractName', row.get('商品名稱', '')))
-                if 'TX' in name or '臺股期貨' in name or '台股期貨' in name:
-                    lo = int(row.get('LongOpenInterest',
-                              row.get('外資多方未平倉口數', 0)) or 0)
-                    so = int(row.get('ShortOpenInterest',
-                              row.get('外資空方未平倉口數', 0)) or 0)
-                    no = int(row.get('NetOpenInterest',
-                              row.get('外資淨未平倉口數', lo - so)) or lo - so)
-                    result.update({
-                        'source':        'TAIFEX',
-                        'foreign_long':  lo,
-                        'foreign_short': so,
-                        'foreign_net':   no,
-                        'date':          row.get('Date', today_str),
-                    })
-                    break
-        except Exception as e:
-            print(f'[TAIFEX] 期貨未平倉解析失敗: {e}')
+    def _try_parse(data, date_str):
+        if not (data and isinstance(data, list)):
+            return False
+        for row in data:
+            name = str(row.get('ContractName',
+                       row.get('contractName',
+                       row.get('商品名稱', ''))))
+            if 'TX' not in name and '臺股期貨' not in name and '台股期貨' not in name:
+                continue
+            try:
+                lo = int(row.get('LongOpenInterest',
+                         row.get('longOI',
+                         row.get('外資多方未平倉口數', 0))) or 0)
+                so = int(row.get('ShortOpenInterest',
+                         row.get('shortOI',
+                         row.get('外資空方未平倉口數', 0))) or 0)
+                no_raw = row.get('NetOpenInterest',
+                         row.get('netOI',
+                         row.get('外資淨未平倉口數', None)))
+                no = int(no_raw or lo - so)
+                result.update({
+                    'source':        'TAIFEX',
+                    'foreign_long':  lo,
+                    'foreign_short': so,
+                    'foreign_net':   no,
+                    'date':          row.get('Date', row.get('queryDate', date_str)),
+                })
+                return True
+            except Exception as e:
+                print(f'[TAIFEX] 單列解析失敗: {e}')
+        return False
 
+    for delta in range(4):
+        try_date = date.today() - timedelta(days=delta)
+        for fmt in ('%Y%m%d', '%Y-%m-%d'):
+            date_str = try_date.strftime(fmt)
+            try:
+                data = _get(url, {'queryDate': date_str}, headers=headers)
+                if _try_parse(data, date_str):
+                    print(f'[TAIFEX] 成功 queryDate={date_str}')
+                    _cache_daily[key] = result
+                    return result
+            except Exception as e:
+                print(f'[TAIFEX] 請求失敗 date={date_str}: {e}')
+
+    print('[TAIFEX] 全部日期皆失敗，回傳 mock')
     _cache_daily[key] = result
     return result
 
