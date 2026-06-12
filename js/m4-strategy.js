@@ -252,7 +252,7 @@ function genKbarData(code) {
     const chg   = (Math.random() - 0.45) * base * 0.025;
     const close = Math.max(base * 0.7, open + chg);
     const high  = Math.max(open, close) + Math.random() * base * 0.01;
-    const low    const low   = Math.min(open, close) - Math.random() * base * 0.01;
+    const low   = Math.min(open, close) - Math.random() * base * 0.01;
     data.push({ open, high, low, close });
     price = close;
   }
@@ -371,6 +371,4 @@ async function initKbar(code) {
 function initStrategy() {
   renderScreenerCards();
   selectScreener('momentum');
-}
-Screener('momentum');
 }
