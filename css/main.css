@@ -13,6 +13,8 @@
   --text3: #484f58;
   --green: #3fb950;
   --red: #f85149;
+  --up:  #f85149;  /* 台股漲=紅 */
+  --dn:  #3fb950;  /* 台股跌=綠 */
   --blue: #58a6ff;
   --orange: #e3b341;
   --purple: #bc8cff;
@@ -223,8 +225,8 @@ body {
 .chart-wrap { position: relative; width: 100%; }
 
 /* ── Colour Helpers ── */
-.up { color: var(--green); }
-.dn { color: var(--red); }
+.up { color: var(--up); }
+.dn { color: var(--dn); }
 
 /* ── Focus List (M1 今日焦點) ── */
 .focus-item {
@@ -315,8 +317,4 @@ body {
 .replay-progress-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width .4s linear; }
 .replay-time { font-family: monospace; font-size: 14px; color: var(--blue); font-weight: 700; white-space: nowrap; }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg1); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+/* ── Scrollbar 

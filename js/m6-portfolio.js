@@ -200,9 +200,9 @@ function updatePaperSummary() {
   };
 
   setEl('paper-capital-display', fmt(paperState.capital));
-  setEl('paper-cash-display',    fmt(paperState.cash),   paperState.cash < paperState.capital * 0.2 ? 'var(--red)' : 'var(--green)');
+  setEl('paper-cash-display',    fmt(paperState.cash),   paperState.cash < paperState.capital * 0.2 ? 'var(--dn)' : 'var(--up)');
   setEl('paper-mktval-display',  fmt(mktVal));
-  const retColor = +ret >= 0 ? 'var(--green)' : 'var(--red)';
+  const retColor = +ret >= 0 ? 'var(--up)' : 'var(--dn)';
   setEl('paper-return-display',  (+ret >= 0 ? '+' : '') + ret + '%', retColor);
 }
 
@@ -409,11 +409,11 @@ function endReplay() {
   if (metricsEl) {
     metricsEl.innerHTML = [
       { label: '總交易', value: total, color: 'var(--text)' },
-      { label: '勝率',   value: `${winRate}%`, color: +winRate >= 50 ? 'var(--green)' : 'var(--red)' },
-      { label: '總損益', value: `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toLocaleString()}`, color: totalPnL >= 0 ? 'var(--green)' : 'var(--red)' },
-      { label: '報酬率', value: `${+ret >= 0 ? '+' : ''}${ret}%`, color: +ret >= 0 ? 'var(--green)' : 'var(--red)' },
-      { label: '最大獲利',value: `+$${maxGain.toLocaleString()}`, color: 'var(--green)' },
-      { label: '最大虧損',value: `$${maxLoss.toLocaleString()}`, color: 'var(--red)' },
+      { label: '勝率',   value: `${winRate}%`, color: +winRate >= 50 ? 'var(--up)' : 'var(--dn)' },
+      { label: '總損益', value: `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toLocaleString()}`, color: totalPnL >= 0 ? 'var(--up)' : 'var(--dn)' },
+      { label: '報酬率', value: `${+ret >= 0 ? '+' : ''}${ret}%`, color: +ret >= 0 ? 'var(--up)' : 'var(--dn)' },
+      { label: '最大獲利',value: `+$${maxGain.toLocaleString()}`, color: 'var(--up)' },
+      { label: '最大虧損',value: `$${maxLoss.toLocaleString()}`, color: 'var(--dn)' },
     ].map(m => `<div class="metric-item"><div class="metric-label">${m.label}</div>
       <div class="metric-value" style="color:${m.color}">${m.value}</div></div>`).join('');
   }

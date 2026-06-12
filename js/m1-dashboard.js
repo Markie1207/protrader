@@ -100,7 +100,7 @@ async function renderHoldings() {
   if (pnlEl) {
     const sign = pnlTotal >= 0 ? '+' : '-';
     pnlEl.textContent  = `${sign}$${Math.abs(pnlTotal).toLocaleString()}`;
-    pnlEl.style.color  = pnlTotal >= 0 ? 'var(--green)' : 'var(--red)';
+    pnlEl.style.color  = pnlTotal >= 0 ? 'var(--up)' : 'var(--dn)';
   }
 }
 
@@ -309,7 +309,7 @@ function renderFocusList() {
 }
 
 /* ─────────────────────────────────────────
-   API 資料更新 Dashboard（加權指數 + 法人籌碼）
+   API 資料更新 Dashboard（加權指數 + 法人籌碼 + 期貨未平倉）
 ───────────────────────────────────────── */
 async function fetchAndUpdateDashboard() {
   /* 加權指數 */
@@ -332,29 +332,26 @@ async function fetchAndUpdateDashboard() {
     const inst = await API.getInstitutional();
     if (inst) {
       const fmt = v => (v >= 0 ? '+' : '') + (v / 1e8).toFixed(0) + '億';
-
-      /* 小卡摘要值 */
-      const fEl = document.getElementById('inst-foreign');
-      const iEl = document.getElementById('inst-invest');
-      const dEl = document.getElementById('inst-dealer');
       const fNet = inst.foreign?.net    ?? 0;
       const iNet = inst.investment?.net ?? 0;
       const dNet = inst.dealer?.net     ?? 0;
+
+      /* 小卡摘要 */
+      const fEl = document.getElementById('inst-foreign');
+      const iEl = document.getElementById('inst-invest');
       if (fEl) { fEl.textContent = fmt(fNet); fEl.className = `card-value ${fNet >= 0 ? 'up' : 'dn'}`; }
       if (iEl) { iEl.textContent = fmt(iNet); iEl.className = `card-value ${iNet >= 0 ? 'up' : 'dn'}`; }
-      if (dEl) { dEl.textContent = fmt(dNet); dEl.className = `card-value ${dNet >= 0 ? 'up' : 'dn'}`; }
 
-      /* chip bar 動態寬度（相對最大值，最大顯示 90%） */
+      /* chip bar 動態寬度 */
       const maxAbs = Math.max(Math.abs(fNet), Math.abs(iNet), Math.abs(dNet), 1);
       const toW    = v => `${Math.round(Math.abs(v) / maxAbs * 90)}%`;
-      const toCol  = v => v >= 0 ? 'var(--green)' : 'var(--red)';
+      const toCol  = v => v >= 0 ? 'var(--up)' : 'var(--dn)';
 
-      const chips = [
+      [
         { bar: 'chip-bar-foreign', val: 'chip-val-foreign', net: fNet },
         { bar: 'chip-bar-invest',  val: 'chip-val-invest',  net: iNet },
         { bar: 'chip-bar-dealer',  val: 'chip-val-dealer',  net: dNet },
-      ];
-      chips.forEach(({ bar, val, net }) => {
+      ].forEach(({ bar, val, net }) => {
         const barEl = document.getElementById(bar);
         const valEl = document.getElementById(val);
         if (barEl) { barEl.style.width = toW(net); barEl.style.background = toCol(net); }
@@ -362,6 +359,23 @@ async function fetchAndUpdateDashboard() {
       });
     }
   } catch (e) { console.warn('[M1] institutional 更新失敗', e); }
+
+  /* 外資期貨未平倉 */
+  try {
+    const oi = await API.getFuturesOI();
+    if (oi) {
+      const net   = oi.foreign_net   ?? 0;
+      const long  = oi.foreign_long  ?? 0;
+      const short = oi.foreign_short ?? 0;
+      const sign  = net >= 0 ? '+' : '';
+      const valEl   = document.getElementById('futures-oi-val');
+      const longEl  = document.getElementById('futures-oi-long');
+      const shortEl = document.getElementById('futures-oi-short');
+      if (valEl)   { valEl.textContent = `${sign}${net.toLocaleString()} 口`; valEl.style.color = net >= 0 ? 'var(--up)' : 'var(--dn)'; }
+      if (longEl)  longEl.textContent  = long.toLocaleString();
+      if (shortEl) shortEl.textContent = short.toLocaleString();
+    }
+  } catch (e) { console.warn('[M1] futures OI 更新失敗', e); }
 
   /* 更新時間 */
   const timeEl = document.getElementById('focus-update-time');

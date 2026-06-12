@@ -79,6 +79,11 @@ const Mock = {
     const prices = { '2330': 1050, '2317': 108, '2454': 890, '2308': 310, '3711': 155 };
     return { source: 'mock', code, price: prices[code] || 100, open: 0, high: 0, low: 0 };
   },
+  futuresOI() {
+    return {
+      source: 'mock', foreign_net: 8532, foreign_long: 32456, foreign_short: 23924, unit: '口'
+    };
+  },
   stockHistory(code) {
     const base = { '2330': 900, '2317': 100, '2454': 800, '2308': 270, '3711': 140 }[code] || 100;
     let price  = base;

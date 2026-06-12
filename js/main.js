@@ -88,7 +88,7 @@ function updateMarketStatus() {
   if (isWeekday && mins >= MKT_START && mins < MKT_END) {
     dot.classList.add('open');
     label.textContent = '開市中';
-    label.style.color = 'var(--green)';
+    label.style.color = 'var(--up)';
   } else if (isWeekday && mins >= PRE_START && mins < MKT_START) {
     dot.classList.add('pre');
     label.textContent = '盤前';

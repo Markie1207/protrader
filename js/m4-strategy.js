@@ -139,7 +139,7 @@ function drawCandlestick(canvas, data) {
   data.forEach((d, i) => {
     const x      = PAD_L + step * i + step / 2;
     const isUp   = d.close >= d.open;
-    const color  = isUp ? '#3fb950' : '#f85149';
+    const color  = isUp ? '#f85149' : '#3fb950';
 
     // 上下影線
     ctx.strokeStyle = color;
@@ -174,10 +174,10 @@ function detectPatterns(data) {
   const bodyRatio = Math.abs(last.close - last.open) / (last.high - last.low + 0.001);
   if (bodyRatio < 0.2) patterns.push({ name: '十字線', desc: '市場猶豫，趨勢可能反轉', color: 'var(--orange)' });
   if (last.close > last.open && (last.open - last.low) > 2 * Math.abs(last.close - last.open)) {
-    patterns.push({ name: '鎚頭線', desc: '下影線長，可能底部支撐', color: 'var(--green)' });
+    patterns.push({ name: '鎚頭線', desc: '下影線長，可能底部支撐', color: 'var(--up)' });
   }
   if (prev.close < prev.open && last.close > last.open && last.close > prev.open && last.open < prev.close) {
-    patterns.push({ name: '看漲吞噬', desc: '多頭強力反攻，注意量能確認', color: 'var(--green)' });
+    patterns.push({ name: '看漲吞噬', desc: '多頭強力反攻，注意量能確認', color: 'var(--up)' });
   }
   if (patterns.length === 0) {
     patterns.push({ name: '趨勢延續', desc: '無明顯反轉型態', color: 'var(--text2)' });

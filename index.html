@@ -79,18 +79,29 @@
         <div class="card-title" style="margin-bottom:10px;"><span class="icon">📊</span>法人籌碼儀表</div>
         <div class="chip-row">
           <div class="chip-label">外資</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-foreign" style="width:78%;background:var(--green)"></div></div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-foreign" style="width:78%;background:var(--up)"></div></div>
           <div class="chip-val up" id="chip-val-foreign">+186億</div>
         </div>
         <div class="chip-row">
           <div class="chip-label">投信</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-invest" style="width:42%;background:var(--blue)"></div></div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-invest" style="width:42%;background:var(--up)"></div></div>
           <div class="chip-val up" id="chip-val-invest">+42億</div>
         </div>
         <div class="chip-row">
           <div class="chip-label">自營</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-dealer" style="width:15%;background:var(--red)"></div></div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-dealer" style="width:15%;background:var(--dn)"></div></div>
           <div class="chip-val dn" id="chip-val-dealer">-8億</div>
+        </div>
+        <!-- 期貨未平倉 -->
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bg3);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:11px;color:var(--text2);">📈 外資台指期未平倉</div>
+            <div id="futures-oi-val" style="font-size:13px;font-weight:700;color:var(--text3);">載入中...</div>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:4px;font-size:11px;color:var(--text2);">
+            <span>多單 <b id="futures-oi-long" style="color:var(--up)">—</b></span>
+            <span>空單 <b id="futures-oi-short" style="color:var(--dn)">—</b></span>
+          </div>
         </div>
       </div>
     </div>

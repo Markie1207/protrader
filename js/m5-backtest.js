@@ -77,14 +77,14 @@ function renderBtMetrics() {
   const el = document.getElementById('bt-metrics');
   if (!el) return;
   const metrics = [
-    { label: '總報酬',    value: `+${backtestResult.totalReturn}%`,   color: 'var(--green)' },
-    { label: '年化報酬',  value: `+${backtestResult.annualReturn}%`,  color: 'var(--green)' },
-    { label: '最大回撤',  value: `${backtestResult.maxDrawdown}%`,    color: 'var(--red)' },
+    { label: '總報酬',    value: `+${backtestResult.totalReturn}%`,   color: 'var(--up)' },
+    { label: '年化報酬',  value: `+${backtestResult.annualReturn}%`,  color: 'var(--up)' },
+    { label: '最大回撤',  value: `${backtestResult.maxDrawdown}%`,    color: 'var(--dn)' },
     { label: 'Sharpe',   value: backtestResult.sharpe,                color: 'var(--blue)' },
-    { label: '勝率',      value: `${backtestResult.winRate}%`,         color: 'var(--green)' },
+    { label: '勝率',      value: `${backtestResult.winRate}%`,         color: 'var(--up)' },
     { label: '總筆數',    value: backtestResult.totalTrades,           color: 'var(--text)' },
-    { label: '均獲利',    value: `+${backtestResult.avgWin}%`,         color: 'var(--green)' },
-    { label: '均虧損',    value: `${backtestResult.avgLoss}%`,         color: 'var(--red)' },
+    { label: '均獲利',    value: `+${backtestResult.avgWin}%`,         color: 'var(--up)' },
+    { label: '均虧損',    value: `${backtestResult.avgLoss}%`,         color: 'var(--dn)' },
   ];
   el.innerHTML = metrics.map(m => `
     <div class="metric-item">
@@ -121,8 +121,8 @@ function renderEquityChart() {
       datasets: [{
         label: '淨值',
         data,
-        borderColor: '#3fb950',
-        backgroundColor: '#3fb95022',
+        borderColor: '#58a6ff',
+        backgroundColor: '#58a6ff22',
         borderWidth: 2,
         pointRadius: 0,
         fill: true,
@@ -163,7 +163,7 @@ function renderHeatmap() {
     vals.forEach(v => {
       html += `<td class="${colFn(v)}">${v > 0 ? '+' : ''}${v}%</td>`;
     });
-    html += `<td style="font-weight:600;color:${+total >= 0 ? 'var(--green)' : 'var(--red)'}">${+total >= 0 ? '+' : ''}${total}%</td></tr>`;
+    html += `<td style="font-weight:600;color:${+total >= 0 ? 'var(--up)' : 'var(--dn)'}">${+total >= 0 ? '+' : ''}${total}%</td></tr>`;
   });
   html += '</tbody></table>';
   el.innerHTML = html;

@@ -33,3 +33,10 @@ def status():
         'market_open':       sinopac._is_market_open(),
         'primary_source':    'Shioaji' if sinopac.is_available() else 'TWSE',
     })
+
+
+@market_bp.route('/futures-oi')
+def futures_oi():
+    """外資期貨未平倉口數（台指期 TX）"""
+    data = twse.get_futures_oi()
+    return jsonify(data)

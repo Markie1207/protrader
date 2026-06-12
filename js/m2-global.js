@@ -64,7 +64,7 @@ function renderNewsFeed() {
 function renderLaunchTracker() {
   const el = document.getElementById('launch-tracker');
   if (!el) return;
-  const impactColor = { '高': 'var(--red)', '中': 'var(--orange)', '低': 'var(--text2)' };
+  const impactColor = { '高': 'var(--dn)', '中': 'var(--orange)', '低': 'var(--text2)' };
   el.innerHTML = `<table class="launch-table">
     <thead><tr>
       <th>發表會 / 事件</th><th>日期</th><th>主要產品</th>
