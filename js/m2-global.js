@@ -1,6 +1,5 @@
 /**
  * m2-global.js — 全球情報站
- * BUG-025 修正：啟動追蹤器加水平捲動（HTML 已加 overflow-x:auto 容器）
  */
 
 'use strict';
@@ -22,12 +21,15 @@ const newsData = [
   { title: 'CoWoS 封裝產能爭奪戰：日月光、矽品搶單',     time: '08:30', tag: '觀察', src: '工商時報' },
 ];
 
+/* 日期格式：YYYY-MM-DD，renderLaunchTracker 自動排序 + 過濾 */
 const launchData = [
-  { event: 'NVIDIA GTC 2026',    date: '06/25', product: 'Blackwell B300', beneficiary: '台積電・日月光・台達電', sector: 'AI伺服器',  impact: '高' },
-  { event: 'Apple WWDC 2026',    date: '06/10', product: 'iOS 20 / M5 晶片', beneficiary: '台積電・大立光・可成', sector: '蘋果供應鏈', impact: '高' },
-  { event: 'Computex 台北',      date: '06/03', product: '各廠 AI PC NB',  beneficiary: '廣達・緯創・英業達',   sector: 'AI NB',       impact: '中' },
-  { event: 'Google I/O 2026',    date: '05/14', product: 'Gemini Ultra 3', beneficiary: '台積電・世芯',         sector: 'AI晶片',      impact: '中' },
-  { event: 'Samsung SDC 2026',   date: '07/16', product: 'Galaxy AI 2.0', beneficiary: '台積電・新光電',        sector: '折疊手機',    impact: '低' },
+  { event: 'Apple WWDC 2026',       date: '2026-06-10', product: 'iOS 20 / M5 晶片',    beneficiary: '台積電・大立光・可成',   sector: '蘋果供應鏈', impact: '高' },
+  { event: 'NVIDIA GTC 2026',       date: '2026-06-25', product: 'Blackwell B300',       beneficiary: '台積電・日月光・台達電', sector: 'AI伺服器',   impact: '高' },
+  { event: 'Fed FOMC 利率決議',     date: '2026-06-18', product: '—',                    beneficiary: '金融股・匯率相關',       sector: '總經',       impact: '高' },
+  { event: '台灣 5月出口統計',      date: '2026-06-20', product: '半導體出口數據',       beneficiary: '台積電・聯發科・廣達',   sector: '半導體',     impact: '中' },
+  { event: 'AMD Next Horizon 2026', date: '2026-07-01', product: 'MI400 / EPYC 5',      beneficiary: '台積電・世芯・創意',     sector: 'AI晶片',     impact: '中' },
+  { event: '台積電法說會 Q2',       date: '2026-07-09', product: 'Q2財報 / 下半年展望', beneficiary: '半導體全族群',           sector: '半導體',     impact: '高' },
+  { event: 'Samsung SDC 2026',      date: '2026-07-16', product: 'Galaxy AI 2.0',        beneficiary: '台積電・新光電',         sector: '折疊手機',   impact: '低' },
 ];
 
 function renderEventCalendar() {
@@ -60,25 +62,49 @@ function renderNewsFeed() {
     </div>`).join('');
 }
 
-/* BUG-025 修正：表格放在 overflow-x:auto 容器內 */
+/* 日期過濾：today-5天 ~ today+30天，結果升序排列 */
 function renderLaunchTracker() {
   const el = document.getElementById('launch-tracker');
   if (!el) return;
-  const impactColor = { '高': 'var(--dn)', '中': 'var(--orange)', '低': 'var(--text2)' };
-  el.innerHTML = `<table class="launch-table">
-    <thead><tr>
-      <th>發表會 / 事件</th><th>日期</th><th>主要產品</th>
-      <th>台股受惠公司</th><th>受惠族群</th><th>影響</th>
-    </tr></thead>
-    <tbody>${launchData.map(r => `<tr>
-      <td style="font-weight:600;">${r.event}</td>
-      <td style="color:var(--text2)">${r.date}</td>
-      <td>${r.product}</td>
-      <td style="color:var(--blue)">${r.beneficiary}</td>
-      <td><span class="badge">${r.sector}</span></td>
-      <td style="color:${impactColor[r.impact]};font-weight:600;">${r.impact}</td>
-    </tr>`).join('')}</tbody>
-  </table>`;
+
+  const now     = new Date(); now.setHours(0, 0, 0, 0);
+  const minDate = new Date(now); minDate.setDate(now.getDate() - 5);
+  const maxDate = new Date(now); maxDate.setDate(now.getDate() + 30);
+
+  const WD  = ['日','一','二','三','四','五','六'];
+  const fmt = d => {
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return mm + '/' + dd + '（週' + WD[d.getDay()] + '）';
+  };
+  const isToday = d => d.toDateString() === now.toDateString();
+
+  const rows = launchData
+    .map(r => Object.assign({}, r, { _d: new Date(r.date) }))
+    .filter(r => r._d >= minDate && r._d <= maxDate)
+    .sort((a, b) => a._d - b._d);
+
+  const impactColor = { '高': 'var(--up)', '中': 'var(--orange)', '低': 'var(--text2)' };
+
+  el.innerHTML = '<table class="launch-table"><thead><tr>'
+    + '<th>發表會 / 事件</th><th>日期</th><th>主要產品</th>'
+    + '<th>台股受惠公司</th><th>受惠族群</th><th>影響</th>'
+    + '</tr></thead><tbody>'
+    + rows.map(r => {
+        const today     = isToday(r._d);
+        const dateTd    = fmt(r._d) + (today ? ' <span class="badge badge-green" style="font-size:9px;padding:1px 4px;">今日</span>' : '');
+        const rowStyle  = today ? ' style="background:rgba(63,185,80,0.06);"' : '';
+        const dateStyle = today ? 'color:var(--up);font-weight:700;' : 'color:var(--text2);';
+        return '<tr' + rowStyle + '>'
+          + '<td style="font-weight:600;">' + r.event + '</td>'
+          + '<td style="' + dateStyle + '">' + dateTd + '</td>'
+          + '<td>' + r.product + '</td>'
+          + '<td style="color:var(--blue)">' + r.beneficiary + '</td>'
+          + '<td><span class="badge">' + r.sector + '</span></td>'
+          + '<td style="color:' + (impactColor[r.impact] || 'var(--text2)') + ';font-weight:600;">' + r.impact + '</td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody></table>';
 }
 
 function initGlobal() {

@@ -396,35 +396,38 @@ async function fetchAndUpdateDashboard() {
         if (valEl) { valEl.textContent = fmt(net); valEl.className = `chip-val ${net >= 0 ? 'up' : 'dn'}`; }
       });
     }
-  } catch (e) { console.warn('[M1] institutional 更新失敗', e); }
+  } catch (e) { console.warn('[M1] 法人更新失敗', e); }
 
-  /* 外資期貨未平倉 */
+  /* 期貨未平倉 */
   try {
     const oi = await API.getFuturesOI();
     if (oi) {
-      const net   = oi.foreign_net   ?? 0;
-      const long  = oi.foreign_long  ?? 0;
-      const short = oi.foreign_short ?? 0;
-      const sign  = net >= 0 ? '+' : '';
+      const net     = oi.foreign_net   ?? 0;
+      const longOI  = oi.foreign_long  ?? 0;
+      const shortOI = oi.foreign_short ?? 0;
       const valEl   = document.getElementById('futures-oi-val');
       const longEl  = document.getElementById('futures-oi-long');
       const shortEl = document.getElementById('futures-oi-short');
-      if (valEl)   { valEl.textContent = `${sign}${net.toLocaleString()} 口`; valEl.style.color = net >= 0 ? 'var(--up)' : 'var(--dn)'; }
-      if (longEl)  longEl.textContent  = long.toLocaleString();
-      if (shortEl) shortEl.textContent = short.toLocaleString();
+      if (valEl) {
+        valEl.textContent = `${net >= 0 ? '+' : ''}${net.toLocaleString()} 口`;
+        valEl.style.color = net >= 0 ? 'var(--up)' : 'var(--dn)';
+      }
+      if (longEl)  longEl.textContent  = longOI.toLocaleString();
+      if (shortEl) shortEl.textContent = shortOI.toLocaleString();
     }
-  } catch (e) { console.warn('[M1] futures OI 更新失敗', e); }
-
-  /* 更新時間 */
-  const timeEl = document.getElementById('focus-update-time');
-  if (timeEl) {
-    const now = new Date();
-    timeEl.textContent = `更新 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  }
+  } catch (e) { console.warn('[M1] 期貨OI更新失敗', e); }
 }
 
 /* ─────────────────────────────────────────
-   模組初始化入口
+   初始化進入點
+───────────────────────────────────────── */
+function initDashboard() {
+  renderHoldings();
+  renderFocusList();
+  renderThermometer();
+  fetchAndUpdateDashboard();
+}
+��組初始化入口
 ───────────────────────────────────────── */
 function initDashboard() {
   renderIndexChart('1d');

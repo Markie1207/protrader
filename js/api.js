@@ -143,6 +143,11 @@ const API = {
     return await _fetch(`/api/stock/${code}/intraday`, () => ({ source: 'unavailable', ticks: [] }));
   },
 
+  /** 外資台指期未平倉 */
+  async getFuturesOI() {
+    return await _fetch('/api/market/futures_oi', Mock.futuresOI);
+  },
+
   /** 取得後端 URL（偵錯用） */
   getBackendUrl() { return BACKEND_URL; },
 };
@@ -160,8 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nav.insertBefore(badge, nav.firstChild);
   }
 
-  // 啟動時查詢一次後端狀態
   API.getStatus().then(s => {
     setDataSourceBadge(s?.primary_source || 'mock');
-  });
+  }).catch(() => {});
 });

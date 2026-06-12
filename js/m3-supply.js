@@ -229,155 +229,55 @@ function selectChain(key, el) {
 function loadChain(key) {
   const chain = chains[key];
   if (!chain) return;
-  renderChainSVG(chain);
+  renderChainHTML(chain);
 }
 
 /* ─────────────────────────────────────────
-   SVG 輔助
+   HTML div 欄位式顯示（取代 SVG，更穩定）
 ───────────────────────────────────────── */
-function _svgEl(tag) {
-  return document.createElementNS('http://www.w3.org/2000/svg', tag);
-}
+function renderChainHTML(chain) {
+  const wrap = document.getElementById('chain-svg-wrap');
+  if (!wrap) return;
 
-/* ─────────────────────────────────────────
-   上 / 中 / 下游 欄位式 SVG 渲染
-───────────────────────────────────────── */
-function renderChainSVG(chain) {
-  const svg = document.getElementById('chain-svg');
-  if (!svg) return;
-
-  const W = Math.max(svg.clientWidth || 0, 600);
-  const H = 420;
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.innerHTML = '';
-
-  /* --- Arrow  /* --- Arrow marker --- */
-  const defs = _svgEl('defs');
-  defs.innerHTML = `
-    <marker id="arr" markerWidth="7" markerHeight="7"
-      refX="6" refY="3.5" orient="auto">
-      <path d="M0,0 L0,7 L7,3.5 z" fill="#484f58"/>
-    </marker>`;
-  svg.appendChild(defs);
-
-  const LANE_META = [
-    { label: '上游', key: 'upstream',   color: '#bc8cff' },
-    { label: '中游', key: 'midstream',  color: '#58a6ff' },
-    { label: '下游', key: 'downstream', color: '#3fb950' },
+  const LANES = [
+    { label: '上游', key: 'upstream',   color: '#bc8cff', bg: 'rgba(188,140,255,0.07)', bd: 'rgba(188,140,255,0.28)' },
+    { label: '中游', key: 'midstream',  color: '#58a6ff', bg: 'rgba(88,166,255,0.07)',  bd: 'rgba(88,166,255,0.28)' },
+    { label: '下游', key: 'downstream', color: '#3fb950', bg: 'rgba(63,185,80,0.07)',   bd: 'rgba(63,185,80,0.28)' },
   ];
-  const ARROW_W = 28;
-  const laneW   = (W - ARROW_W * 2) / 3;
-  const laneX   = [0, laneW + ARROW_W, laneW * 2 + ARROW_W * 2];
 
-  const HEADER_H = 38;
-  const NODE_H   = 40;
-  const NODE_GAP = 7;
-  const NODE_PAD = 8;
-
-  LANE_META.forEach((lm, li) => {
-    const lx    = laneX[li];
+  const laneHTMLArr = LANES.map((lm, idx) => {
     const nodes = chain[lm.key] || [];
-    const nodeW = laneW - NODE_PAD * 2;
+    const nodesHTML = nodes.map(n => {
+      const isOverseas = ['us', 'kr', 'jp', 'cn'].includes(n.type);
+      const lbl = isOverseas ? n.name : `${n.code} ${n.name}`;
+      const hotBadge = n.hot
+        ? '<span style="position:absolute;top:4px;right:4px;background:' + lm.color + ';color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;">熱</span>'
+        : '';
+      return '<div style="position:relative;background:' + (n.hot ? lm.color + '1e' : '#21262d') + ';'
+        + 'border:1px solid ' + (n.hot ? lm.color : lm.color + '50') + ';'
+        + 'border-radius:6px;padding:7px 8px;margin-bottom:6px;">'
+        + hotBadge
+        + '<div style="font-size:11px;font-weight:600;color:' + (n.hot ? lm.color : '#e6edf3') + ';'
+        + 'padding-right:' + (n.hot ? '22px' : '0') + ';">' + lbl + '</div>'
+        + '<div style="font-size:10px;color:#8b949e;margin-top:2px;">' + n.role + '</div>'
+        + '</div>';
+    }).join('');
 
-    const bg = _svgEl('rect');
-    bg.setAttribute('x', lx + 3); bg.setAttribute('y', 3);
-    bg.setAttribute('width', laneW - 6); bg.setAttribute('height', H - 6);
-    bg.setAttribute('rx', '8');
-    bg.setAttribute('fill', lm.color + '0b');
-    bg.setAttribute('stroke', lm.color + '35');
-    bg.setAttribute('stroke-width', '1');
-    svg.appendChild(bg);
+    const arrow = idx < LANES.length - 1
+      ? '<div style="display:flex;align-items:center;align-self:center;padding:0 4px;font-size:22px;color:#484f58;flex-shrink:0;">›</div>'
+      : '';
 
-    const hdr = _svgEl('text');
-    hdr.setAttribute('x', lx + laneW / 2); hdr.setAttribute('y', 24);
-    hdr.setAttribute('text-anchor', 'middle');
-    hdr.setAttribute('fill', lm.color);
-    hdr.setAttribute('font-size', '13'); hdr.setAttribute('font-weight', '700');
-    hdr.textContent = lm.label;
-    svg.appendChild(hdr);
-
-    const totalNodesH = nodes.length * (NODE_H + NODE_GAP) - NODE_GAP;
-    const startY = HEADER_H + Math.max(0, (H - HEADER_H - 10 - totalNodesH) / 2);
-
-    nodes.forEach((node, ni) => {
-      const nx  = lx + NODE_PAD;
-      const ny  = startY + ni * (NODE_H + NODE_GAP);
-      const hot = !!node.hot;
-
-      const rect = _svgEl('rect');
-      rect.setAttribute('x', nx); rect.setAttribute('y', ny);
-      rect.setAttribute('width', nodeW); rect.setAttribute('height', NODE_H);
-      rect.setAttribute('rx', '6');
-      rect.setAttribute('fill', hot ? lm.color + '28' : '#21262d');
-      rect.setAttribute('stroke', hot ? lm.color : lm.color + '45');
-      rect.setAttribute('stroke-width', hot ? '1.5' : '1');
-      svg.appendChild(rect);
-
-      const isOverseas = ['us','kr','jp','cn'].includes(node.type);
-      const label = isOverseas ? node.name : `${node.code} ${node.name}`;
-      const nameT = _svgEl('text');
-      nameT.setAttribute('x', nx + nodeW / 2); nameT.setAttribute('y', ny + 15);
-      nameT.setAttribute('text-anchor', 'middle');
-      nameT.setAttribute('fill', hot ? lm.color : '#e6edf3');
-      nameT.setAttribute('font-size', '11'); nameT.setAttribute('font-weight', '600');
-      nameT.textContent = label;
-      svg.appendChild(nameT);
-
-      const roleT = _svgEl('text');
-      roleT.setAttribute('x', nx + nodeW / 2); roleT.setAttribute('y', ny + 28);
-      roleT.setAttribute('text-anchor', 'middle');
-      roleT.setAttribute('fill', '#8b949e'); roleT.setAttribute('font-size', '10');
-      roleT.textContent = node.role;
-      svg.appendChild(roleT);
-
-      if (hot) {
-        const bx = nx + nodeW - 22, by = ny + 3;
-        const br = _svgEl('rect');
-        br.setAttribute('x', bx); br.setAttribute('y', by);
-        br.setAttribute('width', '19'); br.setAttribute('height', '13');
-        br.setAttribute('rx', '3'); br.setAttribute('fill', lm.color);
-        svg.appendChild(br);
-        const bt = _svgEl('text');
-        bt.setAttribute('x', bx + 9.5); bt.setAttribute('y', by + 9.5);
-        bt.setAttribute('text-anchor', 'middle');
-        bt.setAttribute('fill', '#fff');
-        bt.setAttribute('font-size', '8'); bt.setAttribute('font-weight', '700');
-        bt.textContent = '熱';
-        svg.appendChild(bt);
-      }
-    });
+    return '<div style="flex:1;min-width:0;background:' + lm.bg + ';border:1px solid ' + lm.bd + ';'
+      + 'border-radius:8px;padding:10px;">'
+      + '<div style="text-align:center;font-size:12px;font-weight:700;color:' + lm.color + ';'
+      + 'margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid ' + lm.bd + ';">' + lm.label + '</div>'
+      + nodesHTML + '</div>' + arrow;
   });
 
-  for (let i = 0; i < LANE_META.length - 1; i++) {
-    const x1 = laneX[i] + laneW;
-    const x2 = laneX[i + 1];
-    const y  = H / 2;
-    const line = _svgEl('line');
-    line.setAttribute('x1', x1 + 2); line.setAttribute('y1', y);
-    line.setAttribute('x2', x2 - 4); line.setAttribute('y2', y);
-    line.setAttribute('stroke', '#484f58'); line.setAttribute('stroke-width', '1.5');
-    line.setAttribute('stroke-dasharray', '4,3');
-    line.setAttribute('marker-end', 'url(#arr)');
-    svg.appendChild(line);
-    const lbl = _svgEl('text');
-    lbl.setAttribute('x', (x1 + x2) / 2); lbl.setAttribute('y', y - 5);
-    lbl.setAttribute('text-anchor', 'middle');
-    lbl.setAttribute('fill', '#484f58'); lbl.setAttribute('font-size', '9');
-    lbl.textContent = '供料';
-    svg.appendChild(lbl);
-  }
-
-  const titleT = _svgEl('text');
-  titleT.setAttribute('x', W / 2); titleT.setAttribute('y', H - 8);
-  titleT.setAttribute('text-anchor', 'middle');
-  titleT.setAttribute('fill', '#484f58'); titleT.setAttribute('font-size', '10');
-  titleT.textContent = chain.title;
-  svg.appendChild(titleT);
+  wrap.innerHTML = '<div style="font-size:10px;color:var(--text3);text-align:center;padding:8px 0 4px;">' + chain.title + '</div>'
+    + '<div style="display:flex;align-items:flex-start;gap:0;padding:0 4px 12px;">' + laneHTMLArr.join('') + '</div>';
 }
 
-/* ─────────────────────────────────────────
-   事前佈局訊號卡
-───────────────────────────────────────── */
 const signalData = [
   { code: '3711', name: '日月光',  reason: 'CoWoS 封裝需求激增，月增 +25%，外資連買', strength: 3, type: 'buy' },
   { code: '3017', name: '奇鋐',    reason: '液冷散熱新訂單確認，法人連買 5 日',        strength: 3, type: 'buy' },
@@ -385,29 +285,6 @@ const signalData = [
   { code: '6230', name: '超眾',    reason: 'AI 伺服器熱管需求旺季提前',               strength: 2, type: 'buy' },
   { code: '4966', name: '譜瑞',    reason: 'CPO / 衛星通訊兩頭受惠，近期量增',       strength: 2, type: 'buy' },
   { code: '2034', name: '新光電',  reason: 'CPO 認證延遲，短期觀望',                  strength: 1, type: 'watch' },
-];
-
-function renderSignals() {
-  const el  = document.getElementById('preposition-signals');
-  const cnt = document.getElementById('signal-count');
-  if (!el) return;
-  const buyCount = signalData.filter(s => s.type === 'buy').length;
-  if (cnt) cnt.textContent = `${buyCount} 機會`;
-  el.innerHTML = signalData.map(s => `
-    <div class="signal-card ${s.type === 'watch' ? 'warn' : ''}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-weight:600;">${s.code} ${s.name}</span>
-        <span>${'★'.repeat(s.strength)}${'☆'.repeat(3 - s.strength)}</span>
-      </div>
-      <div style="color:var(--text2)">${s.reason}</div>
-    </div>`).join('');
-}
-
-function initSupply() {
-  loadChain('GPU_AI');
-  renderSignals();
-}
-短期觀望',                 strength: 1, type: 'watch' },
 ];
 
 function renderSignals() {
