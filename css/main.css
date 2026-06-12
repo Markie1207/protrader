@@ -167,6 +167,12 @@ body {
 .btn-ghost    { background: transparent; border-color: var(--border); color: var(--text2); }
 .btn-ghost:hover { background: var(--bg3); color: var(--text); }
 .btn-sm { padding: 5px 10px; font-size: 12px; }
+.input-sm {
+  padding: 6px 10px; font-size: 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg3);
+  color: var(--text); width: 100%; box-sizing: border-box;
+}
+.input-sm:focus { outline: none; border-color: var(--blue); }
 
 /* ── period-btn (M1 走勢切換) ──
    BUG-008 修正：獨立 class，避免影響其他 .btn-ghost */

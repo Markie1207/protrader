@@ -10,7 +10,10 @@ market_bp = Blueprint('market', __name__, url_prefix='/api/market')
 
 @market_bp.route('/taiex')
 def taiex():
-    """加權指數即時資料"""
+    """加權指數即時資料（Shioaji 優先，降級 TWSE）"""
+    data = sinopac.get_taiex()
+    if data:
+        return jsonify(data)
     data = twse.get_taiex_realtime()
     return jsonify(data)
 

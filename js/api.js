@@ -65,7 +65,7 @@ async function _fetch(path, fallbackFn) {
 ───────────────────────────────────────── */
 const Mock = {
   taiex() {
-    return { source: 'mock', index: 22847, change: 312, change_pct: 1.38 };
+    return { source: 'mock', index: 44169, change: 312, change_pct: 0.71 };
   },
   institutional() {
     return {
@@ -157,6 +157,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 啟動時查詢一次後端狀態
   API.getStatus().then(s => {
-    setDataSourceBadge(s?.primary_source || 'mock');
-  });
-});
+    setDataSourceBadge(s?.primary_source || '

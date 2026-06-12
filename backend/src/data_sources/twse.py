@@ -44,9 +44,9 @@ def get_taiex_realtime() -> dict:
 
     result = {
         'source': 'TWSE',
-        'index':  22847,
-        'change': 312,
-        'change_pct': 1.38,
+        'index':  44169,
+        'change': 0,
+        'change_pct': 0.0,
         'timestamp': datetime.now().isoformat(),
     }
 
@@ -120,7 +120,7 @@ def get_stock_daily(code: str, months: int = 1) -> list[dict]:
         y = today.year
         while m <= 0:
             m += 12; y -= 1
-        ym = f'{y}{str(m).padStart(2,"0") if False else str(m).zfill(2)}01'
+        ym = f'{y}{str(m).zfill(2)}01'
         url  = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY'
         data = _get(url, {'response': 'json', 'stockNo': code, 'date': ym})
         if data and 'data' in data:

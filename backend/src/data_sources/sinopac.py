@@ -58,10 +58,38 @@ def _ensure_ready():
     return _ready
 
 
+def get_taiex():
+    """取得加權指數快照（任何時間皆可，盤後回傳收盤值）"""
+    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE:
+        return None
+    if not _ensure_ready():
+        return None
+    cache_key = 'sj_taiex'
+    with _lock:
+        if cache_key in _cache:
+            return _cache[cache_key]
+    try:
+        contract = _api.Contracts.Indexs.TSE.TSE001
+        snap     = _api.snapshots([contract])[0]
+        result   = {
+            'source':     'Shioaji',
+            'index':      float(snap.close),
+            'change':     float(snap.change_price),
+            'change_pct': round(float(snap.change_rate), 2),
+            'timestamp':  datetime.now().isoformat(),
+        }
+        with _lock:
+            _cache[cache_key] = result
+        return result
+    except Exception as e:
+        print(f'[Shioaji] TAIEX 失敗: {e}')
+        return None
+
+
 def get_realtime_quote(code):
-    """即時報價：僅盤中有效"""
+    """報價快照：盤中=即時；盤後=最後成交價"""
     global _api, _ready
-    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE or not _is_market_open():
+    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE:
         return None
     cache_key = f'sj_rt_{code}'
     with _lock:

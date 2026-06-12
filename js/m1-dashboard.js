@@ -1,18 +1,11 @@
 /**
  * m1-dashboard.js — 戰情中心
- * 修正：BUG-008 / BUG-012 / BUG-013 / BUG-020
- * 資料源：API.getTaiex() / API.getInstitutional() / API.getStockQuote()
+ * 持股：localStorage 可新增/刪除，現價從 API 取得
+ * 法人籌碼：bar 寬度動態計算
+ * 溫度計：角度修正（Math.PI + score）
  */
 
 'use strict';
-
-/* ── 持股基本資料（成本/止損/停利由使用者設定，現價從 API 取得）── */
-const holdingsData = [
-  { code: '2330', name: '台積電', cost: 820,  price: 1050, shares: 2,  sl: 780,  tp: 1200 },
-  { code: '2317', name: '鴻海',   cost: 105,  price: 108,  shares: 5,  sl: 98,   tp: 130  },
-  { code: '2454', name: '聯發科', cost: 1020, price: 890,  shares: 1,  sl: 850,  tp: 1300 },
-  { code: '2308', name: '台達電', cost: 280,  price: 310,  shares: 3,  sl: 265,  tp: 380  },
-];
 
 /* ── 今日焦點資料 ── */
 const focusData = [
@@ -23,11 +16,156 @@ const focusData = [
   { rank: 5, code: '2317', name: '鴻海',   reason: 'AI 伺服器組裝份額提升',   score: 74, chg: '+0.6%' },
 ];
 
-/* ── 指數圖 Chart.js 實例 ── */
 let indexChartInstance = null;
 
 /* ─────────────────────────────────────────
-   BUG-012 修正：各週期生成合理時間標籤
+   持股 localStorage 操作
+───────────────────────────────────────── */
+function loadHoldings() {
+  try {
+    return JSON.parse(localStorage.getItem('protrader_holdings') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveHoldings(data) {
+  try {
+    localStorage.setItem('protrader_holdings', JSON.stringify(data));
+  } catch (e) {
+    console.warn('[M1] localStorage 儲存失敗', e);
+  }
+}
+
+/* ─────────────────────────────────────────
+   渲染持股表格（現價從 API 非同步取得）
+───────────────────────────────────────── */
+async function renderHoldings() {
+  const tbody = document.getElementById('holdings-body');
+  const badge = document.getElementById('alert-badge');
+  const pnlEl = document.getElementById('total-pnl');
+  if (!tbody) return;
+
+  const holdings = loadHoldings();
+
+  if (holdings.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:20px;">
+      尚無持股，點擊「+ 新增持倉」開始追蹤</td></tr>`;
+    if (badge) badge.textContent = '0 警示';
+    if (pnlEl) { pnlEl.textContent = '+$0'; pnlEl.style.color = ''; }
+    return;
+  }
+
+  /* 先顯示骨架 */
+  tbody.innerHTML = holdings.map(h => `
+    <tr>
+      <td><strong>${h.code}</strong> <span style="color:var(--text2)">${h.name}</span></td>
+      <td>$${Number(h.cost).toLocaleString()}</td>
+      <td id="hp-${h.code}" style="color:var(--text3)">—</td>
+      <td id="hpct-${h.code}" style="color:var(--text3)">—</td>
+      <td id="hst-${h.code}">—</td>
+      <td><button onclick="removeHolding('${h.code}')" title="刪除"
+            style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 6px;">✕</button></td>
+    </tr>`).join('');
+
+  /* 非同步取得現價 */
+  let alertCount = 0, pnlTotal = 0;
+  await Promise.all(holdings.map(async h => {
+    try {
+      const q     = await API.getStockQuote(h.code);
+      const price = (q?.price && q.price > 0) ? q.price : h.cost;
+      const pnl   = (price - h.cost) * h.shares * 1000;
+      const pct   = ((price - h.cost) / h.cost * 100).toFixed(2);
+      const isUp  = price >= h.cost;
+      const nearSL = price <= h.sl * 1.05;
+      if (nearSL) alertCount++;
+      pnlTotal += pnl;
+
+      const hp  = document.getElementById(`hp-${h.code}`);
+      const hpc = document.getElementById(`hpct-${h.code}`);
+      const hst = document.getElementById(`hst-${h.code}`);
+      if (hp)  hp.textContent = `$${Number(price).toLocaleString()}`;
+      if (hpc) { hpc.textContent = `${isUp ? '+' : ''}${pct}%`; hpc.className = isUp ? 'up' : 'dn'; }
+      if (hst) hst.innerHTML = nearSL
+        ? `<span class="badge badge-red">⚠️ 接近止損</span>`
+        : isUp
+          ? `<span class="badge badge-green">正常</span>`
+          : `<span class="badge badge-yellow">觀察中</span>`;
+    } catch (e) {
+      console.warn(`[M1] 報價失敗 ${h.code}`, e);
+    }
+  }));
+
+  if (badge) badge.textContent = `${alertCount} 警示`;
+  if (pnlEl) {
+    const sign = pnlTotal >= 0 ? '+' : '-';
+    pnlEl.textContent  = `${sign}$${Math.abs(pnlTotal).toLocaleString()}`;
+    pnlEl.style.color  = pnlTotal >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+}
+
+/* ─────────────────────────────────────────
+   新增持倉（Inline form）
+───────────────────────────────────────── */
+function openAddHoldingForm() {
+  const existing = document.getElementById('add-holding-form');
+  if (existing) { existing.remove(); return; }
+
+  const wrap = document.createElement('div');
+  wrap.id = 'add-holding-form';
+  wrap.style.cssText = `
+    padding:14px; background:var(--bg2); border-radius:8px;
+    margin-top:8px; display:grid; grid-template-columns:repeat(3,1fr);
+    gap:8px; border:1px solid var(--border);`;
+  wrap.innerHTML = `
+    <input id="ah-code"   class="input-sm" placeholder="股票代號 (2330)" maxlength="6">
+    <input id="ah-name"   class="input-sm" placeholder="名稱 (台積電)">
+    <input id="ah-cost"   class="input-sm" type="number" placeholder="成本價" min="0">
+    <input id="ah-shares" class="input-sm" type="number" placeholder="張數" min="1">
+    <input id="ah-sl"     class="input-sm" type="number" placeholder="止損價 (選填)" min="0">
+    <input id="ah-tp"     class="input-sm" type="number" placeholder="停利價 (選填)" min="0">
+    <button class="btn btn-primary btn-sm" onclick="saveNewHolding()" style="grid-column:span 2">確認新增</button>
+    <button class="btn btn-ghost btn-sm"   onclick="document.getElementById('add-holding-form').remove()">取消</button>`;
+
+  const card = document.querySelector('#holdings-body')?.closest('.card');
+  if (card) card.appendChild(wrap);
+  document.getElementById('ah-code')?.focus();
+}
+
+function saveNewHolding() {
+  const code   = (document.getElementById('ah-code')?.value   || '').trim().toUpperCase();
+  const name   = (document.getElementById('ah-name')?.value   || '').trim() || code;
+  const cost   = parseFloat(document.getElementById('ah-cost')?.value   || '0');
+  const shares = parseInt(document.getElementById('ah-shares')?.value   || '0', 10);
+  const slVal  = parseFloat(document.getElementById('ah-sl')?.value    || '0');
+  const tpVal  = parseFloat(document.getElementById('ah-tp')?.value    || '0');
+
+  if (!code || cost <= 0 || shares <= 0) {
+    alert('請填入股票代號、成本價、張數（張數 ≥ 1）');
+    return;
+  }
+
+  const sl = slVal > 0 ? slVal : +(cost * 0.9).toFixed(1);
+  const tp = tpVal > 0 ? tpVal : +(cost * 1.2).toFixed(1);
+
+  const holdings = loadHoldings();
+  const idx = holdings.findIndex(h => h.code === code);
+  const entry = { code, name, cost, shares, sl, tp };
+  if (idx >= 0) holdings[idx] = entry; else holdings.push(entry);
+
+  saveHoldings(holdings);
+  document.getElementById('add-holding-form')?.remove();
+  renderHoldings();
+}
+
+function removeHolding(code) {
+  if (!confirm(`確定刪除 ${code}？`)) return;
+  saveHoldings(loadHoldings().filter(h => h.code !== code));
+  renderHoldings();
+}
+
+/* ─────────────────────────────────────────
+   指數週期圖
 ───────────────────────────────────────── */
 function genTimeLabels(period) {
   const days = ['週一', '週二', '週三', '週四', '週五'];
@@ -35,35 +173,22 @@ function genTimeLabels(period) {
     const d = new Date(Date.now() - (21 - i) * 86400000);
     return `${d.getMonth() + 1}/${String(d.getDate()).padStart(2, '0')}`;
   });
-
   switch (period) {
-    case '1d':
-      return ['09:00','09:15','09:30','09:45','10:00','10:15','10:30','10:45',
-              '11:00','11:15','11:30','11:45','12:00','12:15','12:30','12:45',
-              '13:00','13:15','13:30'];
-    case '5d':
-      return days.flatMap(d => ['09:00','10:00','11:00','12:00','13:00'].map(t => `${d} ${t}`));
-    case '1m':
-      return months;
-    default:
-      return [];
+    case '1d': return ['09:00','09:15','09:30','09:45','10:00','10:15','10:30','10:45',
+                       '11:00','11:15','11:30','11:45','12:00','12:15','12:30','12:45','13:00','13:15','13:30'];
+    case '5d': return days.flatMap(d => ['09:00','10:00','11:00','12:00','13:00'].map(t => `${d} ${t}`));
+    case '1m': return months;
+    default:   return [];
   }
 }
 
-/* ─────────────────────────────────────────
-   指數走勢圖資料（模擬）
-───────────────────────────────────────── */
 function genIndexData(period) {
-  const base = { '1d': 22500, '5d': 22000, '1m': 21000 };
-  const b = base[period] || 22000;
+  const base = { '1d': 44000, '5d': 43500, '1m': 43000 };
+  const b = base[period] || 44000;
   const len = genTimeLabels(period).length;
-  return Array.from({length: len}, (_, i) => Math.round(b + (Math.random() - 0.45) * 150 + i * 12));
+  return Array.from({length: len}, (_, i) => Math.round(b + (Math.random() - 0.45) * 200 + i * 15));
 }
 
-/* ─────────────────────────────────────────
-   BUG-008 修正：setChartPeriod 只重置 .period-btn，
-   不影響其他 .btn-ghost 按鈕
-───────────────────────────────────────── */
 function setChartPeriod(period, el) {
   document.querySelectorAll('.period-btn').forEach(b => {
     b.classList.remove('active-period');
@@ -87,13 +212,8 @@ function renderIndexChart(period = '1d') {
     data: {
       labels,
       datasets: [{
-        data,
-        borderColor: color,
-        backgroundColor: `${color}22`,
-        borderWidth: 2,
-        pointRadius: 0,
-        fill: true,
-        tension: 0.3,
+        data, borderColor: color, backgroundColor: `${color}22`,
+        borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3,
       }]
     },
     options: {
@@ -108,54 +228,7 @@ function renderIndexChart(period = '1d') {
 }
 
 /* ─────────────────────────────────────────
-   BUG-013 修正：警示數量動態計算（接近止損=近 5%）
-   BUG-020 修正：損益動態計算，不寫死數字
-   BUG-007（M6 同邏輯）：比對 sl 而非 cost
-───────────────────────────────────────── */
-function renderHoldings() {
-  const tbody  = document.getElementById('holdings-body');
-  const badge  = document.getElementById('alert-badge');
-  const pnlEl  = document.getElementById('total-pnl');
-  if (!tbody) return;
-
-  let alertCount = 0;
-  let pnlTotal   = 0;
-
-  tbody.innerHTML = holdingsData.map(h => {
-    const pnl     = (h.price - h.cost) * h.shares * 1000;
-    const pnlPct  = ((h.price - h.cost) / h.cost * 100).toFixed(2);
-    const isUp    = h.price >= h.cost;
-    // BUG-007 修正：接近止損 → 與 sl 比較，而非 cost
-    const nearSL  = h.price <= h.sl * 1.05;
-    if (nearSL) alertCount++;
-    pnlTotal += pnl;
-
-    const statusBadge = nearSL
-      ? `<span class="badge badge-red">⚠️ 接近止損</span>`
-      : isUp
-        ? `<span class="badge badge-green">正常</span>`
-        : `<span class="badge badge-yellow">觀察中</span>`;
-
-    return `<tr>
-      <td><strong>${h.code}</strong> <span style="color:var(--text2)">${h.name}</span></td>
-      <td>$${h.cost.toLocaleString()}</td>
-      <td>$${h.price.toLocaleString()}</td>
-      <td class="${isUp ? 'up' : 'dn'}">${isUp ? '+' : ''}${pnlPct}%</td>
-      <td>${statusBadge}</td>
-    </tr>`;
-  }).join('');
-
-  if (badge) badge.textContent = `${alertCount} 警示`;
-
-  if (pnlEl) {
-    const sign = pnlTotal >= 0 ? '+' : '-';
-    pnlEl.textContent = `${sign}$${Math.abs(pnlTotal).toLocaleString()}`;
-    pnlEl.style.color = pnlTotal >= 0 ? 'var(--green)' : 'var(--red)';
-  }
-}
-
-/* ─────────────────────────────────────────
-   大盤溫度計（Canvas 半圓儀表）
+   大盤溫度計（修正角度：Math.PI + score/100 * Math.PI）
 ───────────────────────────────────────── */
 function renderGauge(score = 73) {
   const canvas = document.getElementById('gaugeChart');
@@ -167,43 +240,49 @@ function renderGauge(score = 73) {
   const cx = w / 2, cy = 130;
   const r  = Math.min(cx - 20, 100);
 
-  // 背景弧
+  /* 背景弧 */
   ctx.beginPath();
-  ctx.arc(cx, cy, r, Math.PI, 0, false);
-  ctx.lineWidth = 18;
+  ctx.arc(cx, cy, r, Math.PI, 2 * Math.PI, false);
+  ctx.lineWidth   = 18;
   ctx.strokeStyle = '#21262d';
   ctx.stroke();
 
-  // 值弧（0~100 → π~0）
-  const angle = Math.PI - (score / 100) * Math.PI;
+  /* 值弧（green→yellow→red，從左到當前分數位置） */
+  const angle = Math.PI + (score / 100) * Math.PI;
   const grad  = ctx.createLinearGradient(cx - r, cy, cx + r, cy);
   grad.addColorStop(0,   '#3fb950');
   grad.addColorStop(0.5, '#e3b341');
   grad.addColorStop(1,   '#f85149');
   ctx.beginPath();
   ctx.arc(cx, cy, r, Math.PI, angle, false);
-  ctx.lineWidth = 18;
+  ctx.lineWidth   = 18;
   ctx.strokeStyle = grad;
   ctx.stroke();
 
-  // 指針
+  /* 指針 */
   const nx = cx + r * 0.75 * Math.cos(angle);
   const ny = cy + r * 0.75 * Math.sin(angle);
   ctx.beginPath();
   ctx.moveTo(cx, cy);
   ctx.lineTo(nx, ny);
-  ctx.lineWidth = 3;
+  ctx.lineWidth   = 3;
   ctx.strokeStyle = '#e6edf3';
   ctx.stroke();
 
-  // 分數文字
+  /* 圓心小圓點 */
+  ctx.beginPath();
+  ctx.arc(cx, cy, 5, 0, 2 * Math.PI);
+  ctx.fillStyle = '#e6edf3';
+  ctx.fill();
+
+  /* 分數文字 */
   ctx.fillStyle = '#e6edf3';
   ctx.font = 'bold 26px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(score, cx, cy - 4);
+  ctx.fillText(score, cx, cy - 10);
   ctx.fillStyle = '#8b949e';
   ctx.font = '11px sans-serif';
-  ctx.fillText('大盤溫度', cx, cy + 14);
+  ctx.fillText('大盤溫度', cx, cy + 8);
 }
 
 /* ─────────────────────────────────────────
@@ -230,39 +309,61 @@ function renderFocusList() {
 }
 
 /* ─────────────────────────────────────────
-   模組初始化入口
-────────────────────────────────────────────────────────────────────────── */
-
-/* API 資料更新 Dashboard */
+   API 資料更新 Dashboard（加權指數 + 法人籌碼）
+───────────────────────────────────────── */
 async function fetchAndUpdateDashboard() {
+  /* 加權指數 */
   try {
     const taiex = await API.getTaiex();
     if (taiex) {
-      const idxEl  = document.getElementById('taiex-val');
-      const chgEl  = document.getElementById('taiex-chg');
+      const idxEl = document.getElementById('taiex-val');
+      const chgEl = document.getElementById('taiex-chg');
       if (idxEl) idxEl.textContent = Number(taiex.index).toLocaleString();
       if (chgEl) {
         const sign = taiex.change >= 0 ? '+' : '';
         chgEl.textContent = `${sign}${taiex.change} (${sign}${taiex.change_pct}%)`;
-        chgEl.className = taiex.change >= 0 ? 'up' : 'dn';
+        chgEl.className   = taiex.change >= 0 ? 'up' : 'dn';
       }
     }
   } catch (e) { console.warn('[M1] taiex 更新失敗', e); }
 
+  /* 三大法人 */
   try {
     const inst = await API.getInstitutional();
     if (inst) {
       const fmt = v => (v >= 0 ? '+' : '') + (v / 1e8).toFixed(0) + '億';
+
+      /* 小卡摘要值 */
       const fEl = document.getElementById('inst-foreign');
       const iEl = document.getElementById('inst-invest');
       const dEl = document.getElementById('inst-dealer');
-      if (fEl) fEl.textContent = fmt(inst.foreign?.net ?? 0);
-      if (iEl) iEl.textContent = fmt(inst.investment?.net ?? 0);
-      if (dEl) dEl.textContent = fmt(inst.dealer?.net ?? 0);
+      const fNet = inst.foreign?.net    ?? 0;
+      const iNet = inst.investment?.net ?? 0;
+      const dNet = inst.dealer?.net     ?? 0;
+      if (fEl) { fEl.textContent = fmt(fNet); fEl.className = `card-value ${fNet >= 0 ? 'up' : 'dn'}`; }
+      if (iEl) { iEl.textContent = fmt(iNet); iEl.className = `card-value ${iNet >= 0 ? 'up' : 'dn'}`; }
+      if (dEl) { dEl.textContent = fmt(dNet); dEl.className = `card-value ${dNet >= 0 ? 'up' : 'dn'}`; }
+
+      /* chip bar 動態寬度（相對最大值，最大顯示 90%） */
+      const maxAbs = Math.max(Math.abs(fNet), Math.abs(iNet), Math.abs(dNet), 1);
+      const toW    = v => `${Math.round(Math.abs(v) / maxAbs * 90)}%`;
+      const toCol  = v => v >= 0 ? 'var(--green)' : 'var(--red)';
+
+      const chips = [
+        { bar: 'chip-bar-foreign', val: 'chip-val-foreign', net: fNet },
+        { bar: 'chip-bar-invest',  val: 'chip-val-invest',  net: iNet },
+        { bar: 'chip-bar-dealer',  val: 'chip-val-dealer',  net: dNet },
+      ];
+      chips.forEach(({ bar, val, net }) => {
+        const barEl = document.getElementById(bar);
+        const valEl = document.getElementById(val);
+        if (barEl) { barEl.style.width = toW(net); barEl.style.background = toCol(net); }
+        if (valEl) { valEl.textContent = fmt(net); valEl.className = `chip-val ${net >= 0 ? 'up' : 'dn'}`; }
+      });
     }
   } catch (e) { console.warn('[M1] institutional 更新失敗', e); }
 
-  // 更新「今日焦點」時間顯示
+  /* 更新時間 */
   const timeEl = document.getElementById('focus-update-time');
   if (timeEl) {
     const now = new Date();
@@ -270,12 +371,14 @@ async function fetchAndUpdateDashboard() {
   }
 }
 
+/* ─────────────────────────────────────────
+   模組初始化入口
+───────────────────────────────────────── */
 function initDashboard() {
   renderIndexChart('1d');
   renderGauge(73);
   renderFocusList();
   renderHoldings();
   fetchAndUpdateDashboard();
-  // 每 60 秒更新一次
   setInterval(fetchAndUpdateDashboard, 60000);
 }

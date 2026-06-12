@@ -79,18 +79,18 @@
         <div class="card-title" style="margin-bottom:10px;"><span class="icon">📊</span>法人籌碼儀表</div>
         <div class="chip-row">
           <div class="chip-label">外資</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" style="width:78%;background:var(--green)"></div></div>
-          <div class="chip-val up">+186億</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-foreign" style="width:78%;background:var(--green)"></div></div>
+          <div class="chip-val up" id="chip-val-foreign">+186億</div>
         </div>
         <div class="chip-row">
           <div class="chip-label">投信</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" style="width:42%;background:var(--blue)"></div></div>
-          <div class="chip-val up">+42億</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-invest" style="width:42%;background:var(--blue)"></div></div>
+          <div class="chip-val up" id="chip-val-invest">+42億</div>
         </div>
         <div class="chip-row">
           <div class="chip-label">自營</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" style="width:15%;background:var(--red)"></div></div>
-          <div class="chip-val dn" id="inst-dealer">-8億</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-dealer" style="width:15%;background:var(--red)"></div></div>
+          <div class="chip-val dn" id="chip-val-dealer">-8億</div>
         </div>
       </div>
     </div>
@@ -122,11 +122,13 @@
     <div class="card">
       <div class="card-header">
         <div class="card-title"><span class="icon">💼</span>我的持股快報</div>
-        <!-- BUG-013 修正：警示數量動態計算 -->
-        <span class="badge badge-red" id="alert-badge">0 警示</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn btn-primary btn-sm" onclick="openAddHoldingForm()">+ 新增持倉</button>
+          <span class="badge badge-red" id="alert-badge">0 警示</span>
+        </div>
       </div>
       <table class="holdings-table">
-        <thead><tr><th>股票</th><th>成本</th><th>現價</th><th>損益%</th><th>狀態</th></tr></thead>
+        <thead><tr><th>股票</th><th>成本</th><th>現價</th><th>損益%</th><th>狀態</th><th></th></tr></thead>
         <tbody id="holdings-body"></tbody>
       </table>
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
@@ -545,7 +547,4 @@
 <script src="js/m3-supply.js"></script>
 <script src="js/m4-strategy.js"></script>
 <script src="js/m5-backtest.js"></script>
-<script src="js/m6-portfolio.js"></script>
-<script src="js/main.js"></script>
-</body>
-</html>
+<script src="js/m6-portfolio.js
