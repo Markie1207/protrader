@@ -20,7 +20,7 @@ const BACKEND_URL = (function () {
     return 'http://localhost:5000';
   }
   // 部署後的 Railway URL（請在 deploy 後填入）
-  return window.BACKEND_URL || 'https://YOUR_RAILWAY_URL.railway.app';
+  return window.BACKEND_URL || 'https://protrader-production.up.railway.app';
 })();
 
 /* 資料源狀態（顯示於 navbar） */
