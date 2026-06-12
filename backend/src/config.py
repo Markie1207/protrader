@@ -9,7 +9,7 @@ load_dotenv()
 
 # 永豐金 API
 SINOPAC_API_KEY    = os.getenv('SINOPAC_API_KEY', '')
-SINOPAC_SECRET_KEY = os.getenv('SINOPAC_SECRET_KEY', '')
+SINOPAC_SECRET_KEY = os.getenv('SINOPAC_API_SECRET', os.getenv('SINOPAC_SECRET_KEY', ''))
 
 # 快取 TTL（秒）
 CACHE_TTL_REALTIME = int(os.getenv('CACHE_TTL_REALTIME', 10))
