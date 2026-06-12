@@ -9,6 +9,14 @@ from datetime import datetime, time as dtime
 from cachetools import TTLCache
 from src.config import SINOPAC_API_KEY, SINOPAC_SECRET_KEY, HAS_SINOPAC, CACHE_TTL_REALTIME
 
+# shioaji 為 optional — 不在 requirements.txt，動態載入
+try:
+    import shioaji as _sj_module
+    _SHIOAJI_AVAILABLE = True
+except ImportError:
+    _sj_module = None
+    _SHIOAJI_AVAILABLE = False
+
 # 即時報價快取（10 秒 TTL）
 _cache = TTLCache(maxsize=200, ttl=CACHE_TTL_REALTIME)
 _lock  = threading.Lock()
@@ -30,11 +38,10 @@ def _is_market_open() -> bool:
 def _init_shioaji() -> bool:
     """嘗試初始化 Shioaji，成功回傳 True"""
     global _api, _ready
-    if not HAS_SINOPAC:
+    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE:
         return False
     try:
-        import shioaji as sj
-        _api = sj.Shioaji(simulation=False)
+        _api = _sj_module.Shioaji(simulation=True)  # 使用模擬帳號
         _api.login(api_key=SINOPAC_API_KEY, secret_key=SINOPAC_SECRET_KEY)
         _ready = True
         print('[Shioaji] 登入成功')
@@ -52,7 +59,7 @@ def get_realtime_quote(code: str) -> dict | None:
     """
     global _api, _ready
 
-    if not HAS_SINOPAC or not _is_market_open():
+    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE or not _is_market_open():
         return None
 
     cache_key = f'sj_{code}'
@@ -96,11 +103,10 @@ def get_intraday_ticks(code: str) -> list[dict]:
     """
     global _api, _ready
 
-    if not HAS_SINOPAC or not _ready:
+    if not HAS_SINOPAC or not _SHIOAJI_AVAILABLE or not _ready:
         return []
 
     try:
-        import shioaji as sj
         contract = _api.Contracts.Stocks[code]
         kbars    = _api.kbars(contract, start=datetime.today().strftime('%Y-%m-%d'))
         df       = kbars.to_df()
