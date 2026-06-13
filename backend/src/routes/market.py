@@ -44,3 +44,12 @@ def futures_oi():
     """外資期貨未平倉口數（路由修正：底線，對應前端 api.js）"""
     data = twse.get_futures_oi()
     return jsonify(data)
+
+
+@market_bp.route('/focus')
+def focus():
+    """AI 規則引擎焦點選股（無資料回 503 讓前端降級 mock）"""
+    data = twse.get_focus_stocks()
+    if data:
+        return jsonify(data)
+    return jsonify({'error': 'no data'}), 503
