@@ -7,14 +7,8 @@
 
 'use strict';
 
-/* ── 今日焦點資料 ── */
-const focusData = [
-  { rank: 1, code: '2330', name: '台積電', reason: 'AI 晶片訂單持續上修',      score: 94, chg: '+2.4%' },
-  { rank: 2, code: '2454', name: '聯發科', reason: '旗艦 AP 新品發表倒數',     score: 87, chg: '+1.8%' },
-  { rank: 3, code: '3711', name: '日月光', reason: '先進封裝 CoWoS 產能滿載',  score: 83, chg: '+1.2%' },
-  { rank: 4, code: '2308', name: '台達電', reason: '資料中心電源管理需求爆發', score: 79, chg: '+0.9%' },
-  { rank: 5, code: '2317', name: '鴻海',   reason: 'AI 伺服器組裝份額提升',   score: 74, chg: '+0.6%' },
-];
+/* ── 今日焦點資料（由 API.getFocusList() 動態填入，初始為空） ── */
+let focusData = [];
 
 let indexChartInstance = null;
 
@@ -425,6 +419,15 @@ async function fetchAndUpdateDashboard() {
       if (shortEl) shortEl.textContent = shortOI.toLocaleString();
     }
   } catch (e) { console.warn('[M1] 期貨OI更新失敗', e); }
+
+  /* AI 焦點選股（規則引擎） */
+  try {
+    const focus = await API.getFocusList();
+    if (focus && focus.length) {
+      focusData = focus;
+      renderFocusList();
+    }
+  } catch (e) { console.warn('[M1] 焦點清單更新失敗', e); }
 }
 
 /* ─────────────────────────────────────────
@@ -436,3 +439,4 @@ function initDashboard() {
   renderGauge();
   fetchAndUpdateDashboard();
 }
+                                                                                                                                                                                                                                                                                           

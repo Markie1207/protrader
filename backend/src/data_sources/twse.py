@@ -290,3 +290,233 @@ def get_stock_quote(code: str) -> dict:
 
     _cache_instant[cache_key] = result
     return result
+
+
+# ─────────────────────────────────────────
+#  AI 焦點規則引擎
+# ─────────────────────────────────────────
+
+# 熱門題材股票代號（手動維護，有 +5 題材加分）
+_HOT_THEME_CODES = {
+    '2330', '2454', '3711', '2308', '2317',  # AI 伺服器主鏈
+    '3034', '4938', '6669', '3661', '2379',  # CoWoS / HBM
+    '2382', '3008', '4958', '6409', '8016',  # 散熱 / PCB
+    '2303', '2357', '2376', '2377', '3231',  # 半導體 / 整機
+}
+
+
+def _pz(s) -> int:
+    """T86 千股欄位 → 整數（單位：張）"""
+    try:
+        return int(str(s).replace(',', '').replace('+', '').replace(' ', '') or 0)
+    except Exception:
+        return 0
+
+
+def get_stock_day_all() -> dict:
+    """今日所有上市股票收盤行情
+    回傳: { code: { name, close, change_pct, volume_k } }
+    """
+    key = 'stock_day_all'
+    if key in _cache_daily:
+        return _cache_daily[key]
+
+    url  = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL'
+    data = _get(url, {'response': 'json'})
+    result = {}
+
+    if data and 'data' in data:
+        for row in data['data']:
+            try:
+                if len(row) < 10:
+                    continue
+                code = str(row[0]).strip()
+                if not code.isdigit() or len(code) != 4:
+                    continue
+                close = float(str(row[7]).replace(',', '') or 0)
+                if close <= 0:
+                    continue
+                direction   = 1 if str(row[8]).strip() == '+' else -1
+                change_val  = float(str(row[9]).replace(',', '') or 0)
+                prev_close  = close - direction * change_val
+                change_pct  = (direction * change_val / prev_close * 100) if prev_close > 0 else 0.0
+                volume_k    = int(str(row[2]).replace(',', '') or 0) // 1000
+                result[code] = {
+                    'name':       str(row[1]).strip(),
+                    'close':      close,
+                    'change_pct': round(change_pct, 2),
+                    'volume_k':   volume_k,
+                }
+            except Exception:
+                continue
+
+    if result:
+        _cache_daily[key] = result
+    return result
+
+
+def _score_focus(f_k: int, i_k: int, chg: float, vol_k: int, is_hot: bool) -> int:
+    """計算 AI 分數（滿分 100）
+    f_k:   外資淨買超（張）
+    i_k:   投信淨買超（張）
+    chg:   當日漲幅（%）
+    vol_k: 成交量（張）
+    """
+    # 外資籌碼分（35）
+    if f_k >= 5000:
+        f = 35.0
+    elif f_k >= 0:
+        f = 5.0 + (f_k / 5000) * 30
+    else:
+        f = 0.0
+
+    # 漲幅動能分（25）
+    if chg >= 3.0:
+        c = 25.0
+    elif chg >= 1.0:
+        c = 10.0 + (chg - 1.0) / 2.0 * 15
+    elif chg >= 0.0:
+        c = chg * 5.0
+    else:
+        c = 0.0
+
+    # 量能分（20）—— 絕對量門檻（大型股偏高）
+    if vol_k >= 50000:
+        v = 20.0
+    elif vol_k >= 10000:
+        v = 8.0 + (vol_k - 10000) / 40000 * 12
+    elif vol_k >= 3000:
+        v = 3.0 + (vol_k - 3000) / 7000 * 5
+    else:
+        v = (vol_k / 3000) * 3
+
+    # 投信分（15）
+    if i_k >= 500:
+        i = 15.0
+    elif i_k >= 100:
+        i = 5.0 + (i_k - 100) / 400 * 10
+    elif i_k > 0:
+        i = i_k / 100 * 5
+    else:
+        i = 0.0
+
+    # 題材分（5）
+    t = 5.0 if is_hot else 0.0
+
+    return min(int(round(f + c + v + i + t)), 100)
+
+
+def _gen_reason(f_k: int, i_k: int, chg: float) -> str:
+    """根據最高貢獻因子自動生成理由"""
+    parts = []
+    if f_k >= 1000:
+        parts.append(f'外資買超 {f_k:,} 張')
+    elif f_k > 0:
+        parts.append('外資小幅買進')
+    if i_k >= 100:
+        parts.append(f'投信買超 {i_k:,} 張')
+    elif i_k > 0:
+        parts.append('投信買進')
+    if chg >= 2.5:
+        parts.append(f'強勢上漲 {chg:+.1f}%')
+    return '，'.join(parts[:2]) if parts else '籌碼面偏多'
+
+
+def get_focus_stocks() -> list | None:
+    """規則引擎選股：回傳今日焦點前 5 名
+    資料來源：T86（個股三大法人）+ STOCK_DAY_ALL（收盤行情）
+    篩選條件：漲幅>0、量>500張、股價>20元、外資or投信至少一方買超
+    """
+    from datetime import timedelta
+
+    key = 'focus_stocks'
+    if key in _cache_daily:
+        return _cache_daily[key]
+
+    # 嘗試最近 3 個交易日取 T86
+    t86_map: dict = {}
+    for delta in range(4):
+        try_date = date.today() - timedelta(days=delta)
+        if try_date.weekday() >= 5:          # 跳過週末
+            continue
+        url  = 'https://www.twse.com.tw/fund/T86'
+        data = _get(url, {'response': 'json',
+                          'date': try_date.strftime('%Y%m%d'),
+                          'selectType': 'ALLBUT0999'})
+        if not (data and 'data' in data and len(data['data']) > 5):
+            continue
+        for row in data['data'][:-1]:        # 最後列為合計，跳過
+            try:
+                if len(row) < 11:
+                    continue
+                code = str(row[0]).strip()
+                if not code.isdigit() or len(code) != 4:
+                    continue
+                # 外資及陸資[4] + 外資自營商[7]
+                f_net = _pz(row[4]) + _pz(row[7])
+                i_net = _pz(row[10])
+                t86_map[code] = {
+                    'name':     str(row[1]).strip(),
+                    'foreign_k': f_net,
+                    'invest_k':  i_net,
+                }
+            except Exception:
+                continue
+        if t86_map:
+            break
+
+    if not t86_map:
+        print('[FOCUS] T86 無資料，回傳 None')
+        return None
+
+    # 取收盤行情
+    price_map = get_stock_day_all()
+    if not price_map:
+        print('[FOCUS] STOCK_DAY_ALL 無資料，回傳 None')
+        return None
+
+    # 計算分數 + 篩選
+    candidates = []
+    for code, inst in t86_map.items():
+        price = price_map.get(code)
+        if not price:
+            continue
+        chg   = price['change_pct']
+        vol   = price['volume_k']
+        close = price['close']
+        f_k   = inst['foreign_k']
+        i_k   = inst['invest_k']
+
+        # 篩選門檻
+        if chg <= 0:
+            continue
+        if vol < 500:
+            continue
+        if close < 20:
+            continue
+        if f_k < 0 and i_k < 0:           # 外資、投信同時賣超 → 排除
+            continue
+
+        score = _score_focus(f_k, i_k, chg, vol, code in _HOT_THEME_CODES)
+        candidates.append({
+            'rank':   0,
+            'code':   code,
+            'name':   inst['name'] or price['name'],
+            'score':  score,
+            'chg':    f'{chg:+.1f}%',
+            'reason': _gen_reason(f_k, i_k, chg),
+        })
+
+    if not candidates:
+        print('[FOCUS] 無符合篩選條件的股票，回傳 None')
+        return None
+
+    candidates.sort(key=lambda x: x['score'], reverse=True)
+    result = []
+    for i, item in enumerate(candidates[:5], 1):
+        item['rank'] = i
+        result.append(item)
+
+    _cache_daily[key] = result
+    print(f'[FOCUS] 選出 {len(result)} 支，第一名：{result[0]["code"]} {result[0]["name"]} ({result[0]["score"]}分)')
+    return result

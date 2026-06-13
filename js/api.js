@@ -84,6 +84,15 @@ const Mock = {
       source: 'mock', foreign_net: 8532, foreign_long: 32456, foreign_short: 23924, unit: '口'
     };
   },
+  focusList() {
+    return [
+      { rank: 1, code: '2330', name: '台積電', score: 94, chg: '+2.4%', reason: '外資買超 12,456 張，AI 晶片需求強勁' },
+      { rank: 2, code: '2454', name: '聯發科', score: 87, chg: '+1.8%', reason: '外資買超 3,210 張，投信買超 450 張' },
+      { rank: 3, code: '3711', name: '日月光', score: 83, chg: '+1.2%', reason: '外資買超 2,180 張，CoWoS 題材發酵' },
+      { rank: 4, code: '2308', name: '台達電', score: 79, chg: '+0.9%', reason: '投信買超 320 張，電源管理題材' },
+      { rank: 5, code: '2317', name: '鴻海',   score: 74, chg: '+0.6%', reason: '外資買超 8,900 張' },
+    ];
+  },
   stockHistory(code) {
     const base = { '2330': 900, '2317': 100, '2454': 800, '2308': 270, '3711': 140 }[code] || 100;
     let price  = base;
@@ -148,24 +157,9 @@ const API = {
     return await _fetch('/api/market/futures_oi', Mock.futuresOI);
   },
 
-  /** 取得後端 URL（偵錯用） */
-  getBackendUrl() { return BACKEND_URL; },
-};
+  /** AI 規則引擎焦點選股（後端算分，失敗降級 mock） */
+  async getFocusList() {
+    return await _fetch('/api/market/focus', Mock.focusList);
+  },
 
-/* ─────────────────────────────────────────
-   頁面載入時插入資料源標示到 navbar
-───────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  const nav = document.querySelector('.nav-right');
-  if (nav) {
-    const badge = document.createElement('span');
-    badge.id    = 'data-source-badge';
-    badge.style.cssText = 'font-size:11px;font-weight:600;color:var(--text3);';
-    badge.textContent   = '🔧 模擬';
-    nav.insertBefore(badge, nav.firstChild);
-  }
-
-  API.getStatus().then(s => {
-    setDataSourceBadge(s?.primary_source || 'mock');
-  }).catch(() => {});
-});
+  /** 取得後端 URL（偵�
