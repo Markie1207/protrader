@@ -41,13 +41,7 @@ def get_taiex_realtime() -> dict:
     url = 'https://www.twse.com.tw/exchangeReport/MI_INDEX'
     data = _get(url, {'response': 'json', 'type': 'IND'})
 
-    result = {
-        'source':     'TWSE',
-        'index':      44169,
-        'change':     0,
-        'change_pct': 0.0,
-        'timestamp':  datetime.now().isoformat(),
-    }
+    result = None
 
     if data and 'data5' in data:
         try:
@@ -55,15 +49,22 @@ def get_taiex_realtime() -> dict:
                 if '發行量加權股價指數' in row[0]:
                     idx_str = row[1].replace(',', '')
                     chg_str = row[2].replace(',', '').replace('+', '')
-                    result['index']      = float(idx_str)
-                    result['change']     = float(chg_str)
-                    result['change_pct'] = round(float(chg_str) / (float(idx_str) - float(chg_str)) * 100, 2)
+                    idx = float(idx_str)
+                    chg = float(chg_str)
+                    result = {
+                        'source':     'TWSE',
+                        'index':      idx,
+                        'change':     chg,
+                        'change_pct': round(chg / (idx - chg) * 100, 2) if idx != chg else 0.0,
+                        'timestamp':  datetime.now().isoformat(),
+                    }
                     break
         except Exception as e:
             print(f'[TWSE] taiex 解析失敗: {e}')
 
-    _cache_instant[key] = result
-    return result
+    if result:
+        _cache_instant[key] = result
+    return result  # None 時由 route 回 503，前端降級 mock
 
 
 def get_institutional_today() -> dict:
@@ -81,13 +82,7 @@ def get_institutional_today() -> dict:
     url   = 'https://www.twse.com.tw/fund/BFI82U'
     data  = _get(url, {'response': 'json', 'dayDate': today, 'type': 'day'})
 
-    result = {
-        'source':     'TWSE',
-        'date':       today,
-        'foreign':    {'net': 0, 'buy': 0, 'sell': 0},
-        'investment': {'net': 0, 'buy': 0, 'sell': 0},
-        'dealer':     {'net': 0, 'buy': 0, 'sell': 0},
-    }
+    result = None  # 無資料時回 None，讓 route 回 503
 
     if data and 'data' in data:
         try:
@@ -121,10 +116,21 @@ def get_institutional_today() -> dict:
 
     else:
         # BFI82U 無資料（盤後可能還未更新），改用 T86 備援
-        result = _get_institutional_t86(today, result)
+        fallback = {
+            'source':     'TWSE',
+            'date':       today,
+            'foreign':    {'net': 0, 'buy': 0, 'sell': 0},
+            'investment': {'net': 0, 'buy': 0, 'sell': 0},
+            'dealer':     {'net': 0, 'buy': 0, 'sell': 0},
+        }
+        result = _get_institutional_t86(today, fallback)
+        # T86 也無資料（非交易日）→ 維持 None
+        if result and result['foreign']['net'] == 0 and result['investment']['net'] == 0:
+            result = None
 
-    _cache_daily[key] = result
-    return result
+    if result:
+        _cache_daily[key] = result
+    return result  # None 時由 route 回 503，前端降級 mock
 
 
 def _get_institutional_t86(today: str, fallback: dict) -> dict:
