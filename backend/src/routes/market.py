@@ -64,6 +64,22 @@ def debug():
 
     results = {}
 
+    # 步驟 0：STOCK_DAY_ALL 原始第一筆（看欄位順序）
+    try:
+        import requests as _req
+        r0 = _req.get('https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL',
+                       params={'response': 'json'}, headers=t.HEADERS, timeout=8)
+        d0 = r0.json()
+        results['step0_raw'] = {
+            'stat': d0.get('stat'),
+            'date': d0.get('date'),
+            'total_rows': len(d0.get('data', [])),
+            'fields': d0.get('fields', []),
+            'first_row': d0['data'][0] if d0.get('data') else [],
+        }
+    except Exception as e:
+        results['step0_raw'] = {'error': str(e)}
+
     # 步驟 1：price_map
     try:
         pm = t.get_stock_day_all()
