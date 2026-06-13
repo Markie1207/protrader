@@ -46,103 +46,68 @@ def futures_oi():
     return jsonify(data)
 
 
+@market_bp.route('/news')
+def news():
+    """Google News RSS 台股財經新聞（最新 10 則）"""
+    import xml.etree.ElementTree as ET
+    import requests as _req
+    import html, re
+    from cachetools import TTLCache
+
+    _news_cache = getattr(news, '_cache', None)
+    if _news_cache is None:
+        news._cache = TTLCache(maxsize=1, ttl=300)
+        _news_cache = news._cache
+
+    if 'data' in _news_cache:
+        return jsonify(_news_cache['data'])
+
+    queries = ['台股 外資', '台積電 法人', '台股 盤勢']
+    items   = []
+    seen    = set()
+    headers = {'User-Agent': 'Mozilla/5.0'}
+
+    for q in queries:
+        if len(items) >= 10:
+            break
+        try:
+            url = f'https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant'
+            r   = _req.get(url, headers=headers, timeout=6)
+            root = ET.fromstring(r.content)
+            for item in root.iter('item'):
+                title = html.unescape(item.findtext('title') or '')
+                title = re.sub(r'\s*-\s*[^-]+$', '', title).strip()  # 去掉來源後綴
+                link  = item.findtext('link') or ''
+                pub   = item.findtext('pubDate') or ''
+                src   = item.findtext('{https://news.google.com/rss}source') or \
+                        item.findtext('source') or 'Google News'
+                if not title or title in seen:
+                    continue
+                seen.add(title)
+                # 時間格式化
+                try:
+                    from email.utils import parsedate_to_datetime
+                    dt  = parsedate_to_datetime(pub)
+                    tstr = dt.strftime('%m/%d %H:%M')
+                except Exception:
+                    tstr = pub[:16]
+                items.append({'title': title, 'time': tstr, 'src': src, 'url': link, 'tag': '新聞'})
+                if len(items) >= 10:
+                    break
+        except Exception as e:
+            print(f'[NEWS] RSS 失敗 ({q}): {e}')
+
+    result = items if items else []
+    if result:
+        _news_cache['data'] = result
+    return jsonify(result)
+
+
 @market_bp.route('/focus')
 def focus():
-    """AI 規則引擎焦點選股（無資料回 503 讓前端降級 mock）"""
-    data = twse.get_focus_stocks()
+    """AI 精選焦點股（法人買超 + 上漲 + 量能達標）"""
+    from src.data_sources import twse as t
+    data = t.get_focus_stocks()
     if data:
         return jsonify(data)
     return jsonify({'error': 'no data'}), 503
-
-
-@market_bp.route('/debug')
-def debug():
-    """診斷端點：逐步追蹤 get_focus_stocks() 每個環節"""
-    import traceback
-    from datetime import date, timedelta
-    from src.data_sources import twse as t
-
-    results = {}
-
-    # 步驟 0：STOCK_DAY_ALL 原始第一筆（看欄位順序）
-    try:
-        import requests as _req
-        r0 = _req.get('https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL',
-                       params={'response': 'json'}, headers=t.HEADERS, timeout=8)
-        d0 = r0.json()
-        results['step0_raw'] = {
-            'stat': d0.get('stat'),
-            'date': d0.get('date'),
-            'total_rows': len(d0.get('data', [])),
-            'fields': d0.get('fields', []),
-            'first_row': d0['data'][0] if d0.get('data') else [],
-        }
-    except Exception as e:
-        results['step0_raw'] = {'error': str(e)}
-
-    # 步驟 1：price_map
-    try:
-        pm = t.get_stock_day_all()
-        results['step1_price_map'] = {
-            'count': len(pm),
-            'sample': {k: v for k, v in list(pm.items())[:3]} if pm else {}
-        }
-    except Exception as e:
-        results['step1_price_map'] = {'error': str(e), 'tb': traceback.format_exc()}
-
-    # 步驟 2：T86 map
-    try:
-        t86_map = {}
-        t86_date = ''
-        for delta in range(5):
-            td = date.today() - timedelta(days=delta)
-            if td.weekday() >= 5:
-                continue
-            import requests
-            r = requests.get('https://www.twse.com.tw/fund/T86',
-                             params={'response': 'json', 'date': td.strftime('%Y%m%d'),
-                                     'selectType': 'ALLBUT0999'},
-                             headers=t.HEADERS, timeout=8)
-            d = r.json()
-            if d.get('stat') == 'OK' and len(d.get('data', [])) > 5:
-                t86_date = td.strftime('%Y/%m/%d')
-                for row in d['data'][:-1]:
-                    try:
-                        if len(row) < 11: continue
-                        code = str(row[0]).strip()
-                        if not code.isdigit() or len(code) != 4: continue
-                        t86_map[code] = {'f': t._pz(row[4]) + t._pz(row[7]),
-                                         'i': t._pz(row[10])}
-                    except Exception:
-                        pass
-                break
-        results['step2_t86'] = {'date': t86_date, 'count': len(t86_map),
-                                 'sample': {k: v for k, v in list(t86_map.items())[:3]}}
-    except Exception as e:
-        results['step2_t86'] = {'error': str(e), 'tb': traceback.format_exc()}
-
-    # 步驟 3：篩選結果
-    try:
-        pm = t.get_stock_day_all()
-        skip = {'chg_le0': 0, 'vol': 0, 'price': 0, 'f_neg': 0, 'no_price': 0}
-        cands = []
-        for code, inst in t86_map.items():
-            price = pm.get(code)
-            if not price:
-                skip['no_price'] += 1; continue
-            if price['change_pct'] <= 0:
-                skip['chg_le0'] += 1; continue
-            if price['volume_k'] < 500:
-                skip['vol'] += 1; continue
-            if price['close'] < 20:
-                skip['price'] += 1; continue
-            if inst['f'] < 0:
-                skip['f_neg'] += 1; continue
-            cands.append({'code': code, 'chg': price['change_pct'],
-                          'vol': price['volume_k'], 'f': inst['f']})
-        results['step3_filter'] = {'skipped': skip, 'candidates': len(cands),
-                                    'top5': sorted(cands, key=lambda x: x['vol'], reverse=True)[:5]}
-    except Exception as e:
-        results['step3_filter'] = {'error': str(e), 'tb': traceback.format_exc()}
-
-    return jsonify(results)

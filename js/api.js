@@ -93,6 +93,13 @@ const Mock = {
       { rank: 5, code: '2454', name: '聯發科', score: 67, chg: '+1.8%', reason: '成交量 18,760 張，外資買超 3,210 張', data_date: '模擬資料' },
     ];
   },
+  newsList() {
+    return [
+      { title: 'TSMC 5nm 訂單量 Q3 創新高，AI 推動需求',  time: '09:42', src: '電子時報', tag: '新聞', url: '#' },
+      { title: 'Fed 官員：通膨持穩，年內降息路徑清晰',     time: '09:28', src: 'Bloomberg',  tag: '新聞', url: '#' },
+      { title: '外資連買 8 日，加碼半導體 ETF',            time: '09:15', src: '財訊',       tag: '新聞', url: '#' },
+    ];
+  },
   stockHistory(code) {
     const base = { '2330': 900, '2317': 100, '2454': 800, '2308': 270, '3711': 140 }[code] || 100;
     let price  = base;
@@ -160,6 +167,11 @@ const API = {
   /** AI 規則引擎焦點選股（後端算分，失敗降級 mock） */
   async getFocusList() {
     return await _fetch('/api/market/focus', Mock.focusList);
+  },
+
+  /** Google News RSS 台股即時新聞（失敗降級 mock） */
+  async getNews() {
+    return await _fetch('/api/market/news', Mock.newsList);
   },
 
   /** 取得後端 URL（偵錯用） */

@@ -4,6 +4,30 @@
 
 'use strict';
 
+/* 自動計算台指期結算日（每月第三個週三） */
+function _futuresSettleDates(months) {
+  const result = [];
+  const today  = new Date();
+  for (let m = 0; m <= months; m++) {
+    const y  = today.getFullYear() + Math.floor((today.getMonth() + m) / 12);
+    const mo = (today.getMonth() + m) % 12;
+    let wed  = 0;
+    for (let d = 1; d <= 31; d++) {
+      const dt = new Date(y, mo, d);
+      if (dt.getMonth() !== mo) break;
+      if (dt.getDay() === 3) {
+        wed++;
+        if (wed === 3) {
+          const ds = `${y}-${String(mo + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          result.push({ date: ds, title: `台指期結算（${y}/${mo + 1}月）`, impact: 'high', area: '期貨' });
+          break;
+        }
+      }
+    }
+  }
+  return result;
+}
+
 const eventData = [
   { date: '2026-06-18', title: 'Fed FOMC 利率決議', impact: 'high',   area: '美股' },
   { date: '2026-06-20', title: '台灣 5 月出口統計', impact: 'medium', area: '台股' },
@@ -11,15 +35,10 @@ const eventData = [
   { date: '2026-07-01', title: 'ISM 製造業 PMI',    impact: 'medium', area: '原物料' },
   { date: '2026-07-09', title: '台積電法說會',       impact: 'high',   area: '半導體' },
   { date: '2026-07-15', title: '美國 CPI',           impact: 'high',   area: '美股' },
-];
+  ..._futuresSettleDates(3),
+].sort((a, b) => a.date.localeCompare(b.date));
 
-const newsData = [
-  { title: 'TSMC 5nm 訂單量 Q3 創新高，AI 推動需求',     time: '09:42', tag: '利多', src: '電子時報' },
-  { title: 'Fed 官員：通膨持穩，年內降息路徑清晰',        time: '09:28', tag: '觀望', src: 'Bloomberg' },
-  { title: '外資連買 8 日，加碼半導體 ETF',              time: '09:15', tag: '利多', src: '財訊' },
-  { title: 'AMD MI400 量產延期影響 AI 族群情緒',         time: '08:55', tag: '利空', src: 'Reuters' },
-  { title: 'CoWoS 封裝產能爭奪戰：日月光、矽品搶單',     time: '08:30', tag: '觀察', src: '工商時報' },
-];
+/* newsData 已改為動態從後端 /api/market/news 抓取 */
 
 /* 日期格式：YYYY-MM-DD，renderLaunchTracker 自動排序 + 過濾 */
 const launchData = [
@@ -48,18 +67,28 @@ function renderEventCalendar() {
   }).join('');
 }
 
-function renderNewsFeed() {
+async function renderNewsFeed() {
   const el = document.getElementById('news-feed');
   if (!el) return;
-  const tagMap = { '利多': 'badge-green', '利空': 'badge-red', '觀望': 'badge-yellow', '觀察': 'badge-blue' };
-  el.innerHTML = newsData.map(n => `
-    <div class="news-item">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-        <div class="news-title">${n.title}</div>
-        <span class="badge ${tagMap[n.tag] || ''}" style="flex-shrink:0;">${n.tag}</span>
-      </div>
-      <div class="news-meta">${n.time} ─ ${n.src}</div>
-    </div>`).join('');
+  el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px;">載入新聞中…</div>';
+  try {
+    const items = await API.getNews();
+    if (!items || !items.length) {
+      el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px;">暫無新聞資料</div>';
+      return;
+    }
+    el.innerHTML = items.map(n => {
+      const link = n.url && n.url !== '#'
+        ? `<a href="${n.url}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">${n.title}</a>`
+        : n.title;
+      return `<div class="news-item">
+        <div class="news-title">${link}</div>
+        <div class="news-meta">${n.time} ─ ${n.src}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px;">新聞載入失敗</div>';
+  }
 }
 
 /* 日期過濾：today-5天 ~ today+30天，結果升序排列 */
@@ -107,8 +136,8 @@ function renderLaunchTracker() {
     + '</tbody></table>';
 }
 
-function initGlobal() {
+async function initGlobal() {
   renderEventCalendar();
-  renderNewsFeed();
   renderLaunchTracker();
+  await renderNewsFeed();
 }
