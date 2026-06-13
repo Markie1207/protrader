@@ -57,53 +57,76 @@ def focus():
 
 @market_bp.route('/debug')
 def debug():
-    """診斷端點：直接測試 TWSE API 連線（排查 IP 封鎖 / 無資料）"""
-    import requests
+    """診斷端點：逐步追蹤 get_focus_stocks() 每個環節"""
+    import traceback
     from datetime import date, timedelta
+    from src.data_sources import twse as t
 
     results = {}
-    headers = {'User-Agent': 'Mozilla/5.0 (ProTrader/1.1)',
-                'Referer': 'https://www.twse.com.tw/'}
 
-    # 測試 1：STOCK_DAY_ALL（不帶日期）
+    # 步驟 1：price_map
     try:
-        r = requests.get('https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL',
-                         params={'response': 'json'}, headers=headers, timeout=8)
-        d = r.json()
-        results['STOCK_DAY_ALL'] = {
-            'stat': d.get('stat'), 'rows': len(d.get('data', [])), 'date': d.get('date')
+        pm = t.get_stock_day_all()
+        results['step1_price_map'] = {
+            'count': len(pm),
+            'sample': {k: v for k, v in list(pm.items())[:3]} if pm else {}
         }
     except Exception as e:
-        results['STOCK_DAY_ALL'] = {'error': str(e)}
+        results['step1_price_map'] = {'error': str(e), 'tb': traceback.format_exc()}
 
-    # 測試 2：T86（最近交易日）
-    for delta in range(5):
-        td = date.today() - timedelta(days=delta)
-        if td.weekday() >= 5:
-            continue
-        try:
+    # 步驟 2：T86 map
+    try:
+        t86_map = {}
+        t86_date = ''
+        for delta in range(5):
+            td = date.today() - timedelta(days=delta)
+            if td.weekday() >= 5:
+                continue
+            import requests
             r = requests.get('https://www.twse.com.tw/fund/T86',
                              params={'response': 'json', 'date': td.strftime('%Y%m%d'),
                                      'selectType': 'ALLBUT0999'},
-                             headers=headers, timeout=8)
+                             headers=t.HEADERS, timeout=8)
             d = r.json()
-            results[f'T86_{td}'] = {
-                'stat': d.get('stat'), 'rows': len(d.get('data', []))
-            }
-            break
-        except Exception as e:
-            results[f'T86_{td}'] = {'error': str(e)}
-        break
-
-    # 測試 3：BFI82U
-    try:
-        today_str = date.today().strftime('%Y%m%d')
-        r = requests.get('https://www.twse.com.tw/fund/BFI82U',
-                         params={'response': 'json', 'dayDate': today_str, 'type': 'day'},
-                         headers=headers, timeout=8)
-        d = r.json()
-        results['BFI82U'] = {'stat': d.get('stat'), 'rows': len(d.get('data', []))}
+            if d.get('stat') == 'OK' and len(d.get('data', [])) > 5:
+                t86_date = td.strftime('%Y/%m/%d')
+                for row in d['data'][:-1]:
+                    try:
+                        if len(row) < 11: continue
+                        code = str(row[0]).strip()
+                        if not code.isdigit() or len(code) != 4: continue
+                        t86_map[code] = {'f': t._pz(row[4]) + t._pz(row[7]),
+                                         'i': t._pz(row[10])}
+                    except Exception:
+                        pass
+                break
+        results['step2_t86'] = {'date': t86_date, 'count': len(t86_map),
+                                 'sample': {k: v for k, v in list(t86_map.items())[:3]}}
     except Exception as e:
-        results['BFI82U'] = {'error': str(e)}
+        results['step2_t86'] = {'error': str(e), 'tb': traceback.format_exc()}
+
+    # 步驟 3：篩選結果
+    try:
+        pm = t.get_stock_day_all()
+        skip = {'chg_le0': 0, 'vol': 0, 'price': 0, 'f_neg': 0, 'no_price': 0}
+        cands = []
+        for code, inst in t86_map.items():
+            price = pm.get(code)
+            if not price:
+                skip['no_price'] += 1; continue
+            if price['change_pct'] <= 0:
+                skip['chg_le0'] += 1; continue
+            if price['volume_k'] < 500:
+                skip['vol'] += 1; continue
+            if price['close'] < 20:
+                skip['price'] += 1; continue
+            if inst['f'] < 0:
+                skip['f_neg'] += 1; continue
+            cands.append({'code': code, 'chg': price['change_pct'],
+                          'vol': price['volume_k'], 'f': inst['f']})
+        results['step3_filter'] = {'skipped': skip, 'candidates': len(cands),
+                                    'top5': sorted(cands, key=lambda x: x['vol'], reverse=True)[:5]}
+    except Exception as e:
+        results['step3_filter'] = {'error': str(e), 'tb': traceback.format_exc()}
 
     return jsonify(results)
