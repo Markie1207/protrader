@@ -3,6 +3,7 @@ routes/market.py — 大盤 / 法人 API 路由
 """
 
 from flask import Blueprint, jsonify
+from datetime import datetime
 from src.data_sources import twse, sinopac
 
 market_bp = Blueprint('market', __name__, url_prefix='/api/market')
@@ -41,18 +42,28 @@ def status():
 
 @market_bp.route('/futures_oi')
 def futures_oi():
-    """外資期貨未平倉口數（路由修正：底線，對應前端 api.js）"""
+    """外資期貨未平倉口數"""
     data = twse.get_futures_oi()
     return jsonify(data)
 
 
+@market_bp.route('/focus')
+def focus():
+    """AI 精選焦點股（法人買超 + 上漲 + 量能達標）"""
+    data = twse.get_focus_stocks()
+    if data:
+        return jsonify(data)
+    return jsonify({'error': 'no data'}), 503
+
+
 @market_bp.route('/news')
 def news():
-    """Google News RSS 台股財經新聞（最新 10 則）"""
+    """Google News RSS 台股財經新聞（最新 10 則，依時間降序）"""
     import xml.etree.ElementTree as ET
     import requests as _req
     import html, re
     from cachetools import TTLCache
+    from email.utils import parsedate_to_datetime
 
     _news_cache = getattr(news, '_cache', None)
     if _news_cache is None:
@@ -62,52 +73,39 @@ def news():
     if 'data' in _news_cache:
         return jsonify(_news_cache['data'])
 
-    queries = ['台股 外資', '台積電 法人', '台股 盤勢']
-    items   = []
+    queries = ['台股 外資', '台積電 法人', '台股 盤勢', '美伊 戰爭 台股', '台股 今日']
+    raw     = []   # [(datetime, item_dict)]
     seen    = set()
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     for q in queries:
-        if len(items) >= 10:
-            break
         try:
-            url = f'https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant'
-            r   = _req.get(url, headers=headers, timeout=6)
+            url  = f'https://news.google.com/rss/search?q={q}&hl=zh-TW&gl=TW&ceid=TW:zh-Hant'
+            r    = _req.get(url, headers=headers, timeout=6)
             root = ET.fromstring(r.content)
             for item in root.iter('item'):
                 title = html.unescape(item.findtext('title') or '')
-                title = re.sub(r'\s*-\s*[^-]+$', '', title).strip()  # 去掉來源後綴
+                title = re.sub(r'\s*-\s*[^-]+$', '', title).strip()
                 link  = item.findtext('link') or ''
                 pub   = item.findtext('pubDate') or ''
-                src   = item.findtext('{https://news.google.com/rss}source') or \
-                        item.findtext('source') or 'Google News'
+                src   = item.findtext('{https://news.google.com/rss}source') or                         item.findtext('source') or 'Google News'
                 if not title or title in seen:
                     continue
                 seen.add(title)
-                # 時間格式化
                 try:
-                    from email.utils import parsedate_to_datetime
-                    dt  = parsedate_to_datetime(pub)
+                    dt   = parsedate_to_datetime(pub)
                     tstr = dt.strftime('%m/%d %H:%M')
                 except Exception:
+                    dt   = datetime.min
                     tstr = pub[:16]
-                items.append({'title': title, 'time': tstr, 'src': src, 'url': link, 'tag': '新聞'})
-                if len(items) >= 10:
-                    break
+                raw.append((dt, {'title': title, 'time': tstr,
+                                 'src': src, 'url': link, 'tag': '新聞'}))
         except Exception as e:
             print(f'[NEWS] RSS 失敗 ({q}): {e}')
 
-    result = items if items else []
+    # 依時間降序（最新在前），取前 10 則
+    raw.sort(key=lambda x: x[0], reverse=True)
+    result = [it for _, it in raw[:10]]
     if result:
         _news_cache['data'] = result
     return jsonify(result)
-
-
-@market_bp.route('/focus')
-def focus():
-    """AI 精選焦點股（法人買超 + 上漲 + 量能達標）"""
-    from src.data_sources import twse as t
-    data = t.get_focus_stocks()
-    if data:
-        return jsonify(data)
-    return jsonify({'error': 'no data'}), 503
