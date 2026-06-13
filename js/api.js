@@ -86,11 +86,11 @@ const Mock = {
   },
   focusList() {
     return [
-      { rank: 1, code: '2330', name: '台積電', score: 94, chg: '+2.4%', reason: '外資買超 12,456 張，AI 晶片需求強勁' },
-      { rank: 2, code: '2454', name: '聯發科', score: 87, chg: '+1.8%', reason: '外資買超 3,210 張，投信買超 450 張' },
-      { rank: 3, code: '3711', name: '日月光', score: 83, chg: '+1.2%', reason: '外資買超 2,180 張，CoWoS 題材發酵' },
-      { rank: 4, code: '2308', name: '台達電', score: 79, chg: '+0.9%', reason: '投信買超 320 張，電源管理題材' },
-      { rank: 5, code: '2317', name: '鴻海',   score: 74, chg: '+0.6%', reason: '外資買超 8,900 張' },
+      { rank: 1, code: '2603', name: '長榮',   score: 91, chg: '+3.1%', reason: '成交量 68,420 張（市場高度關注），外資買超 9,230 張' },
+      { rank: 2, code: '2882', name: '國泰金', score: 84, chg: '+1.6%', reason: '成交量 52,110 張（市場高度關注），外資買超 4,580 張' },
+      { rank: 3, code: '2330', name: '台積電', score: 79, chg: '+2.4%', reason: '成交量 38,900 張，外資買超 12,456 張' },
+      { rank: 4, code: '2886', name: '兆豐金', score: 73, chg: '+0.8%', reason: '成交量 31,540 張，外資買超 2,100 張' },
+      { rank: 5, code: '2454', name: '聯發科', score: 67, chg: '+1.8%', reason: '成交量 18,760 張，外資買超 3,210 張' },
     ];
   },
   stockHistory(code) {

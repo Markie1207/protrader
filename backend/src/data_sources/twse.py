@@ -357,69 +357,59 @@ def get_stock_day_all() -> dict:
 
 def _score_focus(f_k: int, i_k: int, chg: float, vol_k: int, is_hot: bool) -> int:
     """計算 AI 分數（滿分 100）
+    新權重：量能(50) + 外資買超(40) + 漲幅(10)
+    —— 避免大型股因為外資絕對量過大而壟斷排行
     f_k:   外資淨買超（張）
-    i_k:   投信淨買超（張）
-    chg:   當日漲幅（%）
     vol_k: 成交量（張）
+    chg:   當日漲幅（%）
     """
-    # 外資籌碼分（35）
+    # 量能分（50）—— 相對換手率導向，讓中小型股也有機會
+    if vol_k >= 50000:
+        v = 50.0
+    elif vol_k >= 10000:
+        v = 20.0 + (vol_k - 10000) / 40000 * 30
+    elif vol_k >= 3000:
+        v = 5.0 + (vol_k - 3000) / 7000 * 15
+    else:
+        v = (vol_k / 3000) * 5
+
+    # 外資買超分（40）
     if f_k >= 5000:
-        f = 35.0
+        f = 40.0
+    elif f_k >= 1000:
+        f = 20.0 + (f_k - 1000) / 4000 * 20
     elif f_k >= 0:
-        f = 5.0 + (f_k / 5000) * 30
+        f = (f_k / 1000) * 20
     else:
         f = 0.0
 
-    # 漲幅動能分（25）
+    # 漲幅分（10）
     if chg >= 3.0:
-        c = 25.0
+        c = 10.0
     elif chg >= 1.0:
-        c = 10.0 + (chg - 1.0) / 2.0 * 15
+        c = 4.0 + (chg - 1.0) / 2.0 * 6
     elif chg >= 0.0:
-        c = chg * 5.0
+        c = chg * 4.0
     else:
         c = 0.0
 
-    # 量能分（20）—— 絕對量門檻（大型股偏高）
-    if vol_k >= 50000:
-        v = 20.0
-    elif vol_k >= 10000:
-        v = 8.0 + (vol_k - 10000) / 40000 * 12
-    elif vol_k >= 3000:
-        v = 3.0 + (vol_k - 3000) / 7000 * 5
-    else:
-        v = (vol_k / 3000) * 3
-
-    # 投信分（15）
-    if i_k >= 500:
-        i = 15.0
-    elif i_k >= 100:
-        i = 5.0 + (i_k - 100) / 400 * 10
-    elif i_k > 0:
-        i = i_k / 100 * 5
-    else:
-        i = 0.0
-
-    # 題材分（5）
-    t = 5.0 if is_hot else 0.0
-
-    return min(int(round(f + c + v + i + t)), 100)
+    return min(int(round(v + f + c)), 100)
 
 
-def _gen_reason(f_k: int, i_k: int, chg: float) -> str:
-    """根據最高貢獻因子自動生成理由"""
+def _gen_reason(f_k: int, i_k: int, chg: float, vol_k: int = 0) -> str:
+    """根據量能、外資、漲幅三因子自動生成理由"""
     parts = []
+    if vol_k >= 10000:
+        parts.append(f'成交量 {vol_k:,} 張（市場高度關注）')
+    elif vol_k >= 3000:
+        parts.append(f'成交量 {vol_k:,} 張')
     if f_k >= 1000:
         parts.append(f'外資買超 {f_k:,} 張')
     elif f_k > 0:
         parts.append('外資小幅買進')
-    if i_k >= 100:
-        parts.append(f'投信買超 {i_k:,} 張')
-    elif i_k > 0:
-        parts.append('投信買進')
-    if chg >= 2.5:
+    if chg >= 2.0:
         parts.append(f'強勢上漲 {chg:+.1f}%')
-    return '，'.join(parts[:2]) if parts else '籌碼面偏多'
+    return '，'.join(parts[:2]) if parts else '量能放大、籌碼偏多'
 
 
 def get_focus_stocks() -> list | None:
@@ -494,7 +484,7 @@ def get_focus_stocks() -> list | None:
             continue
         if close < 20:
             continue
-        if f_k < 0 and i_k < 0:           # 外資、投信同時賣超 → 排除
+        if f_k < 0:                        # 外資賣超 → 排除（量能+外資為主軸）
             continue
 
         score = _score_focus(f_k, i_k, chg, vol, code in _HOT_THEME_CODES)
@@ -504,7 +494,7 @@ def get_focus_stocks() -> list | None:
             'name':   inst['name'] or price['name'],
             'score':  score,
             'chg':    f'{chg:+.1f}%',
-            'reason': _gen_reason(f_k, i_k, chg),
+            'reason': _gen_reason(f_k, i_k, chg, vol),
         })
 
     if not candidates:
