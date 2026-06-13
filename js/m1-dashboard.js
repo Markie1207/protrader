@@ -434,6 +434,10 @@ async function fetchAndUpdateDashboard() {
    初始化進入點
 ───────────────────────────────────────── */
 function initDashboard() {
+  // 先用 mock 資料讓焦點清單立即顯示，API 回來後再覆蓋
+  if (typeof Mock !== 'undefined' && typeof Mock.focusList === 'function') {
+    focusData = Mock.focusList();
+  }
   renderHoldings();
   renderFocusList();
   renderGauge();
