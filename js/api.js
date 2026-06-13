@@ -162,4 +162,23 @@ const API = {
     return await _fetch('/api/market/focus', Mock.focusList);
   },
 
-  /** 取得後端 URL（偵�
+  /** 取得後端 URL（偵錯用） */
+  getBackendUrl() { return BACKEND_URL; },
+};
+
+/* 頁面載入時插入資料源標示到 navbar
+───────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  const nav = document.querySelector('.nav-right');
+  if (nav) {
+    const badge = document.createElement('span');
+    badge.id    = 'data-source-badge';
+    badge.style.cssText = 'font-size:11px;font-weight:600;color:var(--text3);';
+    badge.textContent   = '\ud83d\udd27 \u6a21\u64ec';
+    nav.insertBefore(badge, nav.firstChild);
+  }
+
+  API.getStatus().then(s => {
+    setDataSourceBadge(s?.primary_source || 'mock');
+  }).catch(() => {});
+});
