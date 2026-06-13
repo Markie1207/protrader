@@ -53,3 +53,57 @@ def focus():
     if data:
         return jsonify(data)
     return jsonify({'error': 'no data'}), 503
+
+
+@market_bp.route('/debug')
+def debug():
+    """診斷端點：直接測試 TWSE API 連線（排查 IP 封鎖 / 無資料）"""
+    import requests
+    from datetime import date, timedelta
+
+    results = {}
+    headers = {'User-Agent': 'Mozilla/5.0 (ProTrader/1.1)',
+                'Referer': 'https://www.twse.com.tw/'}
+
+    # 測試 1：STOCK_DAY_ALL（不帶日期）
+    try:
+        r = requests.get('https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL',
+                         params={'response': 'json'}, headers=headers, timeout=8)
+        d = r.json()
+        results['STOCK_DAY_ALL'] = {
+            'stat': d.get('stat'), 'rows': len(d.get('data', [])), 'date': d.get('date')
+        }
+    except Exception as e:
+        results['STOCK_DAY_ALL'] = {'error': str(e)}
+
+    # 測試 2：T86（最近交易日）
+    for delta in range(5):
+        td = date.today() - timedelta(days=delta)
+        if td.weekday() >= 5:
+            continue
+        try:
+            r = requests.get('https://www.twse.com.tw/fund/T86',
+                             params={'response': 'json', 'date': td.strftime('%Y%m%d'),
+                                     'selectType': 'ALLBUT0999'},
+                             headers=headers, timeout=8)
+            d = r.json()
+            results[f'T86_{td}'] = {
+                'stat': d.get('stat'), 'rows': len(d.get('data', []))
+            }
+            break
+        except Exception as e:
+            results[f'T86_{td}'] = {'error': str(e)}
+        break
+
+    # 測試 3：BFI82U
+    try:
+        today_str = date.today().strftime('%Y%m%d')
+        r = requests.get('https://www.twse.com.tw/fund/BFI82U',
+                         params={'response': 'json', 'dayDate': today_str, 'type': 'day'},
+                         headers=headers, timeout=8)
+        d = r.json()
+        results['BFI82U'] = {'stat': d.get('stat'), 'rows': len(d.get('data', []))}
+    except Exception as e:
+        results['BFI82U'] = {'error': str(e)}
+
+    return jsonify(results)
