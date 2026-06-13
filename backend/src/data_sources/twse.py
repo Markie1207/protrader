@@ -385,16 +385,16 @@ def get_stock_day_all() -> dict:
     if data and 'data' in data:
         for row in data['data']:
             try:
-                if len(row) < 10:
+                if len(row) < 11:
                     continue
                 code = str(row[0]).strip()
                 if not code.isdigit() or len(code) != 4:
                     continue
-                close = float(str(row[7]).replace(',', '') or 0)
+                close = float(str(row[8]).replace(',', '') or 0)  # row[8]=收盤價
                 if close <= 0:
                     continue
-                direction   = 1 if str(row[8]).strip() == '+' else -1
-                change_val  = float(str(row[9]).replace(',', '') or 0)
+                direction   = 1 if str(row[9]).strip() == '+' else -1  # row[9]=漲跌符號
+                change_val  = float(str(row[10]).replace(',', '') or 0)  # row[10]=漲跌價差
                 prev_close  = close - direction * change_val
                 change_pct  = (direction * change_val / prev_close * 100) if prev_close > 0 else 0.0
                 volume_k    = int(str(row[2]).replace(',', '') or 0) // 1000
