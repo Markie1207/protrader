@@ -385,19 +385,19 @@ def get_stock_day_all() -> dict:
     if data and 'data' in data:
         for row in data['data']:
             try:
-                if len(row) < 11:
+                if len(row) < 10:
                     continue
                 code = str(row[0]).strip()
                 if not code.isdigit() or len(code) != 4:
                     continue
-                close = float(str(row[8]).replace(',', '') or 0)  # row[8]=收盤價
+                close = float(str(row[7]).replace(',', '') or 0)  # row[7]=收盤價
                 if close <= 0:
                     continue
-                direction   = 1 if str(row[9]).strip() == '+' else -1  # row[9]=漲跌符號
-                change_val  = float(str(row[10]).replace(',', '') or 0)  # row[10]=漲跌價差
-                prev_close  = close - direction * change_val
-                change_pct  = (direction * change_val / prev_close * 100) if prev_close > 0 else 0.0
-                volume_k    = int(str(row[2]).replace(',', '') or 0) // 1000
+                # row[8]=漲跌價差（含符號，如 +0.38 / -1.20），無獨立符號欄
+                chg_signed  = float(str(row[8]).replace(',', '') or 0)
+                prev_close  = close - chg_signed
+                change_pct  = round(chg_signed / prev_close * 100, 2) if prev_close > 0 else 0.0
+                volume_k    = int(str(row[2]).replace(',', '') or 0) // 1000  # 股 → 張
                 result[code] = {
                     'name':       str(row[1]).strip(),
                     'close':      close,
@@ -501,8 +501,9 @@ def get_focus_stocks() -> list | None:
                 if not code.isdigit() or len(code) != 4:
                     continue
                 # 外資及陸資[4] + 外資自營商[7]
-                f_net = _pz(row[4]) + _pz(row[7])
-                i_net = _pz(row[10])
+                # T86 單位為股，除以 1000 換算為張
+                f_net = (_pz(row[4]) + _pz(row[7])) // 1000
+                i_net = _pz(row[10]) // 1000
                 t86_map[code] = {
                     'name':     str(row[1]).strip(),
                     'foreign_k': f_net,
