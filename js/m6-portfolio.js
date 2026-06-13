@@ -120,11 +120,9 @@ function openAddWatchlist() {
 }
 
 function openAddHolding() {
-  const code   = prompt('股票代碼（例：2330）：');
-  const cost   = prompt('均成本（例：820）：');
-  const shares = prompt('股數（張）（例：2）：');
-  if (code && cost && shares) {
-    alert(`✅ 已新增持倉：${code}，成本 $${cost}，${shares} 張`);
+  // BUG-009 修正：改用 M1 完整表單（含 localStorage 儲存 + renderHoldings 刷新）
+  if (typeof openAddHoldingForm === 'function') {
+    openAddHoldingForm();
   }
 }
 

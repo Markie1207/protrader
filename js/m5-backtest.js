@@ -54,7 +54,7 @@ function updateStrategyJSON() {
 
 function runBacktest() {
   // 模擬延遲後切換到報告
-  const reportTab = document.querySelector('.inner-tab:nth-child(2)');
+  const reportTab = document.querySelector('#page-backtest .inner-tab:nth-child(2)');
   if (reportTab) {
     setTimeout(() => {
       switchInnerBtReport(reportTab);

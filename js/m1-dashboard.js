@@ -344,6 +344,9 @@ function renderFocusList() {
         <div style="font-size:11px;color:var(--text2)">AI 分 ${f.score}</div>
       </div>
     </div>`).join('');
+  // BUG-011 修正：顯示最後更新時間
+  const timeEl = document.getElementById('focus-update-time');
+  if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
 }
 
 /* ─────────────────────────────────────────
@@ -361,6 +364,12 @@ async function fetchAndUpdateDashboard() {
         const sign = taiex.change >= 0 ? '+' : '';
         chgEl.textContent = `${sign}${taiex.change} (${sign}${taiex.change_pct}%)`;
         chgEl.className   = taiex.change >= 0 ? 'up' : 'dn';
+      }
+      // BUG-010 修正：同步更新漲跌箭頭 badge
+      const badgeEl = document.getElementById('taiex-badge');
+      if (badgeEl) {
+        badgeEl.textContent = taiex.change >= 0 ? '▲' : '▼';
+        badgeEl.style.color = taiex.change >= 0 ? 'var(--up)' : 'var(--dn)';
       }
     }
   } catch (e) { console.warn('[M1] taiex 更新失敗', e); }
