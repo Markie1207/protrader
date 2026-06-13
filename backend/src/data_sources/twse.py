@@ -31,36 +31,56 @@ def _get(url: str, params: dict = None, headers: dict = None) -> dict | None:
 
 def get_taiex_realtime() -> dict:
     """
-    取得加權指數（延遲 ~1 分鐘）
+    取得加權指數（盤中即時；盤後/假日自動回溯最近交易日收盤）
     主路由：Shioaji；本函式為備援
     """
+    from datetime import timedelta
+
     key = 'taiex_rt'
     if key in _cache_instant:
         return _cache_instant[key]
 
-    url = 'https://www.twse.com.tw/exchangeReport/MI_INDEX'
-    data = _get(url, {'response': 'json', 'type': 'IND'})
-
+    url    = 'https://www.twse.com.tw/exchangeReport/MI_INDEX'
     result = None
 
-    if data and 'data5' in data:
-        try:
-            for row in data['data5']:
-                if '發行量加權股價指數' in row[0]:
-                    idx_str = row[1].replace(',', '')
-                    chg_str = row[2].replace(',', '').replace('+', '')
-                    idx = float(idx_str)
-                    chg = float(chg_str)
-                    result = {
-                        'source':     'TWSE',
-                        'index':      idx,
-                        'change':     chg,
-                        'change_pct': round(chg / (idx - chg) * 100, 2) if idx != chg else 0.0,
-                        'timestamp':  datetime.now().isoformat(),
-                    }
+    def _parse_mi(data, label='TWSE') -> dict | None:
+        for k in ('data5', 'data4', 'data3'):
+            for row in data.get(k, []):
+                if '發行量加權股價指數' in str(row[0]):
+                    try:
+                        idx = float(str(row[1]).replace(',', ''))
+                        chg = float(str(row[2]).replace(',', '').replace('+', ''))
+                        return {
+                            'source':     label,
+                            'index':      idx,
+                            'change':     chg,
+                            'change_pct': round(chg / (idx - chg) * 100, 2) if idx != chg else 0.0,
+                            'timestamp':  datetime.now().isoformat(),
+                        }
+                    except Exception:
+                        pass
+        return None
+
+    # 1. 先試即時（不帶日期，盤中有效）
+    data = _get(url, {'response': 'json', 'type': 'IND'})
+    if data:
+        result = _parse_mi(data)
+
+    # 2. 無即時資料 → 回溯最近 5 個交易日取收盤
+    if not result:
+        for delta in range(1, 6):
+            try_date = date.today() - timedelta(days=delta)
+            if try_date.weekday() >= 5:
+                continue
+            data = _get(url, {'response': 'json',
+                               'date': try_date.strftime('%Y%m%d'),
+                               'type': 'IND'})
+            if data:
+                result = _parse_mi(data, label='TWSE-close')
+                if result:
+                    result['date'] = try_date.isoformat()
+                    print(f'[TWSE] 加權指數使用 {try_date} 收盤資料')
                     break
-        except Exception as e:
-            print(f'[TWSE] taiex 解析失敗: {e}')
 
     if result:
         _cache_instant[key] = result
@@ -78,11 +98,26 @@ def get_institutional_today() -> dict:
     if key in _cache_daily:
         return _cache_daily[key]
 
-    today = date.today().strftime('%Y%m%d')
-    url   = 'https://www.twse.com.tw/fund/BFI82U'
-    data  = _get(url, {'response': 'json', 'dayDate': today, 'type': 'day'})
+    from datetime import timedelta
 
-    result = None  # 無資料時回 None，讓 route 回 503
+    url    = 'https://www.twse.com.tw/fund/BFI82U'
+    result = None
+    data   = None
+    today  = date.today().strftime('%Y%m%d')
+
+    # 回溯最近 5 個交易日，找到有資料的最新一天
+    for delta in range(6):
+        try_date = date.today() - timedelta(days=delta)
+        if try_date.weekday() >= 5:          # 跳過週末
+            continue
+        d_str = try_date.strftime('%Y%m%d')
+        data  = _get(url, {'response': 'json', 'dayDate': d_str, 'type': 'day'})
+        if data and 'data' in data:
+            today = d_str
+            if delta > 0:
+                print(f'[TWSE] BFI82U 使用 {try_date} 資料（最近交易日）')
+            break
+        data = None
 
     if data and 'data' in data:
         try:
@@ -107,15 +142,20 @@ def get_institutional_today() -> dict:
                 elif '自營商' in name:
                     d_buy += b; d_sell += s; d_net += n
 
-            result['foreign']    = {'net': f_net, 'buy': f_buy, 'sell': f_sell}
-            result['investment'] = {'net': i_net, 'buy': i_buy, 'sell': i_sell}
-            result['dealer']     = {'net': d_net, 'buy': d_buy, 'sell': d_sell}
+            # 修正：直接建立 result dict（原為 None）
+            result = {
+                'source':     'TWSE',
+                'date':       today,
+                'foreign':    {'net': f_net, 'buy': f_buy, 'sell': f_sell},
+                'investment': {'net': i_net, 'buy': i_buy, 'sell': i_sell},
+                'dealer':     {'net': d_net, 'buy': d_buy, 'sell': d_sell},
+            }
 
         except Exception as e:
             print(f'[TWSE] 法人解析失敗 (BFI82U): {e}')
 
     else:
-        # BFI82U 無資料（盤後可能還未更新），改用 T86 備援
+        # BFI82U 無資料，改用 T86 備援
         fallback = {
             'source':     'TWSE',
             'date':       today,
@@ -124,7 +164,6 @@ def get_institutional_today() -> dict:
             'dealer':     {'net': 0, 'buy': 0, 'sell': 0},
         }
         result = _get_institutional_t86(today, fallback)
-        # T86 也無資料（非交易日）→ 維持 None
         if result and result['foreign']['net'] == 0 and result['investment']['net'] == 0:
             result = None
 
@@ -314,16 +353,34 @@ def _pz(s) -> int:
 
 
 def get_stock_day_all() -> dict:
-    """今日所有上市股票收盤行情
+    """最近交易日所有上市股票收盤行情（自動回溯，支援週末/假日）
     回傳: { code: { name, close, change_pct, volume_k } }
     """
+    from datetime import timedelta
+
     key = 'stock_day_all'
     if key in _cache_daily:
         return _cache_daily[key]
 
-    url  = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL'
-    data = _get(url, {'response': 'json'})
+    url    = 'https://www.twse.com.tw/exchangeReport/STOCK_DAY_ALL'
     result = {}
+
+    # 先試不帶日期（API 通常回最新交易日）
+    data = _get(url, {'response': 'json'})
+
+    # 若資料不足（非交易日），回溯最近 5 個交易日
+    if not (data and 'data' in data and len(data.get('data', [])) > 100):
+        for delta in range(1, 6):
+            try_date = date.today() - timedelta(days=delta)
+            if try_date.weekday() >= 5:
+                continue
+            data = _get(url, {'response': 'json',
+                               'date': try_date.strftime('%Y%m%d')})
+            if data and 'data' in data and len(data.get('data', [])) > 100:
+                print(f'[TWSE] STOCK_DAY_ALL 使用 {try_date} 資料')
+                break
+        else:
+            data = None
 
     if data and 'data' in data:
         for row in data['data']:
