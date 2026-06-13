@@ -423,9 +423,10 @@ def get_focus_stocks() -> list | None:
     if key in _cache_daily:
         return _cache_daily[key]
 
-    # 嘗試最近 3 個交易日取 T86
+    # 嘗試最近 4 個交易日取 T86（含昨日；週末自動跳過）
     t86_map: dict = {}
-    for delta in range(4):
+    t86_date: str = ''          # 記錄實際取到的資料日期
+    for delta in range(5):
         try_date = date.today() - timedelta(days=delta)
         if try_date.weekday() >= 5:          # 跳過週末
             continue
@@ -453,6 +454,8 @@ def get_focus_stocks() -> list | None:
             except Exception:
                 continue
         if t86_map:
+            t86_date = try_date.strftime('%Y/%m/%d')
+            print(f'[FOCUS] T86 使用 {t86_date} 資料（前一交易日）')
             break
 
     if not t86_map:
@@ -505,8 +508,9 @@ def get_focus_stocks() -> list | None:
     result = []
     for i, item in enumerate(candidates[:5], 1):
         item['rank'] = i
+        item['data_date'] = t86_date   # 前一交易日日期，供前端顯示
         result.append(item)
 
     _cache_daily[key] = result
-    print(f'[FOCUS] 選出 {len(result)} 支，第一名：{result[0]["code"]} {result[0]["name"]} ({result[0]["score"]}分)')
+    print(f'[FOCUS] 選出 {len(result)} 支，資料日期 {t86_date}，第一名：{result[0]["code"]} {result[0]["name"]} ({result[0]["score"]}分)')
     return result

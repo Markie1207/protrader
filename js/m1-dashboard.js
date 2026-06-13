@@ -338,9 +338,12 @@ function renderFocusList() {
         <div style="font-size:11px;color:var(--text2)">AI 分 ${f.score}</div>
       </div>
     </div>`).join('');
-  // BUG-011 修正：顯示最後更新時間
+  // BUG-011 修正：顯示資料日期（前一交易日）或更新時間
   const timeEl = document.getElementById('focus-update-time');
-  if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  if (timeEl) {
+    const dataDate = focusData[0]?.data_date;
+    timeEl.textContent = dataDate ? `外資資料：${dataDate}` : new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+  }
 }
 
 /* ─────────────────────────────────────────
