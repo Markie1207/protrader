@@ -88,6 +88,26 @@ const Mock = {
       foreign:          { long: null, short: null, net: null },
     };
   },
+  temperature() {
+    return {
+      source: 'mock', score: 55, label: '中性',
+      description: '多空均衡，無明顯方向', color: 'green',
+      indicators: [],
+    };
+  },
+  focusRanking() {
+    return {
+      source: 'mock', date: null,
+      stocks: [
+        { rank:1, code:'2330', name:'台積電', score:80, change_pct:1.2,
+          volume_ratio:1.5, foreign_buy:8000, foreign_consecutive_days:3,
+          score_detail:{ foreign_rank:30, volume:22, change:8, consecutive:10 } },
+        { rank:2, code:'2317', name:'鴻海',   score:65, change_pct:0.8,
+          volume_ratio:1.2, foreign_buy:3200, foreign_consecutive_days:1,
+          score_detail:{ foreign_rank:24, volume:18, change:6, consecutive:5  } },
+      ],
+    };
+  },
   focusList() {
     return [
       { rank: 1, code: '2603', name: '長榮',   score: 91, chg: '+3.1%', reason: '成交量 68,420 張（市場高度關注），外資買超 9,230 張', data_date: '模擬資料' },
@@ -166,6 +186,17 @@ const API = {
   /** 外資台指期未平倉 */
   async getFuturesOI() {
     return await _fetch('/api/market/futures_oi', Mock.futuresOI);
+  },
+
+  /** 大盤溫度計（7項指標加權分） */
+  async getTemperature() {
+    return await _fetch('/api/market/temperature', Mock.temperature);
+  },
+
+  /** 今日焦點 AI 排序（4因子規則式，可傳自訂股票池） */
+  async getFocusList(codes = null) {
+    const qs = codes ? `?codes=${codes.join(',')}` : '';
+    return await _fetch(`/api/market/focus${qs}`, Mock.focusRanking);
   },
 
   /** AI 規則引擎焦點選股（後端算分，失敗降級 mock） */
