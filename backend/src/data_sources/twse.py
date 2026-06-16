@@ -1183,14 +1183,11 @@ def calc_focus_ranking(pool: list | None = None) -> dict | None:
     if not price_map:
         return None
 
-    # ── 歷史均量（近20日） ──
-    vol_avg: dict = {}
-    for code in pool:
-        hist = get_stock_daily(code, months=1)
-        if hist and len(hist) >= 5:
-            vols          = [r['volume'] for r in hist[-20:]]
-            vol_avg[code] = sum(vols) / len(vols)
-        time.sleep(0.2)
+    # ── 爆量基準：池內中位量（張），不呼叫額外 HTTP 請求 ──
+    pool_vols = sorted(
+        price_map[c]['volume_k'] for c in pool if c in price_map
+    )
+    median_vol = pool_vols[len(pool_vols) // 2] if pool_vols else 1
 
     # ── 外資買超排名換算（第1名40分，線性遞減）──
     pool_inst   = {code: today_t86.get(code, {}).get('foreign_net_k', 0) for code in pool}
@@ -1206,12 +1203,11 @@ def calc_focus_ranking(pool: list | None = None) -> dict | None:
             continue
 
         chg   = price['change_pct']
-        vol   = price['volume_k'] * 1000
-        avg   = vol_avg.get(code) or vol or 1
+        vol_k = price['volume_k']
         f_buy = today_t86.get(code, {}).get('foreign_net_k', 0)
         name  = today_t86.get(code, {}).get('name') or price.get('name', code)
 
-        vol_ratio = min(vol / max(avg, 1), 3.0)
+        vol_ratio = min(vol_k / max(median_vol, 1), 3.0)
         vol_score = round(vol_ratio / 3 * 30)
         chg_score = round(min(max(chg, 0), 5) / 5 * 30)
         f_score   = rank_score.get(code, 0)
@@ -1222,7 +1218,7 @@ def calc_focus_ranking(pool: list | None = None) -> dict | None:
             'name':         name,
             'score':        total,
             'change_pct':   round(chg, 1),
-            'volume_ratio': round(vol_ratio, 1),
+            'volume_ratio': round(vol_ratio, 2),
             'foreign_buy':  f_buy,
             'score_detail': {
                 'foreign_rank': f_score,
