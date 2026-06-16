@@ -404,22 +404,54 @@ async function fetchAndUpdateDashboard() {
     }
   } catch (e) { console.warn('[M1] 法人更新失敗', e); }
 
-  /* 期貨未平倉 */
+  /* 期貨未平倉（三大法人） */
   try {
     const oi = await API.getFuturesOI();
     if (oi) {
-      const net     = oi.foreign_net   ?? 0;
-      const longOI  = oi.foreign_long  ?? 0;
-      const shortOI = oi.foreign_short ?? 0;
-      const valEl   = document.getElementById('futures-oi-val');
-      const longEl  = document.getElementById('futures-oi-long');
-      const shortEl = document.getElementById('futures-oi-short');
-      if (valEl) {
-        valEl.textContent = `${net >= 0 ? '+' : ''}${net.toLocaleString()} 口`;
-        valEl.style.color = net >= 0 ? 'var(--up)' : 'var(--dn)';
+      const isMock = oi.source === 'mock';
+
+      /* 資料日期 */
+      const dateEl = document.getElementById('futures-oi-date');
+      if (dateEl) dateEl.textContent = oi.date ? `資料日期：${oi.date}` : '';
+
+      /* source badge */
+      const badgeEl = document.getElementById('futures-oi-badge');
+      if (badgeEl) {
+        badgeEl.style.display = '';
+        if (isMock) {
+          badgeEl.textContent        = '模擬資料';
+          badgeEl.style.background   = 'rgba(255,136,0,0.15)';
+          badgeEl.style.color        = 'var(--orange)';
+        } else {
+          badgeEl.textContent        = '即時';
+          badgeEl.style.background   = 'rgba(63,185,80,0.15)';
+          badgeEl.style.color        = 'var(--up)';
+        }
       }
-      if (longEl)  longEl.textContent  = longOI.toLocaleString();
-      if (shortEl) shortEl.textContent = shortOI.toLocaleString();
+
+      const fmtOI  = v => (v == null ? '—' : Number(v).toLocaleString());
+      const fmtNet = v => {
+        if (v == null) return '—';
+        return (v >= 0 ? '+' : '') + Number(v).toLocaleString();
+      };
+      const netColor = v => v == null ? 'var(--text)' : (v >= 0 ? 'var(--up)' : 'var(--dn)');
+
+      [
+        { key: 'dealer',           prefix: 'dealer' },
+        { key: 'investment_trust', prefix: 'it'     },
+        { key: 'foreign',          prefix: 'fo'     },
+      ].forEach(({ key, prefix }) => {
+        const grp     = oi[key] || {};
+        const longEl  = document.getElementById(`oi-${prefix}-long`);
+        const shortEl = document.getElementById(`oi-${prefix}-short`);
+        const netEl   = document.getElementById(`oi-${prefix}-net`);
+        if (longEl)  longEl.textContent  = fmtOI(grp.long);
+        if (shortEl) shortEl.textContent = fmtOI(grp.short);
+        if (netEl) {
+          netEl.textContent = fmtNet(grp.net);
+          netEl.style.color = netColor(grp.net);
+        }
+      });
     }
   } catch (e) { console.warn('[M1] 期貨OI更新失敗', e); }
 

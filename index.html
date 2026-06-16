@@ -92,15 +92,35 @@
           <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-dealer" style="width:15%;background:var(--dn)"></div></div>
           <div class="chip-val dn" id="chip-val-dealer">-8億</div>
         </div>
-        <!-- 期貨未平倉 -->
+        <!-- 期貨未平倉（三大法人） -->
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bg3);">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-size:11px;color:var(--text2);">📈 外資台指期未平倉</div>
-            <div id="futures-oi-val" style="font-size:13px;font-weight:700;color:var(--text3);">載入中...</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+            <div style="font-size:11px;color:var(--text2);">
+              📈 台指期三大法人未平倉
+              <span id="futures-oi-date" style="margin-left:5px;color:var(--text3);font-size:10px;"></span>
+            </div>
+            <span id="futures-oi-badge" style="display:none;font-size:10px;font-weight:600;
+              padding:1px 6px;border-radius:3px;"></span>
           </div>
-          <div style="display:flex;gap:16px;margin-top:4px;font-size:11px;color:var(--text2);">
-            <span>多單 <b id="futures-oi-long" style="color:var(--up)">—</b></span>
-            <span>空單 <b id="futures-oi-short" style="color:var(--dn)">—</b></span>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;font-size:11px;line-height:1.7;">
+            <div style="background:var(--bg3);border-radius:5px;padding:6px;text-align:center;">
+              <div style="color:var(--text2);font-weight:600;font-size:10px;margin-bottom:3px;">自營商</div>
+              <div>多 <b id="oi-dealer-long" style="color:var(--up)">—</b></div>
+              <div>空 <b id="oi-dealer-short" style="color:var(--dn)">—</b></div>
+              <div>淨 <b id="oi-dealer-net">—</b></div>
+            </div>
+            <div style="background:var(--bg3);border-radius:5px;padding:6px;text-align:center;">
+              <div style="color:var(--text2);font-weight:600;font-size:10px;margin-bottom:3px;">投信</div>
+              <div>多 <b id="oi-it-long" style="color:var(--up)">—</b></div>
+              <div>空 <b id="oi-it-short" style="color:var(--dn)">—</b></div>
+              <div>淨 <b id="oi-it-net">—</b></div>
+            </div>
+            <div style="background:var(--bg3);border-radius:5px;padding:6px;text-align:center;">
+              <div style="color:var(--text2);font-weight:600;font-size:10px;margin-bottom:3px;">外資</div>
+              <div>多 <b id="oi-fo-long" style="color:var(--up)">—</b></div>
+              <div>空 <b id="oi-fo-short" style="color:var(--dn)">—</b></div>
+              <div>淨 <b id="oi-fo-net">—</b></div>
+            </div>
           </div>
         </div>
       </div>
