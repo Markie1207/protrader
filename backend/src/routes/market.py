@@ -2,7 +2,7 @@
 routes/market.py — 大盤 / 法人 API 路由
 """
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from datetime import datetime
 from src.data_sources import twse, sinopac
 
@@ -47,12 +47,33 @@ def futures_oi():
     return jsonify(data)
 
 
-@market_bp.route('/focus')
-def focus():
-    """AI 精選焦點股（法人買超 + 上漲 + 量能達標）"""
-    data = twse.get_focus_stocks()
+@market_bp.route('/temperature')
+def temperature():
+    """大盤溫度計：7項指標加權平均，回傳分數 + 各指標明細"""
+    data = twse.calc_temperature()
     if data:
         return jsonify(data)
+    return jsonify({'error': 'no data'}), 503
+
+
+@market_bp.route('/focus')
+def focus():
+    """今日焦點 AI 排序（新版4因子，降級舊版規則引擎）"""
+    codes_qs = request.args.get('codes', '')
+    pool     = [c.strip() for c in codes_qs.split(',') if c.strip()] or None
+
+    data = twse.calc_focus_ranking(pool)
+    if data:
+        return jsonify(data)
+
+    # 降級：舊版全市場篩選
+    old = twse.get_focus_stocks()
+    if old:
+        return jsonify({
+            'date':   datetime.today().strftime('%Y-%m-%d'),
+            'stocks': old,
+            'source': 'legacy',
+        })
     return jsonify({'error': 'no data'}), 503
 
 
