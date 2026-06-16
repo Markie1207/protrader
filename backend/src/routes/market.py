@@ -42,8 +42,8 @@ def status():
 
 @market_bp.route('/futures_oi')
 def futures_oi():
-    """外資期貨未平倉口數"""
-    data = twse.get_futures_oi()
+    """三大法人台指期未平倉口數（dealer / investment_trust / foreign）"""
+    data = twse.get_institutional_futures_oi()
     return jsonify(data)
 
 
