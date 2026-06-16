@@ -432,7 +432,8 @@ async function fetchAndUpdateDashboard() {
       const fmtOI  = v => (v == null ? '—' : Number(v).toLocaleString());
       const fmtNet = v => {
         if (v == null) return '—';
-        return (v >= 0 ? '+' : '') + Number(v).toLocaleString();
+        const arrow = v >= 0 ? ' ▲' : ' ▼';
+        return (v >= 0 ? '+' : '') + Number(v).toLocaleString() + arrow;
       };
       const netColor = v => v == null ? 'var(--text)' : (v >= 0 ? 'var(--up)' : 'var(--dn)');
 
