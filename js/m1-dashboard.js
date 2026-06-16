@@ -367,10 +367,9 @@ function renderFocusList() {
     const color     = rankColors[(rank - 1) % rankColors.length];
     const chgStr    = f.chg ?? (f.change_pct != null ? `${f.change_pct >= 0 ? '+' : ''}${f.change_pct}%` : '—');
     const isUp      = parseFloat(chgStr) >= 0;
-    const volStr    = f.volume_ratio != null ? `爆量 ${f.volume_ratio}x` : '';
-    const fBuyStr   = f.foreign_buy  != null ? `外資 ${f.foreign_buy >= 0 ? '+' : ''}${Number(f.foreign_buy).toLocaleString()}張` : '';
-    const cdStr     = f.foreign_consecutive_days > 0 ? `連買 ${f.foreign_consecutive_days}日` : '';
-    const detail    = [volStr, fBuyStr, cdStr].filter(Boolean).join('，') || (f.reason ?? '');
+    const volStr  = f.volume_ratio != null ? `爆量 ${f.volume_ratio}x` : '';
+    const fBuyStr = f.foreign_buy  != null ? `外資 ${f.foreign_buy >= 0 ? '+' : ''}${Number(f.foreign_buy).toLocaleString()}張` : '';
+    const detail  = [volStr, fBuyStr].filter(Boolean).join('，') || (f.reason ?? '');
 
     return `<div class="focus-item">
       <div style="display:flex;align-items:center;gap:10px;">
@@ -533,6 +532,11 @@ async function fetchAndUpdateDashboard() {
       renderIndicatorPanel(temp.indicators || []);
       const gaugeBadge = document.getElementById('gauge-badge');
       if (gaugeBadge) gaugeBadge.textContent = temp.label || '—';
+
+      /* 成交量（gauge-volume）：temp.volume 單位已是億元 */
+      const gvEl = document.getElementById('gauge-volume');
+      if (gvEl) gvEl.textContent = temp.volume != null
+        ? `${Number(temp.volume).toLocaleString()}億` : '—';
 
       /* 右上角小卡（同一個 temp 變數，不再呼叫 API） */
       const valEl   = document.getElementById('temp-card-val');

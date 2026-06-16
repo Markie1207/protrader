@@ -911,11 +911,20 @@ def calc_temperature() -> dict:
         (b[1], b[2], b[3]) for b in BANDS if score <= b[0]
     )
 
+    # 當日大盤總成交量（億元）：來自 FMTQIK 成交金額（仟元）÷ 100,000
+    volume_yi = None
+    if hist and hist.get('volume_5day'):
+        try:
+            volume_yi = round(hist['volume_5day'][-1] / 100_000)
+        except Exception:
+            pass
+
     result = {
         'score':       score,
         'label':       label,
         'description': desc,
         'color':       color,
+        'volume':      volume_yi,
         'indicators': [
             {
                 'name':   ind[1],
@@ -929,6 +938,27 @@ def calc_temperature() -> dict:
     }
     _cache_daily[key] = result
     return result
+
+
+def get_volume_ranking(n: int = 20) -> list:
+    """
+    當日成交量排行前 N 名（從 STOCK_DAY_ALL 導出）
+    回傳 [{ code, name, volume_k, close, change_pct }, ...]
+    """
+    price_map = get_stock_day_all()
+    if not price_map:
+        return []
+    ranked = sorted(price_map.items(), key=lambda x: x[1]['volume_k'], reverse=True)
+    return [
+        {
+            'code':       code,
+            'name':       v['name'],
+            'volume_k':   v['volume_k'],
+            'close':      v['close'],
+            'change_pct': v['change_pct'],
+        }
+        for code, v in ranked[:n]
+    ]
 
 
 def _score_focus(f_k: int, i_k: int, chg: float, vol_k: int, is_hot: bool) -> int:
@@ -1102,18 +1132,31 @@ FOCUS_POOL = ['2330', '2317', '2454', '2882', '2886', '2603', '6770', '3711', '2
 
 def calc_focus_ranking(pool: list | None = None) -> dict | None:
     """
-    今日焦點 AI 排序（4因子規則式評分）
-    因子：外資買超排名(35) + 爆量倍數(30) + 漲幅(20) + 外資連買天數(15)
-    pool：股票代號清單，預設用 FOCUS_POOL
+    今日焦點 AI 排序（3因子規則式評分）
+    因子：外資買超排名(40) + 爆量倍數(30) + 當日漲幅(30)
+    pool：優先用傳入清單（M6 觀察清單），不足20檔自動補當日成交量排行前20
+    回傳前20名
     """
-    pool = list(pool) if pool else list(FOCUS_POOL)
+    pool = list(pool) if pool else []
+
+    # 不足 20 檔：從成交量排行補齊（去重保持順序）
+    if len(pool) < 20:
+        vol_codes = [v['code'] for v in get_volume_ranking(20)]
+        seen: set = set(pool)
+        for c in vol_codes:
+            if c not in seen:
+                pool.append(c)
+                seen.add(c)
+            if len(pool) >= 20:
+                break
+
     cache_key = f'focus_rank_{"_".join(sorted(pool))}'
     if cache_key in _cache_daily:
         return _cache_daily[cache_key]
 
-    # ── T86：最近5個交易日，建立各股連續買超天數 ──
-    t86_by_date: list[dict] = []
-    for delta in range(8):
+    # ── T86：只需最近1個交易日 ──
+    today_t86: dict = {}
+    for delta in range(7):
         try_date = date.today() - timedelta(days=delta)
         if try_date.weekday() >= 5:
             continue
@@ -1123,44 +1166,24 @@ def calc_focus_ranking(pool: list | None = None) -> dict | None:
                           'selectType': 'ALLBUT0999'})
         if not (data and 'data' in data and len(data['data']) > 5):
             continue
-        day_map: dict = {}
         for row in data['data'][:-1]:
             try:
                 code = str(row[0]).strip()
                 if code not in pool:
                     continue
                 f_net = (_pz(row[4]) + _pz(row[7])) // 1000
-                day_map[code] = {'foreign_net_k': f_net, 'name': str(row[1]).strip()}
+                today_t86[code] = {'foreign_net_k': f_net, 'name': str(row[1]).strip()}
             except Exception:
                 pass
-        if day_map:
-            t86_by_date.append(day_map)
-        time.sleep(0.2)
-        if len(t86_by_date) >= 5:
+        if today_t86:
             break
-
-    if not t86_by_date:
-        return None
-
-    today_t86 = t86_by_date[0]
-
-    # 連續買超天數（從最近一日往前，買超＝正值）
-    consec: dict = {}
-    for code in pool:
-        cnt = 0
-        for d_map in t86_by_date:
-            if d_map.get(code, {}).get('foreign_net_k', 0) > 0:
-                cnt += 1
-            else:
-                break
-        consec[code] = cnt
 
     # ── 當日行情 ──
     price_map = get_stock_day_all()
     if not price_map:
         return None
 
-    # ── 歷史均量（近20日，單位：股）──
+    # ── 歷史均量（近20日） ──
     vol_avg: dict = {}
     for code in pool:
         hist = get_stock_daily(code, months=1)
@@ -1169,58 +1192,54 @@ def calc_focus_ranking(pool: list | None = None) -> dict | None:
             vol_avg[code] = sum(vols) / len(vols)
         time.sleep(0.2)
 
-    # ── 外資買超排名換算（第1名35分，線性遞減）──
+    # ── 外資買超排名換算（第1名40分，線性遞減）──
     pool_inst   = {code: today_t86.get(code, {}).get('foreign_net_k', 0) for code in pool}
     sorted_pool = sorted(pool_inst, key=lambda c: pool_inst[c], reverse=True)
     n           = max(len(sorted_pool), 1)
-    rank_score  = {c: round(35 * (n - i) / n) for i, c in enumerate(sorted_pool)}
+    rank_score  = {c: round(40 * (n - i) / n) for i, c in enumerate(sorted_pool)}
 
-    # ── 計算最終得分 ──
+    # ── 計算得分 ──
     results = []
     for code in pool:
         price = price_map.get(code)
         if not price:
             continue
 
-        chg      = price['change_pct']
-        vol      = price['volume_k'] * 1000            # 張 → 股
-        avg      = vol_avg.get(code) or vol or 1
-        f_buy    = today_t86.get(code, {}).get('foreign_net_k', 0)
-        name     = today_t86.get(code, {}).get('name') or price.get('name', code)
-        cd       = consec.get(code, 0)
+        chg   = price['change_pct']
+        vol   = price['volume_k'] * 1000
+        avg   = vol_avg.get(code) or vol or 1
+        f_buy = today_t86.get(code, {}).get('foreign_net_k', 0)
+        name  = today_t86.get(code, {}).get('name') or price.get('name', code)
 
-        vol_ratio  = min(vol / max(avg, 1), 3.0)
-        vol_score  = round(vol_ratio / 3 * 30)
-        chg_score  = round(min(max(chg, 0), 5) / 5 * 20)
-        f_score    = rank_score.get(code, 0)
-        cons_score = (15 if cd >= 3 else 10 if cd == 2 else 5 if cd == 1 else 0)
-        total      = min(f_score + vol_score + chg_score + cons_score, 100)
+        vol_ratio = min(vol / max(avg, 1), 3.0)
+        vol_score = round(vol_ratio / 3 * 30)
+        chg_score = round(min(max(chg, 0), 5) / 5 * 30)
+        f_score   = rank_score.get(code, 0)
+        total     = min(f_score + vol_score + chg_score, 100)
 
         results.append({
-            'code':                     code,
-            'name':                     name,
-            'score':                    total,
-            'change_pct':               round(chg, 1),
-            'volume_ratio':             round(vol_ratio, 1),
-            'foreign_buy':              f_buy,
-            'foreign_consecutive_days': cd,
+            'code':         code,
+            'name':         name,
+            'score':        total,
+            'change_pct':   round(chg, 1),
+            'volume_ratio': round(vol_ratio, 1),
+            'foreign_buy':  f_buy,
             'score_detail': {
                 'foreign_rank': f_score,
                 'volume':       vol_score,
                 'change':       chg_score,
-                'consecutive':  cons_score,
             },
         })
 
     results.sort(key=lambda x: x['score'], reverse=True)
-    for i, r in enumerate(results[:5], 1):
+    for i, r in enumerate(results[:20], 1):
         r['rank'] = i
 
     result = {
         'date':   date.today().isoformat(),
-        'stocks': results[:5],
+        'stocks': results[:20],
         'source': 'computed',
     }
     _cache_daily[cache_key] = result
-    print(f'[FOCUS_RANK] 完成，第一名：{results[0]["code"] if results else "-"}')
+    print(f'[FOCUS_RANK] 完成，共 {len(results[:20])} 支，第一名：{results[0]["code"] if results else "-"}')
     return result

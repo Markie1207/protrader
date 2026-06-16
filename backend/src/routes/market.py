@@ -56,6 +56,13 @@ def temperature():
     return jsonify({'error': 'no data'}), 503
 
 
+@market_bp.route('/volume_ranking')
+def volume_ranking():
+    """當日成交量排行前20名（從 STOCK_DAY_ALL 導出）"""
+    data = twse.get_volume_ranking(20)
+    return jsonify(data)
+
+
 @market_bp.route('/focus')
 def focus():
     """今日焦點 AI 排序（新版4因子，降級舊版規則引擎）"""

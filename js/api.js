@@ -100,11 +100,11 @@ const Mock = {
       source: 'mock', date: null,
       stocks: [
         { rank:1, code:'2330', name:'台積電', score:80, change_pct:1.2,
-          volume_ratio:1.5, foreign_buy:8000, foreign_consecutive_days:3,
-          score_detail:{ foreign_rank:30, volume:22, change:8, consecutive:10 } },
+          volume_ratio:1.5, foreign_buy:8000,
+          score_detail:{ foreign_rank:32, volume:22, change:26 } },
         { rank:2, code:'2317', name:'鴻海',   score:65, change_pct:0.8,
-          volume_ratio:1.2, foreign_buy:3200, foreign_consecutive_days:1,
-          score_detail:{ foreign_rank:24, volume:18, change:6, consecutive:5  } },
+          volume_ratio:1.2, foreign_buy:3200,
+          score_detail:{ foreign_rank:24, volume:18, change:24 } },
       ],
     };
   },
