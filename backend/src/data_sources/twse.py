@@ -197,14 +197,17 @@ def _get_institutional_t86(today: str, fallback: dict) -> dict:
 
 def get_institutional_futures_oi() -> dict:
     """
-    三大法人台指期未平倉口數（TAIFEX open data CSV）
-    契約 TX，快取至隔日 08:00
-    失敗寫 logs/futures_oi.log，回傳 source='mock' 含 null 欄位
+    三大法人台指期(TX)未平倉口數（TAIFEX open data CSV）
+
+    CSV 結構：依身份別分行
+      欄位：日期 / 商品名稱 / 身份別 / 多方未平倉口數 / 空方未平倉口數 / 多空未平倉口數淨額
+      身份別值：自營商 / 投信 / 外資及陸資
+
+    快取至隔日 08:00；失敗寫 logs/futures_oi.log，回傳 source='mock'
     """
     CACHE_KEY = 'inst_futures_oi'
     now = datetime.now()
 
-    # 自訂快取（TTL 至隔日 08:00）
     cached = _inst_oi_cache.get(CACHE_KEY)
     if cached and now < cached['_expires']:
         return {k: v for k, v in cached.items() if k != '_expires'}
@@ -231,31 +234,19 @@ def get_institutional_futures_oi() -> dict:
         except Exception:
             pass
 
-    FIELD_MAP = {
-        'date':        ['日期', 'Date', 'date'],
-        'code':        ['契約代碼', 'ContractCode', 'contract'],
-        'dealer_long':  ['自營商_多方未平倉口數', 'Dealer_Long',              'dealer_long'],
-        'dealer_short': ['自營商_空方未平倉口數', 'Dealer_Short',             'dealer_short'],
-        'dealer_net':   ['自營商_多空淨額',       'Dealer_Net',               'dealer_net'],
-        'it_long':      ['投信_多方未平倉口數',   'InvestmentTrust_Long',     'investment_trust_long'],
-        'it_short':     ['投信_空方未平倉口數',   'InvestmentTrust_Short',    'investment_trust_short'],
-        'it_net':       ['投信_多空淨額',         'InvestmentTrust_Net',      'investment_trust_net'],
-        'fo_long':      ['外資及陸資_多方未平倉口數', 'Foreign_Long',          'foreign_long'],
-        'fo_short':     ['外資及陸資_空方未平倉口數', 'Foreign_Short',         'foreign_short'],
-        'fo_net':       ['外資及陸資_多空淨額',      'Foreign_Net',           'foreign_net'],
-    }
-
-    def _find_col(csv_headers: list, candidates: list) -> str | None:
-        for c in candidates:
-            if c in csv_headers:
-                return c
-        return None
-
     def _int(s) -> int:
         try:
-            return int(str(s).replace(',', '').replace(' ', '') or 0)
+            return int(str(s).replace(',', '').replace(' ', '').replace('+', '') or 0)
         except Exception:
             return 0
+
+    # 身份別 → result key 對照
+    IDENTITY_MAP = {
+        '自營商':     'dealer',
+        '投信':       'investment_trust',
+        '外資及陸資': 'foreign',
+        '外資':       'foreign',
+    }
 
     url = (
         'https://www.taifex.com.tw/data_gov/taifex_open_data.asp'
@@ -281,53 +272,80 @@ def get_institutional_futures_oi() -> dict:
         if text is None:
             raise ValueError('CSV 解碼失敗（嘗試 utf-8-sig / big5 / cp950）')
 
-        reader      = csv.DictReader(io.StringIO(text))
+        # 自動偵測分隔符（tab 優先，否則逗號）
+        delimiter = '\t' if '\t' in text[:300] else ','
+        reader      = csv.DictReader(io.StringIO(text), delimiter=delimiter)
         csv_headers = list(reader.fieldnames or [])
-        _log(f'CSV 欄位：{csv_headers}')
+        _log(f'CSV 欄位：{csv_headers}，分隔符：{"tab" if delimiter == chr(9) else "comma"}')
 
-        col      = {k: _find_col(csv_headers, v) for k, v in FIELD_MAP.items()}
-        code_col = col['code']
-        if not code_col:
-            raise ValueError(f'找不到契約代碼欄位，實際欄位：{csv_headers}')
+        # 欄位定位（含空格 strip）
+        def _col(keywords: list) -> str | None:
+            for h in csv_headers:
+                hs = h.strip()
+                for kw in keywords:
+                    if kw in hs:
+                        return h
+            return None
 
-        result     = None
-        data_date  = date.today().isoformat()
+        col_product  = _col(['商品名稱'])
+        col_date     = _col(['日期'])
+        col_identity = _col(['身份別'])
+        col_long     = _col(['多方未平倉口數'])
+        col_short    = _col(['空方未平倉口數'])
+        col_net      = _col(['多空未平倉口數淨額', '淨額'])
 
+        if not col_identity:
+            raise ValueError(f'找不到身份別欄位，實際欄位：{csv_headers}')
+
+        # 讀取全部列，篩選 TX / 臺股期貨
+        tx_rows = []
         for row in reader:
-            if str(row.get(code_col, '')).strip() != 'TX':
+            product = str(row.get(col_product, '') if col_product else '').strip()
+            if 'TX' not in product and '臺股期貨' not in product:
                 continue
+            tx_rows.append(row)
 
-            if col['date']:
-                data_date = str(row.get(col['date'], '')).strip() or data_date
+        if not tx_rows:
+            raise ValueError(f'篩選後無 TX/臺股期貨資料，商品名稱欄：{col_product}，欄位：{csv_headers}')
 
-            def _get_int(field_key: str) -> int | None:
-                c = col.get(field_key)
-                return _int(row.get(c, 0)) if c else None
+        # 取最新日期的列
+        if col_date:
+            latest_date = max(str(r.get(col_date, '')).strip() for r in tx_rows)
+            tx_rows = [r for r in tx_rows if str(r.get(col_date, '')).strip() == latest_date]
+        else:
+            latest_date = date.today().isoformat()
 
-            d_long, d_short, d_net = _get_int('dealer_long'), _get_int('dealer_short'), _get_int('dealer_net')
-            i_long, i_short, i_net = _get_int('it_long'),     _get_int('it_short'),     _get_int('it_net')
-            f_long, f_short, f_net = _get_int('fo_long'),     _get_int('fo_short'),     _get_int('fo_net')
+        _log(f'TX 資料列 {len(tx_rows)} 筆，最新日期：{latest_date}')
 
-            if d_net is None and d_long is not None and d_short is not None:
-                d_net = d_long - d_short
-            if i_net is None and i_long is not None and i_short is not None:
-                i_net = i_long - i_short
-            if f_net is None and f_long is not None and f_short is not None:
-                f_net = f_long - f_short
+        # 依身份別分組
+        groups: dict = {}
+        for row in tx_rows:
+            identity = str(row.get(col_identity, '')).strip()
+            key = IDENTITY_MAP.get(identity)
+            if key is None:
+                continue
+            long_v  = _int(row.get(col_long,  0) if col_long  else 0)
+            short_v = _int(row.get(col_short, 0) if col_short else 0)
+            net_v   = _int(row.get(col_net,   0) if col_net   else long_v - short_v)
+            groups[key] = {'long': long_v, 'short': short_v, 'net': net_v}
 
-            result = {
-                'source':           'taifex',
-                'date':             data_date,
-                'dealer':           {'long': d_long,  'short': d_short,  'net': d_net},
-                'investment_trust': {'long': i_long,  'short': i_short,  'net': i_net},
-                'foreign':          {'long': f_long,  'short': f_short,  'net': f_net},
-            }
-            break
+        if not groups:
+            raise ValueError(f'身份別解析結果為空，身份別欄值：{[r.get(col_identity,"") for r in tx_rows]}')
 
-        if result is None:
-            raise ValueError('CSV 中無 TX 資料列')
+        null_grp = {'long': None, 'short': None, 'net': None}
+        result = {
+            'source':           'taifex',
+            'date':             latest_date,
+            'dealer':           groups.get('dealer',           null_grp),
+            'investment_trust': groups.get('investment_trust', null_grp),
+            'foreign':          groups.get('foreign',          null_grp),
+        }
 
-        _log(f'成功：date={data_date}, dealer_net={d_net}, it_net={i_net}, foreign_net={f_net}')
+        _log(
+            f'成功：dealer_net={groups.get("dealer",{}).get("net")}，'
+            f'it_net={groups.get("investment_trust",{}).get("net")}，'
+            f'foreign_net={groups.get("foreign",{}).get("net")}'
+        )
         _inst_oi_cache[CACHE_KEY] = {**result, '_expires': _next_08()}
         return result
 
