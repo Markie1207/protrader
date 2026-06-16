@@ -581,6 +581,356 @@ def get_stock_day_all() -> dict:
     return result
 
 
+def get_taiex_history(days: int = 10) -> dict | None:
+    """
+    加權指數近 N 日日線（TWSE FMTQIK 月統計）
+    回傳 { records:[{date,close,volume}], consecutive_k:int, volume_slope:float }
+    consecutive_k > 0 = 連續紅K天數；< 0 = 連續黑K天數
+    volume_slope：最近5日均量趨勢（平均每日 % 變化）
+    """
+    key = f'taiex_hist_{days}'
+    if key in _cache_daily:
+        return _cache_daily[key]
+
+    url     = 'https://www.twse.com.tw/exchangeReport/FMTQIK'
+    records = []
+
+    for delta_month in range(3):
+        m = date.today().month - delta_month
+        y = date.today().year
+        while m <= 0:
+            m += 12; y -= 1
+        data = _get(url, {'response': 'json', 'date': f'{y}{m:02d}01'})
+        if not (data and 'data' in data):
+            time.sleep(0.2)
+            continue
+        for row in data['data']:
+            try:
+                # 日期格式：民國 115/06/02
+                parts = str(row[0]).strip().split('/')
+                iso   = f'{int(parts[0]) + 1911}-{int(parts[1]):02d}-{int(parts[2]):02d}'
+                close = float(str(row[4]).replace(',', ''))
+                vol   = float(str(row[2]).replace(',', ''))  # 成交金額（仟元）
+                records.append({'date': iso, 'close': close, 'volume': vol})
+            except Exception:
+                pass
+        time.sleep(0.2)
+        if len(records) >= days:
+            break
+
+    if not records:
+        return None
+
+    records = sorted(records, key=lambda r: r['date'])[-days:]
+
+    for i in range(len(records)):
+        prev = records[i - 1]['close'] if i > 0 else records[i]['close']
+        records[i]['is_up'] = records[i]['close'] >= prev
+
+    # 連續紅/黑K（從最後一筆往前）
+    consecutive_k = 0
+    if len(records) >= 2:
+        up    = records[-1]['is_up']
+        count = 0
+        for r in reversed(records):
+            if r['is_up'] == up:
+                count += 1
+            else:
+                break
+        consecutive_k = count if up else -count
+
+    # 5日量趨勢
+    vols = [r['volume'] for r in records[-5:]]
+    if len(vols) >= 2:
+        diffs        = [(vols[i] - vols[i-1]) / max(vols[i-1], 1) * 100
+                        for i in range(1, len(vols))]
+        volume_slope = round(sum(diffs) / len(diffs), 2)
+    else:
+        volume_slope = 0.0
+
+    result = {
+        'records':       records,
+        'consecutive_k': consecutive_k,
+        'volume_slope':  volume_slope,
+        'volume_5day':   vols,
+    }
+    _cache_daily[key] = result
+    return result
+
+
+def get_market_breadth() -> dict | None:
+    """
+    漲跌家數（從 STOCK_DAY_ALL 導出，含漲停/跌停統計）
+    """
+    key = 'market_breadth'
+    if key in _cache_daily:
+        return _cache_daily[key]
+
+    price_map = get_stock_day_all()
+    if not price_map:
+        return None
+
+    up = dn = limit_up = limit_dn = unchanged = 0
+    for v in price_map.values():
+        pct = v['change_pct']
+        if pct >= 9.5:     limit_up += 1; up += 1
+        elif pct > 0:      up += 1
+        elif pct == 0:     unchanged += 1
+        elif pct <= -9.5:  limit_dn += 1; dn += 1
+        else:              dn += 1
+
+    total = up + dn
+    result = {
+        'up':             up,
+        'down':           dn,
+        'unchanged':      unchanged,
+        'limit_up':       limit_up,
+        'limit_down':     limit_dn,
+        'total':          len(price_map),
+        'up_ratio':       round(up / max(total, 1) * 100, 1),
+        'limit_up_ratio': round(limit_up / max(total, 1) * 100, 1),
+    }
+    _cache_daily[key] = result
+    return result
+
+
+def get_put_call_ratio() -> dict | None:
+    """
+    TAIFEX Put/Call Ratio（選擇權未平倉量比率，data_name=PutCallRatio）
+    欄位名稱防禦式解析
+    """
+    key = 'pcr'
+    if key in _cache_daily:
+        return _cache_daily[key]
+
+    url = (
+        'https://www.taifex.com.tw/data_gov/taifex_open_data.asp'
+        '?data_name=PutCallRatio'
+    )
+    req_headers = {
+        'User-Agent': 'Mozilla/5.0 (ProTrader/1.1)',
+        'Referer':    'https://www.taifex.com.tw/',
+    }
+
+    try:
+        r = requests.get(url, headers=req_headers, timeout=10)
+        r.raise_for_status()
+
+        raw  = r.content
+        text = None
+        for enc in ('utf-8-sig', 'big5', 'cp950'):
+            try:
+                text = raw.decode(enc); break
+            except Exception:
+                continue
+        if not text:
+            return None
+
+        delimiter   = '\t' if '\t' in text[:300] else ','
+        reader      = csv.DictReader(io.StringIO(text), delimiter=delimiter)
+        csv_headers = list(reader.fieldnames or [])
+        _hmap       = {h.strip(): h for h in csv_headers}
+
+        col_date    = _hmap.get('日期')
+        col_pcr_oi  = (_hmap.get('買賣權未平倉量比率')
+                       or _hmap.get('買賣權未平倉口數比率'))
+        col_pcr_vol = _hmap.get('買賣權成交量比率')
+
+        rows = list(reader)
+        if not rows:
+            return None
+
+        if col_date:
+            latest = max(str(rw.get(col_date, '')).strip() for rw in rows)
+            rows   = [rw for rw in rows if str(rw.get(col_date, '')).strip() == latest]
+        else:
+            latest = date.today().isoformat()
+
+        def _f(s) -> float:
+            try:
+                return float(str(s).replace(',', '').strip() or 0)
+            except Exception:
+                return 0.0
+
+        row     = rows[0]
+        pcr_oi  = _f(row.get(col_pcr_oi,  0) if col_pcr_oi  else 0)
+        pcr_vol = _f(row.get(col_pcr_vol, 0) if col_pcr_vol else 0)
+        pcr     = pcr_oi if pcr_oi > 0 else pcr_vol
+
+        if pcr == 0:
+            print(f'[PCR] PCR=0，欄位未對應，實際欄位：{csv_headers}')
+            return None
+
+        result = {
+            'pcr':     round(pcr,     2),
+            'pcr_oi':  round(pcr_oi,  2),
+            'pcr_vol': round(pcr_vol, 2),
+            'date':    latest,
+        }
+        _cache_daily[key] = result
+        return result
+
+    except Exception as e:
+        print(f'[TAIFEX] PCR 失敗：{e}')
+        return None
+
+
+def _score_indicator(name: str, value: float) -> int:
+    """各溫度指標線性插值換算 0-100 分"""
+
+    def lerp(v, v0, v1, s0, s1) -> int:
+        if v <= v0: return int(s0)
+        if v >= v1: return int(s1)
+        return round(s0 + (v - v0) / (v1 - v0) * (s1 - s0))
+
+    if name == 'foreign_stock':    # 外資現貨 億元
+        if value >= 300:  return 100
+        if value >= 100:  return lerp(value, 100, 300, 70, 100)
+        if value >= 0:    return lerp(value, 0,   100,  50, 70)
+        if value >= -300: return lerp(value, -300, 0,    0, 50)
+        return 0
+
+    if name == 'invest_stock':     # 投信現貨 億元
+        if value >= 100:  return 100
+        if value >= 0:    return lerp(value, 0,   100, 50, 100)
+        if value >= -50:  return lerp(value, -50,  0,   0,  50)
+        return 0
+
+    if name == 'foreign_futures':  # 外資期貨淨口數
+        if value >= 5000:  return 100
+        if value >= 0:     return lerp(value, 0,     5000, 50, 100)
+        if value >= -5000: return lerp(value, -5000, 0,     0,  50)
+        return 0
+
+    if name == 'consecutive_k':    # 正=紅K天數，負=黑K天數
+        if value >= 5:  return lerp(value, 5,  10, 85, 100)
+        if value >= 3:  return lerp(value, 3,   5, 65, 84)
+        if value >= 1:  return lerp(value, 1,   3, 55, 64)
+        if value == 0:  return 50
+        if value >= -2: return lerp(value, -2,  0, 36, 49)
+        if value >= -4: return lerp(value, -4, -2, 16, 35)
+        return lerp(value, -10, -4, 0, 15)
+
+    if name == 'volume_slope':     # %/日
+        if value >= 10:   return lerp(value,  10, 25, 85, 100)
+        if value >= 0:    return lerp(value,   0, 10, 65, 84)
+        if value >= -5:   return lerp(value,  -5,  0, 45, 55)
+        if value >= -10:  return lerp(value, -10, -5, 20, 44)
+        return lerp(value, -25, -10, 0, 19)
+
+    if name == 'pcr':              # Put/Call Ratio
+        if value <= 0.5:  return 100
+        if value <= 0.7:  return lerp(value, 0.5, 0.7, 75, 100)
+        if value <= 1.0:  return lerp(value, 0.7, 1.0, 50,  75)
+        if value <= 1.5:  return lerp(value, 1.0, 1.5, 25,  50)
+        return lerp(value, 1.5, 3.0, 0, 25)
+
+    if name == 'breadth':          # up_ratio (0-1)
+        if value >= 0.8:  return lerp(value, 0.8, 1.0, 90, 100)
+        if value >= 0.7:  return lerp(value, 0.7, 0.8, 70,  89)
+        if value >= 0.45: return lerp(value, 0.45, 0.7, 40, 69)
+        if value >= 0.3:  return lerp(value, 0.3, 0.45, 20, 39)
+        return lerp(value, 0, 0.3, 0, 19)
+
+    return 50
+
+
+def calc_temperature() -> dict:
+    """
+    大盤溫度計：7項指標加權平均
+    任一指標失敗 → 排除，其他指標等比例重新分配權重
+    """
+    key = 'temperature'
+    if key in _cache_daily:
+        return _cache_daily[key]
+
+    inst = get_institutional_today()
+    oi   = get_institutional_futures_oi()
+    hist = get_taiex_history(10)
+    brd  = get_market_breadth()
+    pcr  = get_put_call_ratio()
+
+    # (内部key, 顯示名稱, 分數, 值文字, 基礎權重)
+    indicators: list[tuple] = []
+
+    if inst and inst.get('foreign'):
+        nb = inst['foreign']['net'] / 1e8
+        indicators.append(('foreign_stock', '外資現貨',
+                            _score_indicator('foreign_stock', nb),
+                            f'{nb:+.0f}億', 15))
+
+    if inst and inst.get('investment'):
+        nb = inst['investment']['net'] / 1e8
+        indicators.append(('invest_stock', '投信現貨',
+                            _score_indicator('invest_stock', nb),
+                            f'{nb:+.0f}億', 10))
+
+    if oi and oi.get('source') != 'mock' and oi.get('foreign', {}).get('net') is not None:
+        net = oi['foreign']['net']
+        indicators.append(('foreign_futures', '外資期貨',
+                            _score_indicator('foreign_futures', net),
+                            f'{net:+,}口', 15))
+
+    if hist:
+        ck  = hist['consecutive_k']
+        lbl = (f'紅K {ck}天' if ck > 0 else f'黑K {abs(ck)}天' if ck < 0 else '平盤')
+        indicators.append(('consecutive_k', '連續K棒',
+                            _score_indicator('consecutive_k', ck),
+                            lbl, 15))
+
+    if hist:
+        sl = hist['volume_slope']
+        indicators.append(('volume_slope', '成交量',
+                            _score_indicator('volume_slope', sl),
+                            f'{sl:+.1f}%/日', 15))
+
+    if pcr and pcr.get('pcr'):
+        p = pcr['pcr']
+        indicators.append(('pcr', 'PC Ratio',
+                            _score_indicator('pcr', p),
+                            str(p), 15))
+
+    if brd:
+        ratio = brd['up_ratio'] / 100.0
+        indicators.append(('breadth', '漲跌家數',
+                            _score_indicator('breadth', ratio),
+                            f'{brd["up_ratio"]}%漲', 15))
+
+    total_w = sum(ind[4] for ind in indicators) or 1
+    score   = round(sum(ind[2] * ind[4] for ind in indicators) / total_w)
+
+    BANDS = [
+        (20,  '極度恐慌', '市場大量拋售，可留意逢低機會', 'darkblue'),
+        (40,  '偏空',     '法人持續賣超，謹慎觀望',       'blue'),
+        (60,  '中性',     '多空均衡，無明顯方向',         'green'),
+        (75,  '偏熱',     '短線過熱，注意追高風險',       'orange'),
+        (85,  '過熱',     '籌碼面偏多但需警戒反轉',       'darkorange'),
+        (100, '極度貪婪', '市場過度樂觀，高風險區',       'red'),
+    ]
+    label, desc, color = next(
+        (b[1], b[2], b[3]) for b in BANDS if score <= b[0]
+    )
+
+    result = {
+        'score':       score,
+        'label':       label,
+        'description': desc,
+        'color':       color,
+        'indicators': [
+            {
+                'name':   ind[1],
+                'value':  ind[3],
+                'score':  ind[2],
+                'weight': round(ind[4] / total_w, 3),
+            }
+            for ind in indicators
+        ],
+        'source': 'computed',
+    }
+    _cache_daily[key] = result
+    return result
+
+
 def _score_focus(f_k: int, i_k: int, chg: float, vol_k: int, is_hot: bool) -> int:
     """計算 AI 分數（滿分 100）
     新權重：量能(50) + 外資買超(40) + 漲幅(10)
@@ -740,4 +1090,137 @@ def get_focus_stocks() -> list | None:
 
     _cache_daily[key] = result
     print(f'[FOCUS] 選出 {len(result)} 支，資料日期 {t86_date}，第一名：{result[0]["code"]} {result[0]["name"]} ({result[0]["score"]}分)')
+    return result
+
+
+# ─────────────────────────────────────────
+#  新版焦點排序（4因子規則式）
+# ─────────────────────────────────────────
+
+FOCUS_POOL = ['2330', '2317', '2454', '2882', '2886', '2603', '6770', '3711', '2379', '2308']
+
+
+def calc_focus_ranking(pool: list | None = None) -> dict | None:
+    """
+    今日焦點 AI 排序（4因子規則式評分）
+    因子：外資買超排名(35) + 爆量倍數(30) + 漲幅(20) + 外資連買天數(15)
+    pool：股票代號清單，預設用 FOCUS_POOL
+    """
+    pool = list(pool) if pool else list(FOCUS_POOL)
+    cache_key = f'focus_rank_{"_".join(sorted(pool))}'
+    if cache_key in _cache_daily:
+        return _cache_daily[cache_key]
+
+    # ── T86：最近5個交易日，建立各股連續買超天數 ──
+    t86_by_date: list[dict] = []
+    for delta in range(8):
+        try_date = date.today() - timedelta(days=delta)
+        if try_date.weekday() >= 5:
+            continue
+        url  = 'https://www.twse.com.tw/fund/T86'
+        data = _get(url, {'response': 'json',
+                          'date': try_date.strftime('%Y%m%d'),
+                          'selectType': 'ALLBUT0999'})
+        if not (data and 'data' in data and len(data['data']) > 5):
+            continue
+        day_map: dict = {}
+        for row in data['data'][:-1]:
+            try:
+                code = str(row[0]).strip()
+                if code not in pool:
+                    continue
+                f_net = (_pz(row[4]) + _pz(row[7])) // 1000
+                day_map[code] = {'foreign_net_k': f_net, 'name': str(row[1]).strip()}
+            except Exception:
+                pass
+        if day_map:
+            t86_by_date.append(day_map)
+        time.sleep(0.2)
+        if len(t86_by_date) >= 5:
+            break
+
+    if not t86_by_date:
+        return None
+
+    today_t86 = t86_by_date[0]
+
+    # 連續買超天數（從最近一日往前，買超＝正值）
+    consec: dict = {}
+    for code in pool:
+        cnt = 0
+        for d_map in t86_by_date:
+            if d_map.get(code, {}).get('foreign_net_k', 0) > 0:
+                cnt += 1
+            else:
+                break
+        consec[code] = cnt
+
+    # ── 當日行情 ──
+    price_map = get_stock_day_all()
+    if not price_map:
+        return None
+
+    # ── 歷史均量（近20日，單位：股）──
+    vol_avg: dict = {}
+    for code in pool:
+        hist = get_stock_daily(code, months=1)
+        if hist and len(hist) >= 5:
+            vols          = [r['volume'] for r in hist[-20:]]
+            vol_avg[code] = sum(vols) / len(vols)
+        time.sleep(0.2)
+
+    # ── 外資買超排名換算（第1名35分，線性遞減）──
+    pool_inst   = {code: today_t86.get(code, {}).get('foreign_net_k', 0) for code in pool}
+    sorted_pool = sorted(pool_inst, key=lambda c: pool_inst[c], reverse=True)
+    n           = max(len(sorted_pool), 1)
+    rank_score  = {c: round(35 * (n - i) / n) for i, c in enumerate(sorted_pool)}
+
+    # ── 計算最終得分 ──
+    results = []
+    for code in pool:
+        price = price_map.get(code)
+        if not price:
+            continue
+
+        chg      = price['change_pct']
+        vol      = price['volume_k'] * 1000            # 張 → 股
+        avg      = vol_avg.get(code) or vol or 1
+        f_buy    = today_t86.get(code, {}).get('foreign_net_k', 0)
+        name     = today_t86.get(code, {}).get('name') or price.get('name', code)
+        cd       = consec.get(code, 0)
+
+        vol_ratio  = min(vol / max(avg, 1), 3.0)
+        vol_score  = round(vol_ratio / 3 * 30)
+        chg_score  = round(min(max(chg, 0), 5) / 5 * 20)
+        f_score    = rank_score.get(code, 0)
+        cons_score = (15 if cd >= 3 else 10 if cd == 2 else 5 if cd == 1 else 0)
+        total      = min(f_score + vol_score + chg_score + cons_score, 100)
+
+        results.append({
+            'code':                     code,
+            'name':                     name,
+            'score':                    total,
+            'change_pct':               round(chg, 1),
+            'volume_ratio':             round(vol_ratio, 1),
+            'foreign_buy':              f_buy,
+            'foreign_consecutive_days': cd,
+            'score_detail': {
+                'foreign_rank': f_score,
+                'volume':       vol_score,
+                'change':       chg_score,
+                'consecutive':  cons_score,
+            },
+        })
+
+    results.sort(key=lambda x: x['score'], reverse=True)
+    for i, r in enumerate(results[:5], 1):
+        r['rank'] = i
+
+    result = {
+        'date':   date.today().isoformat(),
+        'stocks': results[:5],
+        'source': 'computed',
+    }
+    _cache_daily[cache_key] = result
+    print(f'[FOCUS_RANK] 完成，第一名：{results[0]["code"] if results else "-"}')
     return result
