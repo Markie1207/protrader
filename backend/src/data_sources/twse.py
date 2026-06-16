@@ -3,13 +3,19 @@ twse.py — TWSE / TPEX / TAIFEX 官方免費 API
 資料來源：www.twse.com.tw、openapi.taifex.com.tw（完全免費、無需帳號）
 """
 
+import csv
+import io
+import os
 import requests
 import time
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from cachetools import TTLCache
 
 _cache_daily   = TTLCache(maxsize=100, ttl=300)
 _cache_instant = TTLCache(maxsize=200, ttl=30)
+
+# 三大法人期貨 OI 專用快取（TTL 至隔日 08:00，重啟清空）
+_inst_oi_cache: dict = {}
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (ProTrader/1.1)',
@@ -189,6 +195,149 @@ def _get_institutional_t86(today: str, fallback: dict) -> dict:
     return fallback
 
 
+def get_institutional_futures_oi() -> dict:
+    """
+    三大法人台指期未平倉口數（TAIFEX open data CSV）
+    契約 TX，快取至隔日 08:00
+    失敗寫 logs/futures_oi.log，回傳 source='mock' 含 null 欄位
+    """
+    CACHE_KEY = 'inst_futures_oi'
+    now = datetime.now()
+
+    # 自訂快取（TTL 至隔日 08:00）
+    cached = _inst_oi_cache.get(CACHE_KEY)
+    if cached and now < cached['_expires']:
+        return {k: v for k, v in cached.items() if k != '_expires'}
+
+    mock_result = {
+        'source':           'mock',
+        'date':             date.today().isoformat(),
+        'dealer':           {'long': None, 'short': None, 'net': None},
+        'investment_trust': {'long': None, 'short': None, 'net': None},
+        'foreign':          {'long': None, 'short': None, 'net': None},
+    }
+
+    def _next_08() -> datetime:
+        target = now.replace(hour=8, minute=0, second=0, microsecond=0)
+        if now >= target:
+            target += timedelta(days=1)
+        return target
+
+    def _log(msg: str) -> None:
+        try:
+            os.makedirs('logs', exist_ok=True)
+            with open('logs/futures_oi.log', 'a', encoding='utf-8') as f:
+                f.write(f'[{now.strftime("%Y-%m-%d %H:%M:%S")}] {msg}\n')
+        except Exception:
+            pass
+
+    FIELD_MAP = {
+        'date':        ['日期', 'Date', 'date'],
+        'code':        ['契約代碼', 'ContractCode', 'contract'],
+        'dealer_long':  ['自營商_多方未平倉口數', 'Dealer_Long',              'dealer_long'],
+        'dealer_short': ['自營商_空方未平倉口數', 'Dealer_Short',             'dealer_short'],
+        'dealer_net':   ['自營商_多空淨額',       'Dealer_Net',               'dealer_net'],
+        'it_long':      ['投信_多方未平倉口數',   'InvestmentTrust_Long',     'investment_trust_long'],
+        'it_short':     ['投信_空方未平倉口數',   'InvestmentTrust_Short',    'investment_trust_short'],
+        'it_net':       ['投信_多空淨額',         'InvestmentTrust_Net',      'investment_trust_net'],
+        'fo_long':      ['外資及陸資_多方未平倉口數', 'Foreign_Long',          'foreign_long'],
+        'fo_short':     ['外資及陸資_空方未平倉口數', 'Foreign_Short',         'foreign_short'],
+        'fo_net':       ['外資及陸資_多空淨額',      'Foreign_Net',           'foreign_net'],
+    }
+
+    def _find_col(csv_headers: list, candidates: list) -> str | None:
+        for c in candidates:
+            if c in csv_headers:
+                return c
+        return None
+
+    def _int(s) -> int:
+        try:
+            return int(str(s).replace(',', '').replace(' ', '') or 0)
+        except Exception:
+            return 0
+
+    url = (
+        'https://www.taifex.com.tw/data_gov/taifex_open_data.asp'
+        '?data_name=MarketDataOfMajorInstitutionalTradersDetailsOfFuturesContractsBytheDate'
+    )
+    req_headers = {
+        'User-Agent': 'Mozilla/5.0 (ProTrader/1.1)',
+        'Referer':    'https://www.taifex.com.tw/',
+    }
+
+    try:
+        r = requests.get(url, headers=req_headers, timeout=12)
+        r.raise_for_status()
+
+        raw  = r.content
+        text = None
+        for enc in ('utf-8-sig', 'big5', 'cp950'):
+            try:
+                text = raw.decode(enc)
+                break
+            except Exception:
+                continue
+        if text is None:
+            raise ValueError('CSV 解碼失敗（嘗試 utf-8-sig / big5 / cp950）')
+
+        reader      = csv.DictReader(io.StringIO(text))
+        csv_headers = list(reader.fieldnames or [])
+        _log(f'CSV 欄位：{csv_headers}')
+
+        col      = {k: _find_col(csv_headers, v) for k, v in FIELD_MAP.items()}
+        code_col = col['code']
+        if not code_col:
+            raise ValueError(f'找不到契約代碼欄位，實際欄位：{csv_headers}')
+
+        result     = None
+        data_date  = date.today().isoformat()
+
+        for row in reader:
+            if str(row.get(code_col, '')).strip() != 'TX':
+                continue
+
+            if col['date']:
+                data_date = str(row.get(col['date'], '')).strip() or data_date
+
+            def _get_int(field_key: str) -> int | None:
+                c = col.get(field_key)
+                return _int(row.get(c, 0)) if c else None
+
+            d_long, d_short, d_net = _get_int('dealer_long'), _get_int('dealer_short'), _get_int('dealer_net')
+            i_long, i_short, i_net = _get_int('it_long'),     _get_int('it_short'),     _get_int('it_net')
+            f_long, f_short, f_net = _get_int('fo_long'),     _get_int('fo_short'),     _get_int('fo_net')
+
+            if d_net is None and d_long is not None and d_short is not None:
+                d_net = d_long - d_short
+            if i_net is None and i_long is not None and i_short is not None:
+                i_net = i_long - i_short
+            if f_net is None and f_long is not None and f_short is not None:
+                f_net = f_long - f_short
+
+            result = {
+                'source':           'taifex',
+                'date':             data_date,
+                'dealer':           {'long': d_long,  'short': d_short,  'net': d_net},
+                'investment_trust': {'long': i_long,  'short': i_short,  'net': i_net},
+                'foreign':          {'long': f_long,  'short': f_short,  'net': f_net},
+            }
+            break
+
+        if result is None:
+            raise ValueError('CSV 中無 TX 資料列')
+
+        _log(f'成功：date={data_date}, dealer_net={d_net}, it_net={i_net}, foreign_net={f_net}')
+        _inst_oi_cache[CACHE_KEY] = {**result, '_expires': _next_08()}
+        return result
+
+    except Exception as e:
+        _log(f'失敗：{e}')
+        print(f'[TAIFEX-CSV] get_institutional_futures_oi 失敗：{e}')
+        return mock_result
+
+
+# deprecated：保留舊簽名一個版本，供平滑過渡
 def get_futures_oi() -> dict:
     """
     外資期貨未平倉口數（台指期 TX，TAIFEX Open API）
