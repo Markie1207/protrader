@@ -260,8 +260,10 @@ function renderIndexChart(period = '1d') {
 }
 
 /* ─────────────────────────────────────────
-   大盤溫度計（修正角度：Math.PI + score/100 * Math.PI）
+   大盤溫度計 + 指標明細展開列
 ───────────────────────────────────────── */
+let _gaugeIndicators = [];   // 最近一次 API 回傳的指標陣列
+
 function renderGauge(score = 73) {
   const canvas = document.getElementById('gaugeChart');
   if (!canvas) return;
@@ -317,32 +319,78 @@ function renderGauge(score = 73) {
   ctx.fillText('大盤溫度', cx, cy + 8);
 }
 
+/* 指標明細展開列 */
+function toggleIndicatorPanel() {
+  const panel = document.getElementById('indicator-panel');
+  const btn   = document.getElementById('indicator-toggle-btn');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (btn) btn.textContent = open ? '[ 指標明細 ▼ ]' : '[ 指標明細 ▲ ]';
+}
+
+function renderIndicatorPanel(indicators) {
+  _gaugeIndicators = indicators || [];
+  const panel = document.getElementById('indicator-panel');
+  if (!panel || !_gaugeIndicators.length) return;
+
+  const rows = _gaugeIndicators.map(ind => {
+    const filled = Math.round(ind.score / 10);
+    const bar    = '█'.repeat(filled) + '░'.repeat(10 - filled);
+    const color  = ind.score >= 60 ? 'var(--up)' : ind.score >= 40 ? 'var(--orange)' : 'var(--dn)';
+    return `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;
+              border-bottom:1px solid var(--bg3);font-size:11px;">
+      <span style="width:56px;color:var(--text2);flex-shrink:0;">${ind.name}</span>
+      <span style="width:64px;color:var(--text);flex-shrink:0;">${ind.value}</span>
+      <span style="flex:1;color:${color};letter-spacing:1px;font-size:9px;">${bar}</span>
+      <span style="width:30px;text-align:right;color:${color};font-weight:600;">${ind.score}</span>
+    </div>`;
+  }).join('');
+
+  panel.innerHTML = rows;
+}
+
 /* ─────────────────────────────────────────
    今日焦點列表
 ───────────────────────────────────────── */
 function renderFocusList() {
   const el = document.getElementById('focus-list');
   if (!el) return;
-  const rankColors = ['#f85149','#e3b341','#3fb950','#58a6ff','#bc8cff'];
-  el.innerHTML = focusData.map(f => `
-    <div class="focus-item">
+
+  const rankColors = ['#f85149', '#e3b341', '#3fb950', '#58a6ff', '#bc8cff'];
+
+  /* 相容新版（stocks 陣列）與舊版（直接陣列） */
+  const stocks = Array.isArray(focusData?.stocks) ? focusData.stocks : focusData;
+
+  el.innerHTML = stocks.map(f => {
+    const rank      = f.rank ?? 1;
+    const color     = rankColors[(rank - 1) % rankColors.length];
+    const chgStr    = f.chg ?? (f.change_pct != null ? `${f.change_pct >= 0 ? '+' : ''}${f.change_pct}%` : '—');
+    const isUp      = parseFloat(chgStr) >= 0;
+    const volStr    = f.volume_ratio != null ? `爆量 ${f.volume_ratio}x` : '';
+    const fBuyStr   = f.foreign_buy  != null ? `外資 ${f.foreign_buy >= 0 ? '+' : ''}${Number(f.foreign_buy).toLocaleString()}張` : '';
+    const cdStr     = f.foreign_consecutive_days > 0 ? `連買 ${f.foreign_consecutive_days}日` : '';
+    const detail    = [volStr, fBuyStr, cdStr].filter(Boolean).join('，') || (f.reason ?? '');
+
+    return `<div class="focus-item">
       <div style="display:flex;align-items:center;gap:10px;">
-        <div class="focus-rank" style="background:${rankColors[f.rank-1]}22;color:${rankColors[f.rank-1]}">${f.rank}</div>
+        <div class="focus-rank" style="background:${color}22;color:${color}">${rank}</div>
         <div>
           <div style="font-size:13px;font-weight:600;">${f.code} ${f.name}</div>
-          <div style="font-size:11px;color:var(--text2)">${f.reason}</div>
+          <div style="font-size:11px;color:var(--text2)">${detail}</div>
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div class="up" style="font-size:13px;font-weight:600;">${f.chg}</div>
+        <div class="${isUp ? 'up' : 'dn'}" style="font-size:13px;font-weight:600;">${chgStr}</div>
         <div style="font-size:11px;color:var(--text2)">AI 分 ${f.score}</div>
       </div>
-    </div>`).join('');
-  // BUG-011 修正：顯示資料日期（前一交易日）或更新時間
+    </div>`;
+  }).join('');
+
   const timeEl = document.getElementById('focus-update-time');
   if (timeEl) {
-    const dataDate = focusData[0]?.data_date;
-    timeEl.textContent = dataDate ? `外資資料：${dataDate}` : new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
+    const d = focusData?.date;
+    timeEl.textContent = d ? `資料日期：${d}` : new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
   }
 }
 
@@ -456,10 +504,29 @@ async function fetchAndUpdateDashboard() {
     }
   } catch (e) { console.warn('[M1] 期貨OI更新失敗', e); }
 
-  /* AI 焦點選股（規則引擎） */
+  /* 大盤溫度計（真實API） */
   try {
-    const focus = await API.getFocusList();
-    if (focus && focus.length) {
+    const temp = await API.getTemperature();
+    if (temp && temp.score != null) {
+      renderGauge(temp.score);
+      renderIndicatorPanel(temp.indicators || []);
+      /* 更新 badge 標籤 */
+      const badge = document.querySelector('.card-header .badge-yellow, .card-header [class*="badge"]');
+      if (badge && temp.label) badge.textContent = temp.label;
+    }
+  } catch (e) { console.warn('[M1] 溫度計更新失敗', e); }
+
+  /* 今日焦點排序（新版4因子） */
+  try {
+    /* 讀取 M6 觀察清單作為股票池（有則優先用） */
+    let watchCodes = null;
+    try {
+      const wl = JSON.parse(localStorage.getItem('protrader_watchlist') || '[]');
+      if (wl.length) watchCodes = wl.map(w => w.code || w).filter(Boolean);
+    } catch (_) {}
+
+    const focus = await API.getFocusList(watchCodes);
+    if (focus) {
       focusData = focus;
       renderFocusList();
     }
