@@ -81,7 +81,11 @@ const Mock = {
   },
   futuresOI() {
     return {
-      source: 'mock', foreign_net: 8532, foreign_long: 32456, foreign_short: 23924, unit: '口'
+      source:           'mock',
+      date:             null,
+      dealer:           { long: null, short: null, net: null },
+      investment_trust: { long: null, short: null, net: null },
+      foreign:          { long: null, short: null, net: null },
     };
   },
   focusList() {
