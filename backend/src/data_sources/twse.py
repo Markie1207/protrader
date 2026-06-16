@@ -287,12 +287,14 @@ def get_institutional_futures_oi() -> dict:
                         return h
             return None
 
-        col_product  = _col(['商品名稱'])
-        col_date     = _col(['日期'])
-        col_identity = _col(['身份別'])
-        col_long     = _col(['多方未平倉口數'])
-        col_short    = _col(['空方未平倉口數'])
-        col_net      = _col(['多空未平倉口數淨額', '淨額'])
+        # 精確比對欄名（strip 去除前後空白），避免誤匹配交易量欄
+        _hmap        = {h.strip(): h for h in csv_headers}
+        col_product  = _hmap.get('商品名稱')
+        col_date     = _hmap.get('日期')
+        col_identity = _hmap.get('身份別')
+        col_long     = _hmap.get('多方未平倉口數')
+        col_short    = _hmap.get('空方未平倉口數')
+        col_net      = _hmap.get('多空未平倉口數淨額')
 
         if not col_identity:
             raise ValueError(f'找不到身份別欄位，實際欄位：{csv_headers}')
