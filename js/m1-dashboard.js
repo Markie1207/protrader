@@ -504,15 +504,29 @@ async function fetchAndUpdateDashboard() {
     }
   } catch (e) { console.warn('[M1] 期貨OI更新失敗', e); }
 
-  /* 大盤溫度計（真實API） */
+  /* 大盤溫度計（真實API）— 同一份資料同步更新儀表盤 + Navbar 小卡 */
   try {
     const temp = await API.getTemperature();
     if (temp && temp.score != null) {
+      const COLOR_MAP = {
+        darkblue: '#388bfd', blue: 'var(--blue)', green: 'var(--up)',
+        orange: 'var(--orange)', darkorange: '#e3713a', red: 'var(--dn)',
+      };
+      const c = COLOR_MAP[temp.color] || 'var(--text)';
+
+      /* 左側大儀表盤 */
       renderGauge(temp.score);
       renderIndicatorPanel(temp.indicators || []);
-      /* 更新 badge 標籤 */
-      const badge = document.querySelector('.card-header .badge-yellow, .card-header [class*="badge"]');
-      if (badge && temp.label) badge.textContent = temp.label;
+      const gaugeBadge = document.querySelector('#page-dashboard .badge-yellow, #page-dashboard [class*="badge"]');
+      if (gaugeBadge && temp.label) gaugeBadge.textContent = temp.label;
+
+      /* 右上角小卡（同一個 temp 變數，不再呼叫 API） */
+      const valEl   = document.getElementById('temp-card-val');
+      const lblEl   = document.getElementById('temp-card-label');
+      const descEl  = document.getElementById('temp-card-desc');
+      if (valEl)  { valEl.textContent = `${temp.score}°`;  valEl.style.color  = c; }
+      if (lblEl)  { lblEl.textContent = temp.label;        lblEl.style.color  = c; }
+      if (descEl) { descEl.textContent = temp.description; }
     }
   } catch (e) { console.warn('[M1] 溫度計更新失敗', e); }
 
