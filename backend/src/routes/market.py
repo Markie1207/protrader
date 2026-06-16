@@ -70,18 +70,10 @@ def focus():
     pool     = [c.strip() for c in codes_qs.split(',') if c.strip()] or None
 
     data = twse.calc_focus_ranking(pool)
-    if data:
+    if data and data.get('stocks'):
         return jsonify(data)
 
-    # 降級：舊版全市場篩選
-    old = twse.get_focus_stocks()
-    if old:
-        return jsonify({
-            'date':   datetime.today().strftime('%Y-%m-%d'),
-            'stocks': old,
-            'source': 'legacy',
-        })
-    return jsonify({'error': 'no data'}), 503
+    return jsonify({'error': 'no data', 'retry': True}), 503
 
 
 @market_bp.route('/news')

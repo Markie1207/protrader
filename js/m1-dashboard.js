@@ -558,9 +558,23 @@ async function fetchAndUpdateDashboard() {
     } catch (_) {}
 
     const focus = await API.getFocusList(watchCodes);
-    if (focus) {
+    if (focus && (focus.stocks?.length || Array.isArray(focus))) {
       focusData = focus;
       renderFocusList();
+    } else {
+      /* 資料尚未就緒（Railway 冷啟動），3秒後重試一次 */
+      const focusEl = document.getElementById('focus-list');
+      if (focusEl) focusEl.innerHTML =
+        '<div style="color:var(--text3);text-align:center;padding:24px;font-size:12px;">資料準備中，稍後重試…</div>';
+      setTimeout(async () => {
+        try {
+          const retry = await API.getFocusList(watchCodes);
+          if (retry && (retry.stocks?.length || Array.isArray(retry))) {
+            focusData = retry;
+            renderFocusList();
+          }
+        } catch (e2) { console.warn('[M1] 焦點清單重試失敗', e2); }
+      }, 3000);
     }
   } catch (e) { console.warn('[M1] 焦點清單更新失敗', e); }
 }
