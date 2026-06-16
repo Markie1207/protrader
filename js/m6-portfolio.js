@@ -13,22 +13,14 @@
 'use strict';
 
 /* ────────────────────────────────────────
-   觀察清單資料
+   觀察清單（代號/名稱/目標/止損/理由，價格從 API 取得）
 ──────────────────────────────────────── */
 const watchlistData = [
-  { code: '2330', name: '台積電', price: 1050, chg: +2.4, target: 1200, sl: 980,  reason: 'AI 晶片需求持續' },
-  { code: '2454', name: '聯發科', price:  890, chg: +1.8, target: 1100, sl: 840,  reason: '旗艦 AP 新品週期' },
-  { code: '3711', name: '日月光', price:  155, chg: +1.2, target:  188, sl: 142,  reason: 'CoWoS 滿單' },
-  { code: '3017', name: '奇鋐',   price:  240, chg: +3.5, target:  300, sl: 220,  reason: '液冷散熱概念' },
-  { code: '6230', name: '超眾',   price:  185, chg: +2.1, target:  230, sl: 170,  reason: '散熱族群' },
-];
-
-/* 真實持倉資料（與 m1 holdingsData 共用邏輯，各自獨立） */
-const realHoldingsData = [
-  { code: '2330', name: '台積電', cost: 820, shares: 2, price: 1050, sl: 780,  tp: 1200 },
-  { code: '2317', name: '鴻海',   cost: 105, shares: 5, price: 108,  sl: 98,   tp: 130  },
-  { code: '2454', name: '聯發科', cost: 1020,shares: 1, price: 890,  sl: 850,  tp: 1300 },
-  { code: '2308', name: '台達電', cost: 280, shares: 3, price: 310,  sl: 265,  tp: 380  },
+  { code: '2330', name: '台積電', target: 1200, sl: 980,  reason: 'AI 晶片需求持續' },
+  { code: '2454', name: '聯發科', target: 1100, sl: 840,  reason: '旗艦 AP 新品週期' },
+  { code: '3711', name: '日月光', target:  188, sl: 142,  reason: 'CoWoS 滿單' },
+  { code: '3017', name: '奇鋐',   target:  300, sl: 220,  reason: '液冷散熱概念' },
+  { code: '6230', name: '超眾',   target:  230, sl: 170,  reason: '散熱族群' },
 ];
 
 /* 虛擬帳戶狀態 */
@@ -58,54 +50,102 @@ let replayState = {
 /* ────────────────────────────────────────
    觀察清單
 ──────────────────────────────────────── */
-function renderWatchlist() {
+async function renderWatchlist() {
   const el = document.getElementById('watchlist-content');
   if (!el) return;
-  el.innerHTML = watchlistData.map(w => {
-    const isUp = w.chg >= 0;
-    return `<div class="watchlist-item">
+
+  /* 先渲染骨架（價格顯示 —） */
+  el.innerHTML = watchlistData.map(w => `
+    <div class="watchlist-item">
       <div>
         <div style="font-weight:600;">${w.code} ${w.name}</div>
         <div style="font-size:11px;color:var(--text2)">${w.reason}</div>
       </div>
       <div style="text-align:right;">
-        <div style="font-weight:600;">$${w.price.toLocaleString()}</div>
-        <div class="${isUp ? 'up' : 'dn'}" style="font-size:12px;">${isUp ? '+' : ''}${w.chg}%</div>
+        <div style="font-weight:600;" id="wl-p-${w.code}">—</div>
+        <div style="font-size:12px;" id="wl-c-${w.code}">—</div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
+
+  /* 非同步取得各股現價 */
+  watchlistData.forEach(async w => {
+    try {
+      const q = await API.getStockQuote(w.code);
+      const pEl = document.getElementById(`wl-p-${w.code}`);
+      const cEl = document.getElementById(`wl-c-${w.code}`);
+      if (q && q.price > 0) {
+        if (pEl) pEl.textContent = `$${Number(q.price).toLocaleString()}`;
+        if (cEl && q.change_pct != null) {
+          const up = q.change_pct >= 0;
+          cEl.textContent = `${up ? '+' : ''}${q.change_pct}%`;
+          cEl.className   = up ? 'up' : 'dn';
+        }
+      }
+    } catch (e) { /* silent */ }
+  });
 }
 
 /* ────────────────────────────────────────
-   真實持倉表格
-   BUG-007 修正：nearSL 對比 sl（非 cost）
+   真實持倉表格（讀 localStorage，同 M1）
+   現價從 API 非同步取得，初始顯示 —
 ──────────────────────────────────────── */
-function renderRealHoldings() {
+async function renderRealHoldings() {
   const tbody = document.getElementById('real-holdings-body');
   if (!tbody) return;
-  tbody.innerHTML = realHoldingsData.map(h => {
-    const pnl    = (h.price - h.cost) * h.shares * 1000;
-    const pnlPct = ((h.price - h.cost) / h.cost * 100).toFixed(2);
-    const isUp   = h.price >= h.cost;
-    // BUG-007 修正
-    const nearSL = h.price <= h.sl * 1.05;
-    const status = nearSL
-      ? `<span class="badge badge-red">⚠️ 接近止損</span>`
-      : isUp
-        ? `<span class="badge badge-green">正常</span>`
-        : `<span class="badge badge-yellow">觀察中</span>`;
-    return `<tr>
-      <td><strong>${h.code}</strong> <span style="color:var(--text2)">${h.name}</span></td>
-      <td>$${h.cost.toLocaleString()}</td>
-      <td>${h.shares}張</td>
-      <td>$${h.price.toLocaleString()}</td>
-      <td class="${isUp ? 'up' : 'dn'}">${isUp ? '+' : ''}$${Math.abs(pnl).toLocaleString()}</td>
-      <td class="${isUp ? 'up' : 'dn'}">${isUp ? '+' : ''}${pnlPct}%</td>
-      <td>$${h.sl}</td>
-      <td>$${h.tp}</td>
-      <td>${status}</td>
-    </tr>`;
-  }).join('');
+
+  let holdings = [];
+  try {
+    holdings = JSON.parse(localStorage.getItem('protrader_holdings') || '[]');
+  } catch (e) {}
+
+  if (!holdings.length) {
+    tbody.innerHTML = `<tr><td colspan="9"
+      style="text-align:center;color:var(--text2);padding:20px;">
+      尚無持倉，請至「戰情中心」新增</td></tr>`;
+    return;
+  }
+
+  /* 骨架列（現價/損益全部顯示 —） */
+  tbody.innerHTML = holdings.map(h => `<tr>
+    <td><strong>${h.code}</strong> <span style="color:var(--text2)">${h.name}</span></td>
+    <td>$${Number(h.cost).toLocaleString()}</td>
+    <td>${h.shares}${h.unit || '張'}</td>
+    <td id="m6hp-${h.code}">—</td>
+    <td id="m6pnl-${h.code}">—</td>
+    <td id="m6pct-${h.code}">—</td>
+    <td>$${h.sl || '—'}</td>
+    <td>$${h.tp || '—'}</td>
+    <td id="m6st-${h.code}">—</td>
+  </tr>`).join('');
+
+  /* 非同步填入現價 */
+  holdings.forEach(async h => {
+    try {
+      const q    = await API.getStockQuote(h.code);
+      const price = (q?.price && q.price > 0) ? q.price : h.cost;
+      const mult  = h.unit === '股' ? 1 : 1000;
+      const pnl   = (price - h.cost) * h.shares * mult;
+      const pct   = ((price - h.cost) / h.cost * 100).toFixed(2);
+      const isUp  = price >= h.cost;
+      const nearSL = h.sl && price <= h.sl * 1.05;
+
+      const set = (id, txt, cls) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = txt;
+        if (cls) el.className = cls;
+      };
+      set(`m6hp-${h.code}`,  `$${Number(price).toLocaleString()}`);
+      set(`m6pnl-${h.code}`, `${isUp ? '+' : '-'}$${Math.abs(Math.round(pnl)).toLocaleString()}`, isUp ? 'up' : 'dn');
+      set(`m6pct-${h.code}`, `${isUp ? '+' : ''}${pct}%`, isUp ? 'up' : 'dn');
+
+      const stEl = document.getElementById(`m6st-${h.code}`);
+      if (stEl) stEl.innerHTML = nearSL
+        ? '<span class="badge badge-red">⚠️ 接近止損</span>'
+        : isUp ? '<span class="badge badge-green">正常</span>'
+               : '<span class="badge badge-yellow">觀察中</span>';
+    } catch (e) { console.warn('[M6] 持倉報價失敗', h.code, e); }
+  });
 }
 
 /* ────────────────────────────────────────

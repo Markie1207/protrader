@@ -449,6 +449,20 @@ async function fetchAndUpdateDashboard() {
         if (barEl) { barEl.style.width = toW(net); barEl.style.background = toCol(net); }
         if (valEl) { valEl.textContent = fmt(net); valEl.className = `chip-val ${net >= 0 ? 'up' : 'dn'}`; }
       });
+
+      /* 溫度儀表盤 inline 法人摘要（gauge-foreign / gauge-invest / gauge-dealer） */
+      const gf = document.getElementById('gauge-foreign');
+      const gi = document.getElementById('gauge-invest');
+      const gd = document.getElementById('gauge-dealer');
+      if (gf) { gf.textContent = fmt(fNet); gf.className = fNet >= 0 ? 'up' : 'dn'; }
+      if (gi) { gi.textContent = fmt(iNet); gi.className = iNet >= 0 ? 'up' : 'dn'; }
+      if (gd) { gd.textContent = fmt(dNet); gd.className = dNet >= 0 ? 'up' : 'dn'; }
+
+      /* 小卡 sub-text */
+      const fSub = document.getElementById('inst-foreign-sub');
+      const iSub = document.getElementById('inst-invest-sub');
+      if (fSub) fSub.textContent = inst.foreign?.date ? `資料日期：${inst.foreign.date}` : '今日資料';
+      if (iSub) iSub.textContent = inst.investment?.date ? `資料日期：${inst.investment.date}` : '今日資料';
     }
   } catch (e) { console.warn('[M1] 法人更新失敗', e); }
 
@@ -517,8 +531,8 @@ async function fetchAndUpdateDashboard() {
       /* 左側大儀表盤 */
       renderGauge(temp.score);
       renderIndicatorPanel(temp.indicators || []);
-      const gaugeBadge = document.querySelector('#page-dashboard .badge-yellow, #page-dashboard [class*="badge"]');
-      if (gaugeBadge && temp.label) gaugeBadge.textContent = temp.label;
+      const gaugeBadge = document.getElementById('gauge-badge');
+      if (gaugeBadge) gaugeBadge.textContent = temp.label || '—';
 
       /* 右上角小卡（同一個 temp 變數，不再呼叫 API） */
       const valEl   = document.getElementById('temp-card-val');
@@ -551,13 +565,12 @@ async function fetchAndUpdateDashboard() {
    初始化進入點
 ───────────────────────────────────────── */
 function initDashboard() {
-  // 先用 mock 資料讓焦點清單立即顯示，API 回來後再覆蓋
-  if (typeof Mock !== 'undefined' && typeof Mock.focusList === 'function') {
-    focusData = Mock.focusList();
-  }
+  /* 焦點清單：API 回傳前顯示載入占位 */
+  const focusEl = document.getElementById('focus-list');
+  if (focusEl) focusEl.innerHTML =
+    '<div style="color:var(--text3);text-align:center;padding:24px;font-size:12px;">資料載入中…</div>';
+
   renderHoldings();
-  renderFocusList();
-  renderGauge();
   renderIndexChart('1d');
   fetchAndUpdateDashboard();
 }

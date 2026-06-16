@@ -39,25 +39,25 @@
     <div class="card card-sm">
       <div class="card-header">
         <div class="card-title"><span class="icon">📈</span>加權指數</div>
-        <span class="badge" id="taiex-badge">▲</span>
+        <span class="badge" id="taiex-badge">—</span>
       </div>
-      <div class="card-value" id="taiex-val">22,847</div>
-      <div class="card-sub"><span id="taiex-chg" class="up">+312 (+1.38%)</span></div>
+      <div class="card-value" id="taiex-val">—</div>
+      <div class="card-sub"><span id="taiex-chg">—</span></div>
     </div>
     <div class="card card-sm">
       <div class="card-header"><div class="card-title"><span class="icon">💱</span>外資今日</div></div>
-      <div class="card-value up" id="inst-foreign">+186億</div>
-      <div class="card-sub">連續買超 <span class="up">8日</span></div>
+      <div class="card-value" id="inst-foreign">—</div>
+      <div class="card-sub" id="inst-foreign-sub">—</div>
     </div>
     <div class="card card-sm">
       <div class="card-header"><div class="card-title"><span class="icon">🏦</span>投信今日</div></div>
-      <div class="card-value up" id="inst-invest">+42億</div>
-      <div class="card-sub">本週累計 <span class="up">+187億</span></div>
+      <div class="card-value" id="inst-invest">—</div>
+      <div class="card-sub" id="inst-invest-sub">—</div>
     </div>
     <div class="card card-sm">
       <div class="card-header"><div class="card-title"><span class="icon">🌡️</span>大盤溫度</div></div>
-      <div id="temp-card-val" class="card-value" style="color:var(--up)">54°</div>
-      <div class="card-sub"><span id="temp-card-label" style="color:var(--up)">中性</span> ─ <span id="temp-card-desc">多空均衡，無明顯方向</span></div>
+      <div id="temp-card-val" class="card-value">—</div>
+      <div class="card-sub"><span id="temp-card-label">—</span> <span id="temp-card-desc"></span></div>
     </div>
   </div>
 
@@ -66,7 +66,7 @@
     <div class="card">
       <div class="card-header">
         <div class="card-title"><span class="icon">🌡️</span>大盤溫度計</div>
-        <span class="badge badge-green">中性</span>
+        <span class="badge" id="gauge-badge">—</span>
       </div>
       <canvas id="gaugeChart" height="160" style="display:block;margin:0 auto;"></canvas>
       <!-- 指標明細展開 -->
@@ -80,27 +80,27 @@
       <div id="indicator-panel" style="display:none;margin-top:6px;padding:6px 8px;
            background:var(--bg3);border-radius:6px;"></div>
       <div style="display:flex;gap:24px;margin-top:8px;justify-content:center;">
-        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">外資</div><div class="up" style="font-weight:700">+186億</div></div>
-        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">投信</div><div class="up" style="font-weight:700">+42億</div></div>
-        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">自營</div><div class="dn" style="font-weight:700">-8億</div></div>
-        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">成交量</div><div style="font-weight:700">4,821億</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">外資</div><div id="gauge-foreign" style="font-weight:700">—</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">投信</div><div id="gauge-invest" style="font-weight:700">—</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">自營</div><div id="gauge-dealer" style="font-weight:700">—</div></div>
+        <div style="text-align:center;"><div style="font-size:11px;color:var(--text3)">成交量</div><div id="gauge-volume" style="font-weight:700">—</div></div>
       </div>
       <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
         <div class="card-title" style="margin-bottom:10px;"><span class="icon">📊</span>法人籌碼儀表</div>
         <div class="chip-row">
           <div class="chip-label">外資</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-foreign" style="width:78%;background:var(--up)"></div></div>
-          <div class="chip-val up" id="chip-val-foreign">+186億</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-foreign" style="width:0%"></div></div>
+          <div class="chip-val" id="chip-val-foreign">—</div>
         </div>
         <div class="chip-row">
           <div class="chip-label">投信</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-invest" style="width:42%;background:var(--up)"></div></div>
-          <div class="chip-val up" id="chip-val-invest">+42億</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-invest" style="width:0%"></div></div>
+          <div class="chip-val" id="chip-val-invest">—</div>
         </div>
         <div class="chip-row">
           <div class="chip-label">自營</div>
-          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-dealer" style="width:15%;background:var(--dn)"></div></div>
-          <div class="chip-val dn" id="chip-val-dealer">-8億</div>
+          <div class="chip-bar-wrap"><div class="chip-bar" id="chip-bar-dealer" style="width:0%"></div></div>
+          <div class="chip-val" id="chip-val-dealer">—</div>
         </div>
         <!-- 期貨未平倉（三大法人） -->
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bg3);">
@@ -175,7 +175,7 @@
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
         <div style="font-size:12px;color:var(--text2)">總未實現損益</div>
         <!-- BUG-020 修正：損益動態計算，不再寫死 -->
-        <div id="total-pnl" style="font-size:18px;font-weight:700">+$0</div>
+        <div id="total-pnl" style="font-size:18px;font-weight:700">—</div>
       </div>
     </div>
   </div>
