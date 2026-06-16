@@ -264,7 +264,7 @@ function renderIndexChart(period = '1d') {
 ───────────────────────────────────────── */
 let _gaugeIndicators = [];   // 最近一次 API 回傳的指標陣列
 
-function renderGauge(score = 73) {
+function renderGauge(score = 54) {
   const canvas = document.getElementById('gaugeChart');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
