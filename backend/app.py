@@ -6,9 +6,10 @@ Flask + CORS + Shioaji / TWSE 雙資料源
 import atexit
 from flask import Flask
 from flask_cors import CORS
-from src.routes.health  import health_bp
-from src.routes.market  import market_bp
-from src.routes.stock   import stock_bp
+from src.routes.health      import health_bp
+from src.routes.market      import market_bp
+from src.routes.stock       import stock_bp
+from src.routes.prediction  import prediction_bp
 from src.data_sources   import sinopac
 
 app = Flask(__name__)
@@ -21,6 +22,7 @@ CORS(app, origins='*')
 app.register_blueprint(health_bp)
 app.register_blueprint(market_bp)
 app.register_blueprint(stock_bp)
+app.register_blueprint(prediction_bp)
 
 # 關閉時登出 Shioaji
 atexit.register(sinopac.logout)

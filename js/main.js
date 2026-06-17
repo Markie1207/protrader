@@ -113,10 +113,11 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateMarketStatus, 60000);
 
   // 初始化各模組
-  if (typeof initDashboard === 'function') initDashboard();
-  if (typeof initGlobal    === 'function') initGlobal();
-  if (typeof initSupply    === 'function') initSupply();
-  if (typeof initStrategy  === 'function') initStrategy();
-  if (typeof initBacktest  === 'function') initBacktest();
-  if (typeof initPortfolio === 'function') initPortfolio();
+  if (typeof initDashboard  === 'function') initDashboard();
+  if (typeof initGlobal     === 'function') initGlobal();
+  if (typeof initSupply     === 'function') initSupply();
+  if (typeof initStrategy   === 'function') initStrategy();
+  if (typeof initBacktest   === 'function') initBacktest();
+  if (typeof initPortfolio  === 'function') initPortfolio();
+  if (typeof initPrediction === 'function') initPrediction();
 });

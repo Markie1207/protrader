@@ -19,6 +19,7 @@
     <button class="nav-tab" onclick="switchPage('strategy',this)">📋 交易策略室</button>
     <button class="nav-tab" onclick="switchPage('backtest',this)">🧪 回測實驗室</button>
     <button class="nav-tab" onclick="switchPage('portfolio',this)">💼 持倉管理</button>
+    <button class="nav-tab" onclick="switchPage('prediction',this)">🤖 股價預測</button>
   </div>
   <div class="nav-right">
     <div class="market-status">
@@ -578,6 +579,134 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════
+     M7 ─ 股價預測
+══════════════════════════════════════════════════════ -->
+<div id="page-prediction" class="page">
+
+  <!-- 頂部控制列 -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+    <div class="card-title" style="font-size:15px;font-weight:700;">
+      <span class="icon">🤖</span> AI 股價預測
+    </div>
+    <select id="pred-ticker-select"
+      onchange="loadPrediction(this.value)"
+      style="background:var(--bg3);color:var(--text);border:1px solid var(--border);
+             border-radius:6px;padding:6px 10px;font-size:13px;min-width:160px;cursor:pointer;">
+    </select>
+    <button onclick="loadPrediction()"
+      style="background:var(--blue);color:#fff;border:none;border-radius:6px;
+             padding:6px 14px;font-size:13px;cursor:pointer;font-weight:600;">
+      重新整理
+    </button>
+    <span id="pred-loading" style="display:none;color:var(--text2);font-size:12px;">載入中...</span>
+    <span id="pred-error"   style="display:none;color:var(--up);font-size:12px;"></span>
+    <span id="pred-update-time" style="margin-left:auto;color:var(--text3);font-size:11px;"></span>
+  </div>
+
+  <!-- 股票名稱 + 訊號日期 -->
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;">
+    <div id="pred-stock-name"
+      style="font-size:18px;font-weight:700;color:var(--text);">—</div>
+    <div id="pred-signal-date"
+      style="font-size:11px;color:var(--text3);">—</div>
+  </div>
+
+  <!-- 信號卡片列 -->
+  <div class="grid-4" style="margin-bottom:16px;">
+
+    <!-- 綜合信號 -->
+    <div class="card card-sm">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🎯</span>AI 綜合信號</div>
+        <span class="badge" id="pred-model-tag" style="font-size:10px;">—</span>
+      </div>
+      <div id="pred-signal-label"
+        class="card-value" style="font-size:22px;font-weight:800;">—</div>
+      <div class="card-sub">信心度：<strong id="pred-conf">—</strong></div>
+    </div>
+
+    <!-- LSTM -->
+    <div class="card card-sm">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🧠</span>LSTM 機率</div>
+        <span id="pred-lstm-val" style="font-size:13px;font-weight:700;color:var(--text2);">—</span>
+      </div>
+      <div style="height:6px;background:var(--bg3);border-radius:3px;margin:8px 0;">
+        <div id="pred-lstm-bar"
+          style="height:100%;border-radius:3px;width:0%;transition:width .4s;"></div>
+      </div>
+      <div class="card-sub">買進機率（>50% 看多）</div>
+    </div>
+
+    <!-- TCN -->
+    <div class="card card-sm">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📡</span>TCN 機率</div>
+        <span id="pred-tcn-val" style="font-size:13px;font-weight:700;color:var(--text2);">—</span>
+      </div>
+      <div style="height:6px;background:var(--bg3);border-radius:3px;margin:8px 0;">
+        <div id="pred-tcn-bar"
+          style="height:100%;border-radius:3px;width:0%;transition:width .4s;"></div>
+      </div>
+      <div class="card-sub">買進機率（>50% 看多）</div>
+    </div>
+
+    <!-- PPO -->
+    <div class="card card-sm">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">🎮</span>PPO 強化學習</div>
+      </div>
+      <div id="pred-ppo-val"
+        class="card-value" style="font-size:22px;font-weight:800;">—</div>
+      <div class="card-sub">強化學習策略建議</div>
+    </div>
+
+  </div>
+
+  <!-- 圖表 + 資料表 -->
+  <div class="grid-2" style="margin-bottom:16px;">
+
+    <!-- 折線圖 -->
+    <div class="card" style="grid-column:span 2;">
+      <div class="card-header">
+        <div class="card-title">
+          <span class="icon">📈</span>股價走勢 — 前5天實際 + 後5天預測
+        </div>
+        <span id="pred-chart-divider-label"
+          style="font-size:11px;color:var(--text3);">← 實際　預測 →</span>
+      </div>
+      <div style="position:relative;height:260px;margin-top:8px;">
+        <canvas id="predChart"></canvas>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px;text-align:center;">
+        ⚠️ 預測線為 AI 模型方向性估計，非精確價格，僅供參考。
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 資料明細表 -->
+  <div class="card" style="max-width:400px;">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">📋</span>逐日明細</div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;">
+      <thead>
+        <tr style="color:var(--text2);">
+          <th style="text-align:left;padding:4px 8px;border-bottom:1px solid var(--border);">日期</th>
+          <th style="text-align:right;padding:4px 8px;border-bottom:1px solid var(--border);">收盤價</th>
+          <th style="text-align:center;padding:4px 8px;border-bottom:1px solid var(--border);">類型</th>
+        </tr>
+      </thead>
+      <tbody id="pred-table-body">
+        <tr><td colspan="3" style="color:var(--text3);text-align:center;padding:12px;">載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
 <!-- api.js 最先載入，其餘模組依賴它 -->
 <script src="js/api.js"></script>
 <!-- 載入順序：各模組 JS → 最後 main.js 初始化 -->
@@ -587,6 +716,7 @@
 <script src="js/m4-strategy.js"></script>
 <script src="js/m5-backtest.js"></script>
 <script src="js/m6-portfolio.js"></script>
+<script src="js/m7-prediction.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

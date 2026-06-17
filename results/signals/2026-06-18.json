@@ -1,0 +1,137 @@
+{
+  "date": "2026-06-18",
+  "generated_at": "2026-06-18T00:10:47.604175",
+  "n_signals": 13,
+  "signals": [
+    {
+      "ticker": "1303",
+      "direction": -1,
+      "confidence": 0.9473,
+      "lstm_prob": 0.0466,
+      "tcn_prob": 0.0588,
+      "ppo_action": 0,
+      "model": "ensemble",
+      "close_price": 126.5
+    },
+    {
+      "ticker": "2882",
+      "direction": 1,
+      "confidence": 0.9103,
+      "lstm_prob": 0.9636,
+      "tcn_prob": 0.857,
+      "ppo_action": 1,
+      "model": "ensemble",
+      "close_price": 112.5
+    },
+    {
+      "ticker": "3008",
+      "direction": -1,
+      "confidence": 0.8812,
+      "lstm_prob": 0.0913,
+      "tcn_prob": 0.1463,
+      "ppo_action": 0,
+      "model": "ensemble",
+      "close_price": 5120.0
+    },
+    {
+      "ticker": "2357",
+      "direction": 1,
+      "confidence": 0.8779,
+      "lstm_prob": 0.9604,
+      "tcn_prob": 0.7953,
+      "ppo_action": 1,
+      "model": "ensemble",
+      "close_price": 799.0
+    },
+    {
+      "ticker": "2308",
+      "direction": 1,
+      "confidence": 0.8507,
+      "lstm_prob": 0.8257,
+      "tcn_prob": 0.8757,
+      "ppo_action": 1,
+      "model": "ensemble",
+      "close_price": 2160.0
+    },
+    {
+      "ticker": "2891",
+      "direction": 1,
+      "confidence": 0.819,
+      "lstm_prob": 0.9637,
+      "tcn_prob": 0.6742,
+      "ppo_action": 0,
+      "model": "lstm+tcn",
+      "close_price": 70.6
+    },
+    {
+      "ticker": "2886",
+      "direction": -1,
+      "confidence": 0.8133,
+      "lstm_prob": 0.1926,
+      "tcn_prob": 0.1809,
+      "ppo_action": 0,
+      "model": "ensemble",
+      "close_price": 45.05
+    },
+    {
+      "ticker": "2881",
+      "direction": 1,
+      "confidence": 0.8048,
+      "lstm_prob": 0.9382,
+      "tcn_prob": 0.6713,
+      "ppo_action": 1,
+      "model": "ensemble",
+      "close_price": 134.5
+    },
+    {
+      "ticker": "2412",
+      "direction": -1,
+      "confidence": 0.7777,
+      "lstm_prob": 0.2198,
+      "tcn_prob": 0.2248,
+      "ppo_action": 0,
+      "model": "ensemble",
+      "close_price": 145.0
+    },
+    {
+      "ticker": "2884",
+      "direction": -1,
+      "confidence": 0.6108,
+      "lstm_prob": 0.2094,
+      "tcn_prob": 0.5689,
+      "ppo_action": 0,
+      "model": "ensemble",
+      "close_price": 35.45
+    },
+    {
+      "ticker": "5880",
+      "direction": -1,
+      "confidence": 0.6003,
+      "lstm_prob": 0.3125,
+      "tcn_prob": 0.4869,
+      "ppo_action": 0,
+      "model": "ensemble",
+      "close_price": 24.7
+    },
+    {
+      "ticker": "2454",
+      "direction": 1,
+      "confidence": 0.5742,
+      "lstm_prob": 0.7112,
+      "tcn_prob": 0.4372,
+      "ppo_action": 1,
+      "model": "ensemble",
+      "close_price": 4440.0
+    },
+    {
+      "ticker": "2317",
+      "direction": 1,
+      "confidence": 0.5665,
+      "lstm_prob": 0.361,
+      "tcn_prob": 0.7719,
+      "ppo_action": 1,
+      "model": "ensemble",
+      "close_price": 270.0
+    }
+  ]
+}
