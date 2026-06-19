@@ -576,8 +576,9 @@
       ],
       "midstream": [
         { "ticker": "3017", "name": "奇鋐", "role": "散熱模組龍頭，VC 均熱板、散熱器" },
-        { "ticker": "3376", "name": "雙鴻", "role": "散熱模組，VC 均熱板" },
+        { "ticker": "3376", "name": "雙鴻", "role": "散熱模組，VC 均熱板、液冷板" },
         { "ticker": "3504", "name": "超眾", "role": "Heatpipe 熱管散熱模組" },
+        { "ticker": "6247", "name": "健策", "role": "VC 均熱板、導熱石墨片，AI 晶片散熱關鍵材料" },
         { "ticker": "6244", "name": "茂林-KY", "role": "散熱片" },
         { "ticker": "3657", "name": "力致", "role": "散熱風扇" }
       ],
@@ -606,6 +607,7 @@
       ],
       "midstream": [
         { "ticker": "2308", "name": "台達電", "role": "資料中心水冷 CDU、整合方案" },
+        { "ticker": "3376", "name": "雙鴻", "role": "浸沒式冷卻模組、液冷板" },
         { "ticker": "1028", "name": "建準", "role": "水冷幫浦、風扇" },
         { "ticker": "6691", "name": "訊凱國際", "role": "電競水冷 All-in-one、客製化水冷" },
         { "ticker": "6279", "name": "廣運", "role": "浸沒式冷卻系統" }
@@ -1196,6 +1198,37 @@
       "relationships": [
         { "from": "智邦", "to": "AWS", "type": "網路設備供貨" },
         { "from": "中華電信", "to": "企業客戶", "type": "HiCloud 雲端服務" }
+      ]
+    },
+
+    {
+      "id": "ev_800v_sic",
+      "name": "800V 電動車 / SiC 碳化矽",
+      "emoji": "⚡",
+      "category": "電動車 / 能源",
+      "market_size": "全球 SiC 功率元件市場 2025 年約 $30 億美元，800V EV 占比快速提升",
+      "growth_rate": "YoY +40%+",
+      "key_theme": "800V 高壓平台成 EV 主流架構，SiC MOSFET 取代矽基 IGBT，台廠從基板到模組全面受惠",
+      "key_risk": "中國 SiC 廠商急速擴產、良率提升壓縮利潤",
+      "upstream": [
+        { "ticker": "3707", "name": "漢磊", "role": "SiC 磊晶片、GaN 功率元件" },
+        { "ticker": "6488", "name": "環球晶", "role": "SiC 基板供應" },
+        { "ticker": "3016", "name": "嘉晶", "role": "SiC/GaN 磊晶片" }
+      ],
+      "midstream": [
+        { "ticker": "6672", "name": "朋程", "role": "SiC 功率模組、整流器" },
+        { "ticker": "2308", "name": "台達電", "role": "800V 車載充電器（OBC）、DC-DC 轉換器" },
+        { "ticker": "6220", "name": "飛宏", "role": "800V 直流快充模組" },
+        { "ticker": "3665", "name": "貿聯-KY", "role": "800V 高壓線束、充電線纜" }
+      ],
+      "downstream": [
+        { "ticker": null, "name": "Porsche / Hyundai / GM", "role": "800V 整車平台採購商" },
+        { "ticker": null, "name": "BYD / 小鵬", "role": "中國 800V EV 整車品牌" }
+      ],
+      "relationships": [
+        { "from": "漢磊", "to": "朋程", "type": "SiC 磊晶片供貨" },
+        { "from": "台達電", "to": "Porsche", "type": "OBC 車載充電器供貨" },
+        { "from": "飛宏", "to": "GM", "type": "DC 快充模組供貨" }
       ]
     }
 
