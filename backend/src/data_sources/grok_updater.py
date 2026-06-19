@@ -1,5 +1,5 @@
 """
-grok_updater.py — Grok API 自動更新產業鏈資料
+grok_updater.py — Gemini API 自動更新產業鏈資料
 
 兩種更新模式：
   A. 描述更新（每日）：只改 key_theme / key_risk / market_size / growth_rate
@@ -18,8 +18,9 @@ log = logging.getLogger(__name__)
 
 _DATA_PATH  = Path(__file__).parent.parent.parent / 'industry_map.json'
 _DRAFT_PATH = Path(__file__).parent.parent.parent / 'industry_map_draft.json'
-_GROK_URL   = 'https://api.x.ai/v1/chat/completions'
-_MODEL      = os.getenv('GROK_MODEL', 'grok-3')
+# Gemini OpenAI-compatible 端點，Auth 格式與 OpenAI 相同
+_AI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
+_MODEL  = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
 _BATCH_DESC = 7   # 描述更新每批幾條
 _BATCH_CO   = 4   # 公司更新每批幾條（內容更多，批次縮小）
 
@@ -36,9 +37,9 @@ def load_data() -> dict:
     try:
         with open(_DATA_PATH, encoding='utf-8') as f:
             _cache = json.load(f)
-        log.info(f'[Grok] 載入 {len(_cache.get("industries",[]))} 條產業鏈')
+        log.info(f'[Gemini] 載入 {len(_cache.get("industries",[]))} 條產業鏈')
     except FileNotFoundError:
-        log.error(f'[Grok] 找不到 {_DATA_PATH}')
+        log.error(f'[Gemini] 找不到 {_DATA_PATH}')
         _cache = {'meta': {}, 'industries': []}
     return _cache
 
@@ -93,10 +94,10 @@ def approve_draft() -> bool:
             json.dump(draft, f, ensure_ascii=False, indent=2)
         _cache = draft
         _DRAFT_PATH.unlink(missing_ok=True)
-        log.info('[Grok] 草稿已套用')
+        log.info('[Gemini] 草稿已套用')
         return True
     except Exception as e:
-        log.error(f'[Grok] 套用草稿失敗：{e}')
+        log.error(f'[Gemini] 套用草稿失敗：{e}')
         return False
 
 
@@ -104,7 +105,7 @@ def reject_draft() -> bool:
     """捨棄草稿"""
     try:
         _DRAFT_PATH.unlink(missing_ok=True)
-        log.info('[Grok] 草稿已捨棄')
+        log.info('[Gemini] 草稿已捨棄')
         return True
     except Exception:
         return False
@@ -116,9 +117,9 @@ def reject_draft() -> bool:
 
 def run_update_descriptions():
     """排程：每日呼叫 Grok 更新描述性欄位（直接生效）"""
-    api_key = os.getenv('XAI_API_KEY', '').strip()
+    api_key = os.getenv('GEMINI_API_KEY', '').strip()
     if not api_key:
-        log.warning('[Grok] XAI_API_KEY 未設定，略過描述更新')
+        log.warning('[Gemini] GEMINI_API_KEY 未設定，略過描述更新')
         return
 
     data = get_data()
@@ -126,7 +127,7 @@ def run_update_descriptions():
     if not industries:
         return
 
-    log.info(f'[Grok] 開始描述更新，共 {len(industries)} 條')
+    log.info(f'[Gemini] 開始描述更新，共 {len(industries)} 條')
     success = 0
     for i in range(0, len(industries), _BATCH_DESC):
         batch = industries[i: i + _BATCH_DESC]
@@ -134,11 +135,11 @@ def run_update_descriptions():
             _update_descriptions_batch(batch, api_key)
             success += len(batch)
         except Exception as e:
-            log.error(f'[Grok] 描述更新 batch {i//_BATCH_DESC+1} 失敗：{e}')
+            log.error(f'[Gemini] 描述更新 batch {i//_BATCH_DESC+1} 失敗：{e}')
 
     data['meta']['generated_at'] = datetime.now().strftime('%Y-%m-%d')
     _save_live(data)
-    log.info(f'[Grok] 描述更新完成：{success}/{len(industries)} 條')
+    log.info(f'[Gemini] 描述更新完成：{success}/{len(industries)} 條')
 
 
 def _update_descriptions_batch(batch: list, api_key: str):
@@ -153,7 +154,7 @@ def _update_descriptions_batch(batch: list, api_key: str):
         '[{"id":"...","market_size":"...","growth_rate":"...","key_theme":"...","key_risk":"..."}, ...]\n\n'
         f'產業鏈：{json.dumps(chain_list, ensure_ascii=False)}'
     )
-    text = _call_grok(prompt, api_key, max_tokens=2500)
+    text = _call_ai(prompt, api_key, max_tokens=2500)
     updates = json.loads(_strip_md(text))
     update_map = {u['id']: u for u in updates if 'id' in u}
     for chain in batch:
@@ -172,9 +173,9 @@ def _update_descriptions_batch(batch: list, api_key: str):
 
 def run_update_companies():
     """排程：每週呼叫 Grok 更新公司清單並新增缺少的產業鏈，存為草稿"""
-    api_key = os.getenv('XAI_API_KEY', '').strip()
+    api_key = os.getenv('GEMINI_API_KEY', '').strip()
     if not api_key:
-        log.warning('[Grok] XAI_API_KEY 未設定，略過公司更新')
+        log.warning('[Gemini] GEMINI_API_KEY 未設定，略過公司更新')
         return
 
     data = get_data()
@@ -183,29 +184,29 @@ def run_update_companies():
     import copy
     draft_industries = copy.deepcopy(industries)
 
-    log.info(f'[Grok] 開始公司更新，共 {len(draft_industries)} 條')
+    log.info(f'[Gemini] 開始公司更新，共 {len(draft_industries)} 條')
     success = 0
     for i in range(0, len(draft_industries), _BATCH_CO):
         batch = draft_industries[i: i + _BATCH_CO]
         try:
             _update_companies_batch(batch, api_key)
             success += len(batch)
-            log.info(f'[Grok] 公司更新進度 {success}/{len(draft_industries)}')
+            log.info(f'[Gemini] 公司更新進度 {success}/{len(draft_industries)}')
         except Exception as e:
-            log.error(f'[Grok] 公司更新 batch {i//_BATCH_CO+1} 失敗：{e}')
+            log.error(f'[Gemini] 公司更新 batch {i//_BATCH_CO+1} 失敗：{e}')
 
     # 詢問 Grok 是否有缺少的重要產業鏈
     try:
         new_chains = _suggest_new_chains(draft_industries, api_key)
         if new_chains:
             draft_industries.extend(new_chains)
-            log.info(f'[Grok] 新增 {len(new_chains)} 條新產業鏈')
+            log.info(f'[Gemini] 新增 {len(new_chains)} 條新產業鏈')
     except Exception as e:
-        log.error(f'[Grok] 新增產業鏈失敗：{e}')
+        log.error(f'[Gemini] 新增產業鏈失敗：{e}')
 
     # 只有至少一批成功才存草稿，避免存入全為原始資料的假草稿
     if success == 0:
-        log.error('[Grok] 公司更新：所有批次均失敗，不產生草稿')
+        log.error('[Gemini] 公司更新：所有批次均失敗，不產生草稿')
         return
 
     # 存為草稿
@@ -221,9 +222,9 @@ def run_update_companies():
     try:
         with open(_DRAFT_PATH, 'w', encoding='utf-8') as f:
             json.dump(draft, f, ensure_ascii=False, indent=2)
-        log.info(f'[Grok] 草稿已儲存：{_DRAFT_PATH}，成功 {success}/{len(industries)} 條')
+        log.info(f'[Gemini] 草稿已儲存：{_DRAFT_PATH}，成功 {success}/{len(industries)} 條')
     except Exception as e:
-        log.error(f'[Grok] 草稿儲存失敗：{e}')
+        log.error(f'[Gemini] 草稿儲存失敗：{e}')
 
 
 def _update_companies_batch(batch: list, api_key: str):
@@ -248,7 +249,7 @@ def _update_companies_batch(batch: list, api_key: str):
 現有資料：
 {json.dumps(batch, ensure_ascii=False, indent=2)}"""
 
-    text = _call_grok(prompt, api_key, max_tokens=4000)
+    text = _call_ai(prompt, api_key, max_tokens=4000)
     updated = json.loads(_strip_md(text))
 
     if not isinstance(updated, list) or len(updated) != len(batch):
@@ -257,7 +258,7 @@ def _update_companies_batch(batch: list, api_key: str):
     for i, chain in enumerate(batch):
         u = updated[i]
         if u.get('id') != chain.get('id'):
-            log.warning(f'[Grok] id 不符：{chain.get("id")} vs {u.get("id")}，略過')
+            log.warning(f'[Gemini] id 不符：{chain.get("id")} vs {u.get("id")}，略過')
             continue
         for field in ('upstream', 'midstream', 'downstream', 'relationships',
                       'market_size', 'growth_rate', 'key_theme', 'key_risk'):
@@ -295,7 +296,7 @@ def _suggest_new_chains(existing: list, api_key: str) -> list:
 
 台股 ticker 若不確定請設 null。只回傳 JSON 陣列，不要說明。"""
 
-    text = _call_grok(prompt, api_key, max_tokens=4000)
+    text = _call_ai(prompt, api_key, max_tokens=4000)
     result = json.loads(_strip_md(text))
     if not isinstance(result, list):
         return []
@@ -307,9 +308,9 @@ def _suggest_new_chains(existing: list, api_key: str) -> list:
 # 內部工具
 # ──────────────────────────────────────────
 
-def _call_grok(prompt: str, api_key: str, max_tokens: int = 3000) -> str:
+def _call_ai(prompt: str, api_key: str, max_tokens: int = 3000) -> str:
     resp = requests.post(
-        _GROK_URL,
+        _AI_URL,
         headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
         json={
             'model': _MODEL,
@@ -341,17 +342,17 @@ def _save_live(data: dict):
             json.dump(data, f, ensure_ascii=False, indent=2)
         _cache = data
     except Exception as e:
-        log.error(f'[Grok] 寫入失敗：{e}')
+        log.error(f'[Gemini] 寫入失敗：{e}')
 
 
 def test_connection() -> dict:
     """同步測試 Grok 連線，回傳詳細結果（供診斷用）"""
-    api_key = os.getenv('XAI_API_KEY', '').strip()
+    api_key = os.getenv('GEMINI_API_KEY', '').strip()
     if not api_key:
-        return {'ok': False, 'error': 'XAI_API_KEY 未設定', 'model': _MODEL}
+        return {'ok': False, 'error': 'GEMINI_API_KEY 未設定', 'model': _MODEL}
     try:
         resp = requests.post(
-            _GROK_URL,
+            _AI_URL,
             headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
             json={
                 'model': _MODEL,
