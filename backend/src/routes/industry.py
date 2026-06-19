@@ -66,3 +66,11 @@ def manual_refresh_full():
     t = threading.Thread(target=grok_updater.run_update_companies, daemon=True)
     t.start()
     return jsonify({'status': 'started', 'message': '公司清單更新已在背景執行，完成後請至產業鏈地圖審核草稿'})
+
+
+@industry_bp.get('/test-grok')
+def test_grok():
+    """同步測試 Grok API 連線（約 5-10 秒），回傳成功/失敗與錯誤原因"""
+    result = grok_updater.test_connection()
+    code = 200 if result.get('ok') else 400
+    return jsonify(result), code

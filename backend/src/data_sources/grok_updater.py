@@ -203,17 +203,25 @@ def run_update_companies():
     except Exception as e:
         log.error(f'[Grok] 新增產業鏈失敗：{e}')
 
+    # 只有至少一批成功才存草稿，避免存入全為原始資料的假草稿
+    if success == 0:
+        log.error('[Grok] 公司更新：所有批次均失敗，不產生草稿')
+        return
+
     # 存為草稿
     draft = copy.deepcopy(data)
     draft['industries'] = draft_industries
     draft['meta']['draft_generated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M')
-    draft['meta']['draft_note'] = f'Grok 公司更新草稿，共 {len(draft_industries)} 條產業鏈'
+    draft['meta']['draft_note'] = (
+        f'Grok 公司更新草稿，共 {len(draft_industries)} 條產業鏈'
+        f'（成功更新 {success}/{len(industries)} 條）'
+    )
     draft['meta']['total_industries'] = len(draft_industries)
 
     try:
         with open(_DRAFT_PATH, 'w', encoding='utf-8') as f:
             json.dump(draft, f, ensure_ascii=False, indent=2)
-        log.info(f'[Grok] 草稿已儲存：{_DRAFT_PATH}')
+        log.info(f'[Grok] 草稿已儲存：{_DRAFT_PATH}，成功 {success}/{len(industries)} 條')
     except Exception as e:
         log.error(f'[Grok] 草稿儲存失敗：{e}')
 
@@ -334,6 +342,33 @@ def _save_live(data: dict):
         _cache = data
     except Exception as e:
         log.error(f'[Grok] 寫入失敗：{e}')
+
+
+def test_connection() -> dict:
+    """同步測試 Grok 連線，回傳詳細結果（供診斷用）"""
+    api_key = os.getenv('XAI_API_KEY', '').strip()
+    if not api_key:
+        return {'ok': False, 'error': 'XAI_API_KEY 未設定', 'model': _MODEL}
+    try:
+        resp = requests.post(
+            _GROK_URL,
+            headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+            json={
+                'model': _MODEL,
+                'messages': [{'role': 'user', 'content': '請用一句話介紹台積電，直接回答。'}],
+                'temperature': 0.1,
+                'max_tokens': 80,
+            },
+            timeout=30,
+        )
+        if resp.status_code == 200:
+            content = resp.json()['choices'][0]['message']['content'].strip()
+            return {'ok': True, 'model': _MODEL, 'reply': content}
+        else:
+            return {'ok': False, 'model': _MODEL,
+                    'status_code': resp.status_code, 'error': resp.text[:500]}
+    except Exception as e:
+        return {'ok': False, 'model': _MODEL, 'error': str(e)}
 
 
 # 向下相容：原本 run_update() 維持描述更新
