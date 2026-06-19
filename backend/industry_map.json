@@ -128,6 +128,7 @@
         { "ticker": "6176", "name": "瑞儀", "role": "光學元件" }
       ],
       "midstream": [
+        { "ticker": "3163", "name": "波若威", "role": "CPO 光引擎、高速光收發模組" },
         { "ticker": "6547", "name": "光環新網", "role": "光纖模組" },
         { "ticker": "3491", "name": "聯亞", "role": "高速光收發模組" },
         { "ticker": "2455", "name": "全新", "role": "雷射二極體" }
