@@ -61,7 +61,7 @@ def _roc_to_iso(date_str: str) -> str:
     return date_str
 
 
-def _actual_prices(ticker: str, n: int = 5) -> list[dict]:
+def _actual_prices(ticker: str, n: int = 10) -> list[dict]:
     """用 TWSE get_stock_daily() 取最近 n 天收盤價。"""
     candles = twse.get_stock_daily(ticker, months=1)
     recent = candles[-n:] if len(candles) >= n else candles
@@ -79,21 +79,48 @@ def _next_trading_day(dt: datetime) -> datetime:
 
 
 def _predicted_prices(actual: list[dict], signal: dict, n: int = 5) -> list[dict]:
-    """根據 AI 訊號方向+信心度估算未來 n 個交易日收盤價。"""
+    """
+    根據 AI 訊號 + 歷史波動率估算未來 n 個交易日收盤價。
+    改良重點：
+      1. 使用實際歷史日報酬標準差取代固定 ±0.5%
+      2. 信心度隨預測天數衰減（越遠越不確定，逐漸趨平）
+      3. 混入近期動能（最近 3 天均值）作為基線修正
+    """
     if not actual:
         return []
+
     direction  = int(signal.get("direction", 0))
     confidence = float(signal.get("confidence", 0.5))
-    last_close = float(actual[-1]["close"])
+    closes     = [float(p["close"]) for p in actual]
+    last_close = closes[-1]
     last_date  = datetime.strptime(actual[-1]["date"], "%Y-%m-%d")
-    # 每日預測漲跌幅：最多 ±0.5%，依方向與信心度縮放
-    daily_rate = 0.005 * direction * (0.3 + confidence * 0.7)
 
+    # 1. 歷史波動率（日報酬標準差），限制在 0.3%~4%
+    if len(closes) >= 3:
+        rets = [(closes[i] - closes[i - 1]) / max(closes[i - 1], 1e-8)
+                for i in range(1, len(closes))]
+        hist_vol = (sum(r ** 2 for r in rets) / len(rets)) ** 0.5
+        hist_vol = max(0.003, min(hist_vol, 0.04))
+    else:
+        hist_vol = 0.005
+
+    # 2. 近期動能（最近 3 天平均日報酬），限制在 ±1%
+    if len(closes) >= 4:
+        momentum = sum((closes[i] - closes[i - 1]) / max(closes[i - 1], 1e-8)
+                       for i in range(len(closes) - 3, len(closes))) / 3
+        momentum = max(-0.01, min(momentum, 0.01))
+    else:
+        momentum = 0.0
+
+    # 3. 逐日預測：AI 訊號信心隨時間衰減（decay=0.75/day），混合近期動能
     result = []
     price, dt = last_close, last_date
-    for _ in range(n):
+    for i in range(n):
+        decay      = 0.75 ** i                              # 第 i 天信心剩 75%^i
+        ai_rate    = hist_vol * direction * confidence * decay
+        blend_rate = ai_rate * 0.7 + momentum * 0.3        # 70% AI + 30% 動能
         dt    = _next_trading_day(dt)
-        price = round(price * (1 + daily_rate), 1)
+        price = round(price * (1 + blend_rate), 1)
         result.append({"date": dt.strftime("%Y-%m-%d"), "close": price})
     return result
 
@@ -107,16 +134,17 @@ def list_stocks():
 def predict(ticker: str):
     try:
         signal  = _latest_signal(ticker)
-        actual  = _actual_prices(ticker, n=5)
+        actual  = _actual_prices(ticker, n=10)
         pred    = _predicted_prices(actual, signal, n=5)
         dir_map = {1: "買進", -1: "賣出", 0: "觀望"}
         return jsonify({
-            "ticker":          ticker,
-            "name":            STOCK_NAMES.get(ticker, ticker),
-            "signal":          signal,
-            "direction_label": dir_map.get(signal.get("direction", 0), "觀望"),
-            "actual":          actual,
-            "predicted":       pred,
+            "ticker":               ticker,
+            "name":                 STOCK_NAMES.get(ticker, ticker),
+            "signal":               signal,
+            "direction_label":      dir_map.get(signal.get("direction", 0), "觀望"),
+            "actual":               actual,
+            "predicted":            pred,
+            "price_estimation_note": "預測價格依歷史波動率×AI信心度（含衰減）估算，非模型直接輸出，僅供參考",
         })
     except Exception as e:
         return jsonify({"error": str(e), "ticker": ticker}), 500
