@@ -26,7 +26,8 @@ const _M3C = {
 ═══════════════════════════════════════ */
 async function initSupply() {
   try {
-    const res = await fetch('/industry_map.json');
+    const url = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : '') + '/api/industry-map';
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     _m3Data = await res.json();
   } catch (e) {
