@@ -255,6 +255,18 @@ body {
 .launch-table th { padding: 6px 12px; color: var(--text3); text-align: left; border-bottom: 1px solid var(--border); }
 .launch-table td { padding: 8px 12px; border-bottom: 1px solid var(--bg3); }
 
+/* ── M3 草稿審核 Banner ── */
+.m3-draft-banner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; padding:10px 14px; background:rgba(227,179,65,.1); border:1px solid var(--orange); border-radius:8px; margin-bottom:12px; font-size:12px; }
+.m3-draft-banner .db-info { color:var(--orange); font-weight:600; }
+.m3-draft-banner .db-meta { color:var(--text2); font-size:11px; margin-top:2px; }
+.m3-draft-banner .db-actions { display:flex; gap:6px; }
+.m3-draft-panel { background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:12px; font-size:12px; }
+.m3-draft-panel h4 { margin:0 0 10px; font-size:13px; color:var(--text); }
+.m3-diff-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; max-height:360px; overflow-y:auto; }
+.m3-diff-col h5 { margin:0 0 6px; font-size:11px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; }
+.m3-diff-item { padding:5px 8px; border-radius:4px; margin-bottom:4px; font-size:11px; }
+.m3-diff-item.same  { background:var(--bg3); color:var(--text2); }
+.m3-diff-item.added { background:rgba(63,185,80,.12); color:var(--green); border-left:2px solid var(--green); }
 /* ── M3 Supply Chain Mind Map ── */
 .m3-cat-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
 .m3-cat-tab { padding: 3px 10px; border-radius: 14px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); transition: all .15s; white-space: nowrap; }

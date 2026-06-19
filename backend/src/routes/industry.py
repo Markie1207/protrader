@@ -1,9 +1,16 @@
 """
 industry.py — 產業鏈地圖路由
-GET  /api/industry-map          取得完整 JSON（含 Grok 最新內容）
-POST /api/industry-map/refresh  手動觸發 Grok 更新（供測試用）
+
+GET  /api/industry-map              取得正式資料
+GET  /api/industry-map/draft        取得草稿狀態（has_draft / 摘要）
+GET  /api/industry-map/draft/data   取得完整草稿內容
+POST /api/industry-map/draft/approve 套用草稿 → 正式生效
+POST /api/industry-map/draft/reject  捨棄草稿
+POST /api/industry-map/refresh       手動觸發描述更新（背景）
+POST /api/industry-map/refresh-full  手動觸發公司+新鏈更新（背景，產生草稿）
 """
 
+import threading
 from flask import Blueprint, jsonify
 from src.data_sources import grok_updater
 
@@ -12,17 +19,50 @@ industry_bp = Blueprint('industry', __name__, url_prefix='/api/industry-map')
 
 @industry_bp.get('')
 def get_industry_map():
-    """回傳最新產業鏈 JSON"""
     data = grok_updater.get_data()
     resp = jsonify(data)
     resp.headers['Cache-Control'] = 'no-cache'
     return resp
 
 
+@industry_bp.get('/draft')
+def get_draft_status():
+    return jsonify(grok_updater.get_draft_status())
+
+
+@industry_bp.get('/draft/data')
+def get_draft_data():
+    draft = grok_updater.get_draft_data()
+    if draft is None:
+        return jsonify({'error': True, 'message': '目前沒有草稿'}), 404
+    return jsonify(draft)
+
+
+@industry_bp.post('/draft/approve')
+def approve_draft():
+    ok = grok_updater.approve_draft()
+    if ok:
+        return jsonify({'status': 'ok', 'message': '草稿已套用為正式資料'})
+    return jsonify({'error': True, 'message': '套用失敗，草稿不存在或讀取錯誤'}), 400
+
+
+@industry_bp.post('/draft/reject')
+def reject_draft():
+    grok_updater.reject_draft()
+    return jsonify({'status': 'ok', 'message': '草稿已捨棄'})
+
+
 @industry_bp.post('/refresh')
-def manual_refresh():
-    """手動觸發 Grok 更新（用於測試；不建議前端直接呼叫）"""
-    import threading
-    t = threading.Thread(target=grok_updater.run_update, daemon=True)
+def manual_refresh_descriptions():
+    """背景觸發描述更新（直接生效）"""
+    t = threading.Thread(target=grok_updater.run_update_descriptions, daemon=True)
     t.start()
-    return jsonify({'status': 'started', 'message': 'Grok 更新已在背景執行'})
+    return jsonify({'status': 'started', 'message': '描述更新已在背景執行'})
+
+
+@industry_bp.post('/refresh-full')
+def manual_refresh_full():
+    """背景觸發完整更新（產生草稿，需審核）"""
+    t = threading.Thread(target=grok_updater.run_update_companies, daemon=True)
+    t.start()
+    return jsonify({'status': 'started', 'message': '公司清單更新已在背景執行，完成後請至產業鏈地圖審核草稿'})

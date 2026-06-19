@@ -25,13 +25,13 @@ const _M3C = {
    Init
 ═══════════════════════════════════════ */
 async function initSupply() {
+  const base = typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : '';
   try {
-    const url = (typeof BACKEND_URL !== 'undefined' ? BACKEND_URL : '') + '/api/industry-map';
-    const res = await fetch(url);
+    const res = await fetch(base + '/api/industry-map');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     _m3Data = await res.json();
   } catch (e) {
-    console.error('[M3] JSON fetch failed:', e);
+    console.error('[M3] fetch failed:', e);
     const el = document.getElementById('m3-chain-list');
     if (el) el.innerHTML = '<div style="color:var(--red);padding:8px;font-size:12px;">資料載入失敗</div>';
     return;
@@ -39,6 +39,118 @@ async function initSupply() {
   _m3RenderCatTabs();
   _m3FilterList('全部');
   if (_m3Data.industries.length > 0) _m3SelectChain(_m3Data.industries[0]);
+
+  // 非同步檢查草稿（不阻塞主流程）
+  _m3CheckDraft(base);
+}
+
+/* ═══════════════════════════════════════
+   草稿審核
+═══════════════════════════════════════ */
+async function _m3CheckDraft(base) {
+  try {
+    const res = await fetch(base + '/api/industry-map/draft');
+    if (!res.ok) return;
+    const status = await res.json();
+    if (status.has_draft) _m3ShowDraftBanner(status, base);
+  } catch (_) { /* 靜默 */ }
+}
+
+function _m3ShowDraftBanner(status, base) {
+  const pageEl = document.getElementById('page-supply');
+  if (!pageEl) return;
+
+  const banner = document.createElement('div');
+  banner.className = 'm3-draft-banner';
+  banner.id = 'm3-draft-banner';
+  banner.innerHTML = `
+    <div>
+      <div class="db-info">📋 有新草稿待審核</div>
+      <div class="db-meta">Grok 產生於 ${status.generated_at}・共 ${status.total_industries} 條產業鏈・${status.note || ''}</div>
+    </div>
+    <div class="db-actions">
+      <button class="btn btn-sm" style="background:rgba(227,179,65,.2);color:var(--orange);border-color:var(--orange);"
+        onclick="_m3ShowDraftDiff('${base}')">查看差異</button>
+      <button class="btn btn-primary btn-sm" onclick="_m3ApproveDraft('${base}')">✓ 套用草稿</button>
+      <button class="btn btn-ghost btn-sm" onclick="_m3RejectDraft('${base}')">✕ 捨棄</button>
+    </div>`;
+
+  // 插入在 section-title 後面
+  const title = pageEl.querySelector('.section-title');
+  if (title) title.after(banner);
+  else pageEl.prepend(banner);
+}
+
+async function _m3ShowDraftDiff(base) {
+  try {
+    const res = await fetch(base + '/api/industry-map/draft/data');
+    if (!res.ok) return;
+    const draft = await res.json();
+
+    const liveIds  = new Set((_m3Data?.industries || []).map(i => i.id));
+    const draftIds = new Set((draft.industries || []).map(i => i.id));
+    const added    = [...draftIds].filter(id => !liveIds.has(id));
+    const same     = [...draftIds].filter(id => liveIds.has(id));
+
+    const panel = document.createElement('div');
+    panel.className = 'm3-draft-panel';
+    panel.id = 'm3-draft-panel';
+    panel.innerHTML = `
+      <h4>草稿內容預覽</h4>
+      <div class="m3-diff-grid">
+        <div>
+          <h5>✅ 既有（${same.length} 條，已更新公司清單）</h5>
+          ${same.map(id => {
+            const d = draft.industries.find(i => i.id === id);
+            return `<div class="m3-diff-item same">${d?.emoji || ''} ${d?.name || id}</div>`;
+          }).join('')}
+        </div>
+        <div>
+          <h5>🆕 新增（${added.length} 條）</h5>
+          ${added.length ? added.map(id => {
+            const d = draft.industries.find(i => i.id === id);
+            return `<div class="m3-diff-item added">${d?.emoji || ''} ${d?.name || id}</div>`;
+          }).join('') : '<div style="color:var(--text3);font-size:11px;">無新增產業鏈</div>'}
+        </div>
+      </div>
+      <div style="margin-top:10px;text-align:right">
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('m3-draft-panel').remove()">關閉預覽</button>
+      </div>`;
+
+    const banner = document.getElementById('m3-draft-banner');
+    if (banner) {
+      const existing = document.getElementById('m3-draft-panel');
+      if (existing) existing.remove();
+      banner.after(panel);
+    }
+  } catch (e) {
+    console.error('[M3] 草稿讀取失敗', e);
+  }
+}
+
+async function _m3ApproveDraft(base) {
+  if (!confirm('確定要套用草稿？正式資料將被替換。')) return;
+  try {
+    const res = await fetch(base + '/api/industry-map/draft/approve', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      alert('草稿已套用！頁面即將重新載入。');
+      location.reload();
+    } else {
+      alert('套用失敗：' + (data.message || '未知錯誤'));
+    }
+  } catch (e) {
+    alert('網路錯誤：' + e.message);
+  }
+}
+
+async function _m3RejectDraft(base) {
+  if (!confirm('確定要捨棄這份草稿？')) return;
+  try {
+    await fetch(base + '/api/industry-map/draft/reject', { method: 'POST' });
+    document.getElementById('m3-draft-banner')?.remove();
+    document.getElementById('m3-draft-panel')?.remove();
+  } catch (_) { }
 }
 
 /* ═══════════════════════════════════════

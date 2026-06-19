@@ -39,15 +39,28 @@ _is_main_worker = os.getenv('GUNICORN_WORKER_ID', '0') == '0' or \
                   os.getenv('SERVER_SOFTWARE', '').startswith('gunicorn') is False
 
 scheduler = BackgroundScheduler(timezone='UTC')
+
+# A. 每日 UTC 00:00（台灣 08:00）更新描述欄位（直接生效）
 scheduler.add_job(
-    grok_updater.run_update,
+    grok_updater.run_update_descriptions,
     trigger='cron',
-    hour=0,
-    minute=0,
-    id='daily_grok_update',
+    hour=0, minute=0,
+    id='daily_desc_update',
     max_instances=1,
     coalesce=True,
 )
+
+# B. 每週日 UTC 02:00（台灣 10:00）更新公司清單（存為草稿，需審核）
+scheduler.add_job(
+    grok_updater.run_update_companies,
+    trigger='cron',
+    day_of_week='sun',
+    hour=2, minute=0,
+    id='weekly_company_update',
+    max_instances=1,
+    coalesce=True,
+)
+
 scheduler.start()
 
 # 關閉時清理

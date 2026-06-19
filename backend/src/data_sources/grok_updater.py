@@ -1,7 +1,9 @@
 """
 grok_updater.py — Grok API 自動更新產業鏈資料
-每日呼叫 xAI Grok，更新 key_theme / key_risk / market_size / growth_rate
-公司結構（ticker / name / role / relationships）維持不變，防止 AI 亂改
+
+兩種更新模式：
+  A. 描述更新（每日）：只改 key_theme / key_risk / market_size / growth_rate
+  B. 完整更新（每週）：補公司清單、新增鏈 → 存為草稿，需人工審核後套用
 """
 
 import json
@@ -14,18 +16,19 @@ import requests
 
 log = logging.getLogger(__name__)
 
-_DATA_PATH = Path(__file__).parent.parent.parent / 'industry_map.json'
-_GROK_URL  = 'https://api.x.ai/v1/chat/completions'
-_MODEL     = os.getenv('GROK_MODEL', 'grok-3')
-_BATCH     = 7   # 每次 API 呼叫幾條，控制 prompt 長度
+_DATA_PATH  = Path(__file__).parent.parent.parent / 'industry_map.json'
+_DRAFT_PATH = Path(__file__).parent.parent.parent / 'industry_map_draft.json'
+_GROK_URL   = 'https://api.x.ai/v1/chat/completions'
+_MODEL      = os.getenv('GROK_MODEL', 'grok-3')
+_BATCH_DESC = 7   # 描述更新每批幾條
+_BATCH_CO   = 4   # 公司更新每批幾條（內容更多，批次縮小）
 
-# 記憶體快取（主進程共用）
 _cache: dict = {}
 
 
-# ─────────────────────────────────────────
+# ══════════════════════════════════════════
 # 公開介面
-# ─────────────────────────────────────────
+# ══════════════════════════════════════════
 
 def load_data() -> dict:
     """從磁碟載入 industry_map.json 並更新快取"""
@@ -33,114 +36,305 @@ def load_data() -> dict:
     try:
         with open(_DATA_PATH, encoding='utf-8') as f:
             _cache = json.load(f)
-        log.info(f'[GrokUpdater] 載入 {len(_cache.get("industries", []))} 條產業鏈')
+        log.info(f'[Grok] 載入 {len(_cache.get("industries",[]))} 條產業鏈')
     except FileNotFoundError:
-        log.error(f'[GrokUpdater] 找不到 {_DATA_PATH}')
+        log.error(f'[Grok] 找不到 {_DATA_PATH}')
         _cache = {'meta': {}, 'industries': []}
     return _cache
 
 
 def get_data() -> dict:
-    """取得快取中的最新資料（若未載入則先讀磁碟）"""
+    """取得記憶體快取（未載入則先讀磁碟）"""
     if not _cache:
         load_data()
     return _cache
 
 
-def run_update():
-    """排程入口：分批呼叫 Grok，更新描述性欄位"""
+def get_draft_status() -> dict:
+    """回傳草稿狀態"""
+    if not _DRAFT_PATH.exists():
+        return {'has_draft': False}
+    try:
+        with open(_DRAFT_PATH, encoding='utf-8') as f:
+            draft = json.load(f)
+        meta = draft.get('meta', {})
+        return {
+            'has_draft': True,
+            'generated_at': meta.get('draft_generated_at', ''),
+            'total_industries': len(draft.get('industries', [])),
+            'note': meta.get('draft_note', ''),
+        }
+    except Exception:
+        return {'has_draft': False}
+
+
+def get_draft_data() -> dict | None:
+    """回傳完整草稿資料"""
+    if not _DRAFT_PATH.exists():
+        return None
+    try:
+        with open(_DRAFT_PATH, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return None
+
+
+def approve_draft() -> bool:
+    """套用草稿：草稿 → 正式資料"""
+    global _cache
+    draft = get_draft_data()
+    if not draft:
+        return False
+    try:
+        draft['meta']['generated_at'] = datetime.now().strftime('%Y-%m-%d')
+        draft['meta'].pop('draft_generated_at', None)
+        draft['meta'].pop('draft_note', None)
+        with open(_DATA_PATH, 'w', encoding='utf-8') as f:
+            json.dump(draft, f, ensure_ascii=False, indent=2)
+        _cache = draft
+        _DRAFT_PATH.unlink(missing_ok=True)
+        log.info('[Grok] 草稿已套用')
+        return True
+    except Exception as e:
+        log.error(f'[Grok] 套用草稿失敗：{e}')
+        return False
+
+
+def reject_draft() -> bool:
+    """捨棄草稿"""
+    try:
+        _DRAFT_PATH.unlink(missing_ok=True)
+        log.info('[Grok] 草稿已捨棄')
+        return True
+    except Exception:
+        return False
+
+
+# ──────────────────────────────────────────
+# A. 每日描述更新（直接覆蓋，風險低）
+# ──────────────────────────────────────────
+
+def run_update_descriptions():
+    """排程：每日呼叫 Grok 更新描述性欄位（直接生效）"""
     api_key = os.getenv('XAI_API_KEY', '').strip()
     if not api_key:
-        log.warning('[GrokUpdater] XAI_API_KEY 未設定，略過本次更新')
+        log.warning('[Grok] XAI_API_KEY 未設定，略過描述更新')
         return
 
     data = get_data()
     industries = data.get('industries', [])
     if not industries:
-        log.error('[GrokUpdater] 無產業鏈資料')
         return
 
-    log.info(f'[GrokUpdater] 開始更新 {len(industries)} 條產業鏈（model={_MODEL}）')
+    log.info(f'[Grok] 開始描述更新，共 {len(industries)} 條')
     success = 0
-
-    for i in range(0, len(industries), _BATCH):
-        batch = industries[i : i + _BATCH]
+    for i in range(0, len(industries), _BATCH_DESC):
+        batch = industries[i: i + _BATCH_DESC]
         try:
-            _update_batch(batch, api_key)
+            _update_descriptions_batch(batch, api_key)
             success += len(batch)
-            log.info(f'[GrokUpdater] 已更新 {success}/{len(industries)}')
         except Exception as e:
-            log.error(f'[GrokUpdater] batch {i // _BATCH + 1} 失敗：{e}')
+            log.error(f'[Grok] 描述更新 batch {i//_BATCH_DESC+1} 失敗：{e}')
 
     data['meta']['generated_at'] = datetime.now().strftime('%Y-%m-%d')
-    _save(data)
-    log.info(f'[GrokUpdater] 完成，成功 {success}/{len(industries)} 條')
+    _save_live(data)
+    log.info(f'[Grok] 描述更新完成：{success}/{len(industries)} 條')
 
 
-# ─────────────────────────────────────────
-# 內部實作
-# ─────────────────────────────────────────
-
-def _update_batch(batch: list, api_key: str):
-    """呼叫 Grok API，更新一批產業鏈的描述欄位"""
-    chain_list = [
-        {'id': c['id'], 'name': c['name'], 'category': c['category']}
-        for c in batch
-    ]
-
+def _update_descriptions_batch(batch: list, api_key: str):
+    chain_list = [{'id': c['id'], 'name': c['name'], 'category': c['category']} for c in batch]
     prompt = (
-        f'你是台股產業分析師。根據當前最新市況，為以下 {len(batch)} 條產業鏈更新 4 個欄位：\n'
-        '- market_size：全球或台灣相關市場規模（一句話，含金額）\n'
-        '- growth_rate：年增率預測（如 "YoY +25%"）\n'
-        '- key_theme：目前最重要的投資主題（1-2 句，重點明確）\n'
+        f'你是台股產業分析師。根據最新市況，為以下 {len(batch)} 條產業鏈更新 4 個欄位：\n'
+        '- market_size：市場規模（一句，含金額）\n'
+        '- growth_rate：年增率（如 "YoY +25%"）\n'
+        '- key_theme：最重要投資主題（1-2 句）\n'
         '- key_risk：主要風險（1-2 句）\n\n'
-        '請直接回傳 JSON 陣列，不要任何說明或 markdown：\n'
+        '直接回傳 JSON 陣列，不要 markdown 或說明：\n'
         '[{"id":"...","market_size":"...","growth_rate":"...","key_theme":"...","key_risk":"..."}, ...]\n\n'
-        f'產業鏈：\n{json.dumps(chain_list, ensure_ascii=False)}'
+        f'產業鏈：{json.dumps(chain_list, ensure_ascii=False)}'
     )
-
-    resp = requests.post(
-        _GROK_URL,
-        headers={
-            'Authorization': f'Bearer {api_key}',
-            'Content-Type': 'application/json',
-        },
-        json={
-            'model': _MODEL,
-            'messages': [{'role': 'user', 'content': prompt}],
-            'temperature': 0.3,
-            'max_tokens': 3000,
-        },
-        timeout=90,
-    )
-    resp.raise_for_status()
-
-    text = resp.json()['choices'][0]['message']['content'].strip()
-    # 去除可能的 ```json ... ``` 包裝
-    if text.startswith('```'):
-        lines = text.splitlines()
-        text = '\n'.join(lines[1:-1] if lines[-1] == '```' else lines[1:])
-
-    updates: list = json.loads(text)
+    text = _call_grok(prompt, api_key, max_tokens=2500)
+    updates = json.loads(_strip_md(text))
     update_map = {u['id']: u for u in updates if 'id' in u}
-
     for chain in batch:
         u = update_map.get(chain['id'])
         if not u:
             continue
         for field in ('market_size', 'growth_rate', 'key_theme', 'key_risk'):
-            val = u.get(field, '').strip()
+            val = str(u.get(field, '')).strip()
             if val:
                 chain[field] = val
 
 
-def _save(data: dict):
-    """寫回磁碟並更新記憶體快取"""
+# ──────────────────────────────────────────
+# B. 每週公司清單更新（存為草稿，需審核）
+# ──────────────────────────────────────────
+
+def run_update_companies():
+    """排程：每週呼叫 Grok 更新公司清單並新增缺少的產業鏈，存為草稿"""
+    api_key = os.getenv('XAI_API_KEY', '').strip()
+    if not api_key:
+        log.warning('[Grok] XAI_API_KEY 未設定，略過公司更新')
+        return
+
+    data = get_data()
+    industries = list(data.get('industries', []))   # 複本，不動 live
+
+    import copy
+    draft_industries = copy.deepcopy(industries)
+
+    log.info(f'[Grok] 開始公司更新，共 {len(draft_industries)} 條')
+    success = 0
+    for i in range(0, len(draft_industries), _BATCH_CO):
+        batch = draft_industries[i: i + _BATCH_CO]
+        try:
+            _update_companies_batch(batch, api_key)
+            success += len(batch)
+            log.info(f'[Grok] 公司更新進度 {success}/{len(draft_industries)}')
+        except Exception as e:
+            log.error(f'[Grok] 公司更新 batch {i//_BATCH_CO+1} 失敗：{e}')
+
+    # 詢問 Grok 是否有缺少的重要產業鏈
+    try:
+        new_chains = _suggest_new_chains(draft_industries, api_key)
+        if new_chains:
+            draft_industries.extend(new_chains)
+            log.info(f'[Grok] 新增 {len(new_chains)} 條新產業鏈')
+    except Exception as e:
+        log.error(f'[Grok] 新增產業鏈失敗：{e}')
+
+    # 存為草稿
+    draft = copy.deepcopy(data)
+    draft['industries'] = draft_industries
+    draft['meta']['draft_generated_at'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+    draft['meta']['draft_note'] = f'Grok 公司更新草稿，共 {len(draft_industries)} 條產業鏈'
+    draft['meta']['total_industries'] = len(draft_industries)
+
+    try:
+        with open(_DRAFT_PATH, 'w', encoding='utf-8') as f:
+            json.dump(draft, f, ensure_ascii=False, indent=2)
+        log.info(f'[Grok] 草稿已儲存：{_DRAFT_PATH}')
+    except Exception as e:
+        log.error(f'[Grok] 草稿儲存失敗：{e}')
+
+
+def _update_companies_batch(batch: list, api_key: str):
+    """請 Grok 審核並補強一批產業鏈的公司清單"""
+    prompt = f"""你是台股產業鏈分析師。請審核並補強以下 {len(batch)} 條產業鏈的公司清單。
+
+任務：
+1. 補充遺漏的重要台股公司到 upstream/midstream/downstream
+2. 修正錯誤的公司角色描述
+3. 可刪除不相關或已下市的公司
+4. 同時更新 market_size / growth_rate / key_theme / key_risk
+
+台股 ticker 規則（重要！）：
+- 台股代碼為 4 位數字字串，如 "2330"
+- 若不確定某公司的正確代碼，ticker 設為 null，不要猜測
+- 外國公司（美/日/韓）ticker 一律設為 null
+- 每個 upstream/midstream/downstream 各保持 2-6 家，不要過多
+
+回傳格式：JSON 陣列（與輸入格式完全相同，包含所有欄位）
+只回傳 JSON，不要任何說明或 markdown。
+
+現有資料：
+{json.dumps(batch, ensure_ascii=False, indent=2)}"""
+
+    text = _call_grok(prompt, api_key, max_tokens=4000)
+    updated = json.loads(_strip_md(text))
+
+    if not isinstance(updated, list) or len(updated) != len(batch):
+        raise ValueError(f'回傳筆數不符：期望 {len(batch)}，實得 {len(updated) if isinstance(updated, list) else "非陣列"}')
+
+    for i, chain in enumerate(batch):
+        u = updated[i]
+        if u.get('id') != chain.get('id'):
+            log.warning(f'[Grok] id 不符：{chain.get("id")} vs {u.get("id")}，略過')
+            continue
+        for field in ('upstream', 'midstream', 'downstream', 'relationships',
+                      'market_size', 'growth_rate', 'key_theme', 'key_risk'):
+            if field in u:
+                chain[field] = u[field]
+
+
+def _suggest_new_chains(existing: list, api_key: str) -> list:
+    """請 Grok 建議目前缺少的重要產業鏈"""
+    existing_names = [c['name'] for c in existing]
+    categories = list({c['category'] for c in existing})
+
+    prompt = f"""你是台股產業鏈分析師。目前已有以下 {len(existing_names)} 條產業鏈：
+{json.dumps(existing_names, ensure_ascii=False)}
+
+分類：{json.dumps(categories, ensure_ascii=False)}
+
+請建議 3-8 條目前市場上重要但清單中缺少的台灣相關產業鏈（例如：玻璃基板、CoWoS-R、CoPos、ABF 載板替代等）。
+
+每條鏈請提供完整資料，格式與現有資料相同：
+{{
+  "id": "snake_case_id",
+  "name": "中文名稱",
+  "emoji": "適合的 emoji",
+  "category": "從現有分類中選一個",
+  "market_size": "市場規模描述",
+  "growth_rate": "YoY 成長率",
+  "key_theme": "投資主題",
+  "key_risk": "主要風險",
+  "upstream": [{{"ticker": "台股4碼或null", "name": "公司名", "role": "角色"}}],
+  "midstream": [...],
+  "downstream": [...],
+  "relationships": [{{"from": "公司名", "to": "公司名", "type": "關係"}}]
+}}
+
+台股 ticker 若不確定請設 null。只回傳 JSON 陣列，不要說明。"""
+
+    text = _call_grok(prompt, api_key, max_tokens=4000)
+    result = json.loads(_strip_md(text))
+    if not isinstance(result, list):
+        return []
+    # 基本驗證：必須有 id 和 name
+    return [c for c in result if c.get('id') and c.get('name')]
+
+
+# ──────────────────────────────────────────
+# 內部工具
+# ──────────────────────────────────────────
+
+def _call_grok(prompt: str, api_key: str, max_tokens: int = 3000) -> str:
+    resp = requests.post(
+        _GROK_URL,
+        headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+        json={
+            'model': _MODEL,
+            'messages': [{'role': 'user', 'content': prompt}],
+            'temperature': 0.2,
+            'max_tokens': max_tokens,
+        },
+        timeout=120,
+    )
+    resp.raise_for_status()
+    return resp.json()['choices'][0]['message']['content'].strip()
+
+
+def _strip_md(text: str) -> str:
+    """去除可能的 ```json ... ``` 包裝"""
+    if text.startswith('```'):
+        lines = text.splitlines()
+        start = 1 if lines[0].startswith('```') else 0
+        end = -1 if lines[-1] == '```' else len(lines)
+        text = '\n'.join(lines[start:end])
+    return text.strip()
+
+
+def _save_live(data: dict):
+    """寫回正式資料並更新快取"""
     global _cache
     try:
         with open(_DATA_PATH, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         _cache = data
-        log.info(f'[GrokUpdater] 已寫入 {_DATA_PATH}')
     except Exception as e:
-        log.error(f'[GrokUpdater] 寫入失敗：{e}')
+        log.error(f'[Grok] 寫入失敗：{e}')
+
+
+# 向下相容：原本 run_update() 維持描述更新
+run_update = run_update_descriptions
