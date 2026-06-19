@@ -209,6 +209,16 @@ const API = {
     return await _fetch('/api/market/news', Mock.newsList);
   },
 
+  /** AI 預測股票清單（20 檔） */
+  async getPredictionStocks() {
+    return await _fetch('/api/prediction/stocks', () => []);
+  },
+
+  /** AI 個股預測（訊號 + 實際/預測股價） */
+  async getPrediction(ticker) {
+    return await _fetch(`/api/prediction/${ticker}`, () => null);
+  },
+
   /** 取得後端 URL（偵錯用） */
   getBackendUrl() { return BACKEND_URL; },
 };

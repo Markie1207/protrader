@@ -669,6 +669,16 @@
 
   </div>
 
+  <!-- 跟單操作列 -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+    <button id="va-follow-btn" onclick="vaFollowSignal()"
+      style="background:var(--blue);color:#fff;border:none;border-radius:6px;
+             padding:7px 18px;font-size:13px;font-weight:700;cursor:pointer;min-width:100px;">
+      跟單
+    </button>
+    <span id="va-status-msg" style="font-size:12px;color:var(--text3);">選擇股票後可跟單</span>
+  </div>
+
   <!-- 圖表 + 資料表 -->
   <div class="grid-2" style="margin-bottom:16px;">
 
@@ -691,8 +701,11 @@
 
   </div>
 
+  <!-- 資料明細表 + 虛擬帳戶（並排） -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;">
+
   <!-- 資料明細表 -->
-  <div class="card" style="max-width:400px;">
+  <div class="card" style="min-width:280px;flex:0 0 auto;">
     <div class="card-header">
       <div class="card-title"><span class="icon">📋</span>逐日明細</div>
     </div>
@@ -709,6 +722,61 @@
       </tbody>
     </table>
   </div>
+
+  <!-- 虛擬帳戶 -->
+  <div class="card" style="flex:1;min-width:320px;">
+    <div class="card-header" style="margin-bottom:12px;">
+      <div class="card-title"><span class="icon">💼</span>虛擬帳戶</div>
+      <button onclick="vaReset()"
+        style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);
+               border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">
+        重置
+      </button>
+    </div>
+
+    <!-- 摘要列 -->
+    <div style="display:flex;gap:20px;font-size:12px;color:var(--text2);
+                margin-bottom:14px;flex-wrap:wrap;">
+      <span>持倉：<strong id="va-pos-count" style="color:var(--text);">—</strong></span>
+      <span>歷史交易：<strong id="va-hist-count" style="color:var(--text);">—</strong></span>
+      <span>累計損益：<strong id="va-total-pnl" style="color:var(--text);">—</strong></span>
+    </div>
+
+    <!-- 持倉表格 -->
+    <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px;">目前持倉</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:14px;">
+      <thead>
+        <tr style="color:var(--text3);">
+          <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">股票</th>
+          <th style="text-align:right;padding:4px 6px;border-bottom:1px solid var(--border);">買入價</th>
+          <th style="text-align:right;padding:4px 6px;border-bottom:1px solid var(--border);">買入日</th>
+          <th style="text-align:center;padding:4px 6px;border-bottom:1px solid var(--border);">操作</th>
+        </tr>
+      </thead>
+      <tbody id="va-positions-body">
+        <tr><td colspan="4" style="color:var(--text3);text-align:center;padding:10px;">尚無持倉</td></tr>
+      </tbody>
+    </table>
+
+    <!-- 交易紀錄 -->
+    <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px;">交易紀錄</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="color:var(--text3);">
+          <th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);">股票</th>
+          <th style="text-align:center;padding:4px 6px;border-bottom:1px solid var(--border);">動作</th>
+          <th style="text-align:right;padding:4px 6px;border-bottom:1px solid var(--border);">價格</th>
+          <th style="text-align:right;padding:4px 6px;border-bottom:1px solid var(--border);">損益%</th>
+          <th style="text-align:right;padding:4px 6px;border-bottom:1px solid var(--border);">日期</th>
+        </tr>
+      </thead>
+      <tbody id="va-history-body">
+        <tr><td colspan="5" style="color:var(--text3);text-align:center;padding:10px;">尚無紀錄</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  </div><!-- end flex wrapper -->
 
 </div>
 

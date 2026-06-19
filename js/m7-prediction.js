@@ -7,6 +7,7 @@
 
 let _predChart = null;
 let _predStocks = [];
+let _lastPredData = null;  // 最後載入的預測資料（虛擬帳戶跟單使用）
 
 /* ── 初始化 ── */
 async function initPrediction() {
@@ -43,9 +44,12 @@ async function loadPrediction(ticker) {
 
     if (data.error) throw new Error(data.error);
 
+    _lastPredData = data;
     _renderSignalCards(data);
     _renderPredChart(data);
     _renderPredTable(data);
+    vaRender();
+    vaUpdateFollowBtn();
     document.getElementById('pred-update-time').textContent =
       '更新時間：' + new Date().toLocaleTimeString('zh-TW');
   } catch (e) {
@@ -215,6 +219,226 @@ function _renderPredTable(data) {
       </td>
     </tr>`;
   }).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   虛擬帳戶（VA）
+   Storage key: protrader_va
+   { positions: [...], history: [...] }
+══════════════════════════════════════════════════════ */
+
+const VA_KEY = 'protrader_va';
+
+function vaLoad() {
+  try {
+    return JSON.parse(localStorage.getItem(VA_KEY)) || { positions: [], history: [] };
+  } catch (e) {
+    return { positions: [], history: [] };
+  }
+}
+
+function vaSave(va) {
+  try { localStorage.setItem(VA_KEY, JSON.stringify(va)); } catch (e) {}
+}
+
+function vaToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/* 跟單：依目前 AI 訊號買入或賣出 */
+function vaFollowSignal() {
+  if (!_lastPredData) return;
+  const sig    = _lastPredData.signal || {};
+  const dir    = sig.direction ?? 0;
+  const ticker = _lastPredData.ticker;
+  const name   = _lastPredData.name || ticker;
+  const actual = _lastPredData.actual || [];
+  const price  = actual.length ? actual[actual.length - 1].close : null;
+
+  if (!price) { _vaMsg('無法取得現價，請稍後再試'); return; }
+
+  const va  = vaLoad();
+  const has = va.positions.some(p => p.ticker === ticker);
+
+  if (dir === 1 && !has) {
+    va.positions.push({ ticker, name, entry_price: price, entry_date: vaToday(), confidence: sig.confidence ?? 0 });
+    va.history.push({ ticker, name, action: 'buy', price, date: vaToday(), pnl_pct: null });
+    vaSave(va);
+    _vaMsg(`已買入 ${ticker} ${name} @ $${price}`);
+  } else if (dir === -1 && has) {
+    _vaDoClose(ticker, price);
+    return;
+  } else if (dir === 1 && has) {
+    _vaMsg(`${ticker} 已在持倉中`);
+  } else if (dir === -1 && !has) {
+    _vaMsg(`${ticker} 無持倉可賣出`);
+  } else {
+    _vaMsg('目前訊號為觀望，不執行');
+  }
+
+  vaRender();
+  vaUpdateFollowBtn();
+}
+
+/* 平倉（持倉表格的平倉按鈕） */
+async function vaClosePosition(ticker) {
+  let price = null;
+
+  if (_lastPredData?.ticker === ticker) {
+    const actual = _lastPredData.actual || [];
+    price = actual.length ? actual[actual.length - 1].close : null;
+  }
+
+  if (!price) {
+    const hist = await API.getStockHistory(ticker, 1);
+    const candles = hist?.candles || [];
+    price = candles.length ? candles[candles.length - 1].close : null;
+  }
+
+  if (!price) { _vaMsg('無法取得現價，請稍後再試'); return; }
+  _vaDoClose(ticker, price);
+  vaRender();
+  vaUpdateFollowBtn();
+}
+
+function _vaDoClose(ticker, price) {
+  const va  = vaLoad();
+  const idx = va.positions.findIndex(p => p.ticker === ticker);
+  if (idx === -1) return;
+
+  const pos     = va.positions[idx];
+  const pnl_pct = ((price - pos.entry_price) / pos.entry_price * 100);
+  va.positions.splice(idx, 1);
+  va.history.push({
+    ticker, name: pos.name, action: 'sell',
+    price, date: vaToday(), pnl_pct: +pnl_pct.toFixed(2),
+  });
+  vaSave(va);
+  _vaMsg(`已平倉 ${ticker} @ $${price}，損益 ${pnl_pct >= 0 ? '+' : ''}${pnl_pct.toFixed(2)}%`);
+}
+
+/* 重置帳戶 */
+function vaReset() {
+  if (!confirm('確定清除所有虛擬帳戶紀錄？')) return;
+  vaSave({ positions: [], history: [] });
+  vaRender();
+  vaUpdateFollowBtn();
+  _vaMsg('虛擬帳戶已重置');
+}
+
+/* 渲染虛擬帳戶 UI */
+function vaRender() {
+  const va = vaLoad();
+
+  // 摘要
+  const totalPnl = va.history.filter(h => h.pnl_pct !== null).reduce((s, h) => s + h.pnl_pct, 0);
+  const pnlColor = totalPnl > 0 ? '#ef4444' : totalPnl < 0 ? '#22c55e' : 'var(--text2)';
+  _setEl('va-pos-count',  va.positions.length);
+  _setEl('va-hist-count', va.history.length);
+  _setEl('va-total-pnl',  va.history.length ? `${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(2)}%` : '—');
+  const pnlEl = document.getElementById('va-total-pnl');
+  if (pnlEl && va.history.length) pnlEl.style.color = pnlColor;
+
+  // 持倉
+  const posTbody = document.getElementById('va-positions-body');
+  if (posTbody) {
+    posTbody.innerHTML = va.positions.length
+      ? va.positions.map(p => `
+          <tr>
+            <td style="padding:5px 6px;">${p.ticker}<span style="color:var(--text3);font-size:10px;margin-left:4px;">${p.name}</span></td>
+            <td style="padding:5px 6px;text-align:right;">$${p.entry_price.toFixed(1)}</td>
+            <td style="padding:5px 6px;text-align:right;color:var(--text3);font-size:11px;">${p.entry_date}</td>
+            <td style="padding:5px 6px;text-align:center;">
+              <button onclick="vaClosePosition('${p.ticker}')"
+                style="background:var(--bg3);color:var(--text2);border:1px solid var(--border);
+                       border-radius:4px;padding:2px 8px;font-size:11px;cursor:pointer;">
+                平倉
+              </button>
+            </td>
+          </tr>`).join('')
+      : '<tr><td colspan="4" style="color:var(--text3);text-align:center;padding:10px;">尚無持倉</td></tr>';
+  }
+
+  // 歷史（最新在上）
+  const histTbody = document.getElementById('va-history-body');
+  if (histTbody) {
+    const sorted = [...va.history].reverse();
+    histTbody.innerHTML = sorted.length
+      ? sorted.map(h => {
+          const isBuy = h.action === 'buy';
+          const pnlStr = h.pnl_pct !== null
+            ? `<span style="color:${h.pnl_pct >= 0 ? '#ef4444' : '#22c55e'}">${h.pnl_pct >= 0 ? '+' : ''}${h.pnl_pct}%</span>`
+            : '—';
+          return `<tr>
+            <td style="padding:4px 6px;">${h.ticker}<span style="color:var(--text3);font-size:10px;margin-left:4px;">${h.name}</span></td>
+            <td style="padding:4px 6px;text-align:center;color:${isBuy ? '#ef4444' : '#22c55e'};font-weight:700;">${isBuy ? '買入' : '賣出'}</td>
+            <td style="padding:4px 6px;text-align:right;">$${h.price.toFixed(1)}</td>
+            <td style="padding:4px 6px;text-align:right;">${pnlStr}</td>
+            <td style="padding:4px 6px;text-align:right;color:var(--text3);font-size:11px;">${h.date}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="5" style="color:var(--text3);text-align:center;padding:10px;">尚無紀錄</td></tr>';
+  }
+}
+
+/* 更新跟單按鈕狀態 */
+function vaUpdateFollowBtn() {
+  const btn = document.getElementById('va-follow-btn');
+  const msg = document.getElementById('va-status-msg');
+  if (!btn) return;
+
+  if (!_lastPredData) {
+    btn.textContent = '跟單';
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    return;
+  }
+
+  const va     = vaLoad();
+  const dir    = _lastPredData.signal?.direction ?? 0;
+  const ticker = _lastPredData.ticker;
+  const has    = va.positions.some(p => p.ticker === ticker);
+
+  btn.disabled = false;
+  btn.style.opacity = '1';
+
+  if (dir === 1 && !has) {
+    btn.textContent = '跟單買入';
+    btn.style.background = '#ef4444';
+    if (msg) msg.textContent = `AI 看多 ${ticker}，點擊跟單買入`;
+  } else if (dir === -1 && has) {
+    btn.textContent = '跟單賣出';
+    btn.style.background = '#22c55e';
+    if (msg) msg.textContent = `AI 看空 ${ticker}，點擊跟單賣出`;
+  } else if (dir === 1 && has) {
+    btn.textContent = '已持有';
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.background = 'var(--bg3)';
+    if (msg) msg.style.color = 'var(--text3)', msg.textContent = `${ticker} 已在持倉中`;
+  } else if (dir === -1 && !has) {
+    btn.textContent = '無倉可賣';
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.background = 'var(--bg3)';
+    if (msg) msg.textContent = `${ticker} 無持倉`;
+  } else {
+    btn.textContent = '觀望';
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.background = 'var(--bg3)';
+    if (msg) msg.textContent = `AI 對 ${ticker} 目前觀望`;
+  }
+}
+
+function _setEl(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function _vaMsg(text) {
+  const el = document.getElementById('va-status-msg');
+  if (el) { el.textContent = text; el.style.color = 'var(--blue)'; }
 }
 
 /* ── 工具函式 ── */
