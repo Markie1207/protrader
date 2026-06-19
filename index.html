@@ -214,28 +214,33 @@
 ══════════════════════════════════════════════════════ -->
 <div id="page-supply" class="page">
   <div class="section-title">🔗 產業鏈地圖</div>
-  <!-- 10 條熱門產業鏈切換按鈕 -->
-  <div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;">
-    <button class="btn btn-primary btn-sm chain-btn" onclick="selectChain('GPU_AI',this)">🖥 GPU/AI</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Memory',this)">💾 HBM記憶體</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('CPO',this)">🔆 CPO光學</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Cooling',this)">❄️ 液冷散熱</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('PCB',this)">📐 PCB載板</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Robot',this)">🤖 人形機器人</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('EV',this)">🚗 電動車</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Solar',this)">☀️ 太陽能</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Satellite',this)">🛰 衛星通訊</button>
-    <button class="btn btn-ghost btn-sm chain-btn" onclick="selectChain('Apple',this)">🍎 蘋果供應鏈</button>
-  </div>
-  <div class="card" style="margin-bottom:16px;">
-    <div id="chain-svg-wrap"><svg id="chain-svg" class="chain" style="width:100%;height:420px;"></svg></div>
-  </div>
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title"><span class="icon">⚡</span>事前佈局訊號卡</div>
-      <span class="badge badge-red" id="signal-count">3 機會</span>
+
+  <!-- 分類 Tab -->
+  <div id="m3-cat-tabs" class="m3-cat-tabs"></div>
+
+  <!-- 主體：左側清單 + 右側主畫面 -->
+  <div class="m3-body">
+    <!-- 左側產業鏈清單 -->
+    <div class="m3-sidebar">
+      <div id="m3-chain-list"></div>
     </div>
-    <div id="preposition-signals"></div>
+
+    <!-- 右側主畫面 -->
+    <div class="m3-main">
+      <!-- 產業鏈資訊卡 -->
+      <div id="m3-chain-info" class="card m3-chain-info">
+        <div style="color:var(--text3);font-size:12px;">載入中…</div>
+      </div>
+
+      <!-- 電腦版 D3 心智圖 / 手機版摺疊卡片 -->
+      <div class="card m3-content-wrap">
+        <div id="m3-mindmap-wrap" style="min-height:420px;"></div>
+        <div id="m3-mobile-cards"></div>
+      </div>
+
+      <!-- 節點詳細資訊（點擊台股節點後出現） -->
+      <div id="m3-node-detail" class="card m3-node-detail" style="display:none;"></div>
+    </div>
   </div>
 </div>
 
@@ -707,6 +712,8 @@
 
 </div>
 
+<!-- D3.js for M3 Mind Map -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js" crossorigin="anonymous"></script>
 <!-- api.js 最先載入，其餘模組依賴它 -->
 <script src="js/api.js"></script>
 <!-- 載入順序：各模組 JS → 最後 main.js 初始化 -->

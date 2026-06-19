@@ -1,309 +1,425 @@
 /**
  * m3-supply.js — 產業鏈地圖
- * 10 條熱門產業鏈，上游 / 中游 / 下游 欄位式 SVG 顯示
+ * 42 條產業鏈，資料來自 /industry_map.json
+ * 電腦版：D3 force-directed 心智圖
+ * 手機版：摺疊卡片（< 768px）
  */
 
 'use strict';
 
-/* ─────────────────────────────────────────
-   10 條產業鏈定義（上游 / 中游 / 下游）
-   hot: true → 節點高亮標示
-───────────────────────────────────────── */
-const chains = {
+/* ─── State ─── */
+let _m3Data   = null;
+let _m3Chain  = null;
+let _m3Cat    = '全部';
+let _m3Sim    = null;
 
-  GPU_AI: {
-    title: 'GPU / AI Server 供應鏈',
-    upstream: [
-      { code: 'NVDA', name: 'NVIDIA',  role: 'GPU 設計',    type: 'us' },
-      { code: 'AMD',  name: 'AMD',     role: 'AI 加速器',   type: 'us' },
-      { code: 'MRVL', name: 'Marvell', role: 'DPU/網路IC',  type: 'us' },
-    ],
-    midstream: [
-      { code: '2330', name: '台積電', role: 'CoWoS 封裝',  hot: true },
-      { code: '3711', name: '日月光', role: '先進封裝',     hot: true },
-      { code: '2308', name: '台達電', role: '電源模組' },
-      { code: '2383', name: '台光電', role: '高速 ABF 基板' },
-      { code: '3037', name: '欣興',   role: 'ABF 載板' },
-    ],
-    downstream: [
-      { code: '2382', name: '廣達',   role: 'AI 伺服器',   hot: true },
-      { code: '6669', name: '緯穎',   role: 'CSP 伺服器' },
-      { code: '3231', name: '緯創',   role: '機架系統' },
-      { code: '2356', name: '英業達', role: '伺服器代工' },
-    ],
-  },
-
-  Memory: {
-    title: 'HBM / 記憶體供應鏈',
-    upstream: [
-      { code: 'SKH', name: 'SK Hynix', role: 'HBM 主導',  type: 'kr' },
-      { code: 'SAM', name: 'Samsung',  role: 'DRAM 製造', type: 'kr' },
-      { code: 'MU',  name: 'Micron',   role: 'HBM3E',     type: 'us' },
-    ],
-    midstream: [
-      { code: '2330', name: '台積電', role: 'HBM3 CoWoS 封裝', hot: true },
-      { code: '2408', name: '南亞科', role: 'DRAM 製造' },
-      { code: '2344', name: '華邦電', role: 'NOR Flash' },
-      { code: '6770', name: '力積電', role: '特殊記憶體' },
-    ],
-    downstream: [
-      { code: '3711', name: '日月光', role: 'HBM 模組封裝', hot: true },
-      { code: '2337', name: '旺宏',   role: 'Flash 應用' },
-      { code: '2454', name: '聯發科', role: 'AI 晶片客戶' },
-    ],
-  },
-
-  CPO: {
-    title: 'CPO 共封裝光學供應鏈',
-    upstream: [
-      { code: 'INTC', name: 'Intel',    role: 'CPO 規格制定', type: 'us' },
-      { code: 'AVGO', name: 'Broadcom', role: '光子 IC',      type: 'us' },
-    ],
-    midstream: [
-      { code: '2330', name: '台積電', role: '光電共封裝',  hot: true },
-      { code: '3019', name: '亞光',   role: '光收發模組' },
-      { code: '2034', name: '新光電', role: '光纖陣列' },
-      { code: '3714', name: '富采',   role: '雷射晶粒' },
-      { code: '4966', name: '譜瑞',   role: '高速 SerDes', hot: true },
-    ],
-    downstream: [
-      { code: '6669', name: '緯穎',   role: '光交換系統', hot: true },
-      { code: '2327', name: '國巨',   role: '被動元件' },
-      { code: '2382', name: '廣達',   role: '超高速網路交換機' },
-    ],
-  },
-
-  Cooling: {
-    title: '液冷 / AI 散熱供應鏈',
-    upstream: [
-      { code: 'NVDA', name: 'NVIDIA', role: 'GPU 熱設計規格', type: 'us' },
-      { code: 'AMD',  name: 'AMD',    role: 'CPU 熱設計規格', type: 'us' },
-    ],
-    midstream: [
-      { code: '3017', name: '奇鋐',   role: '液冷 / 散熱模組', hot: true },
-      { code: '6230', name: '超眾',   role: '均熱片 / 熱管',   hot: true },
-      { code: '3324', name: '雙鴻',   role: '液冷板' },
-      { code: '2308', name: '台達電', role: '冷卻系統整合' },
-    ],
-    downstream: [
-      { code: '2382', name: '廣達',   role: 'AI 伺服器整合' },
-      { code: '2356', name: '英業達', role: '伺服器散熱整合' },
-      { code: '6669', name: '緯穎',   role: 'CSP 液冷機架' },
-    ],
-  },
-
-  PCB: {
-    title: 'PCB / IC 載板供應鏈',
-    upstream: [
-      { code: 'AJIN', name: '味之素',   role: 'ABF 膜材',  type: 'jp' },
-      { code: 'SMUI', name: 'Sumitomo', role: 'CCL 原料',  type: 'jp' },
-    ],
-    midstream: [
-      { code: '2383', name: '台光電', role: 'ABF 載板材',  hot: true },
-      { code: '3037', name: '欣興',   role: 'ABF 載板',    hot: true },
-      { code: '4958', name: '臻鼎',   role: 'HDI 軟板' },
-      { code: '2312', name: '金寶',   role: 'PCB 組裝' },
-    ],
-    downstream: [
-      { code: '3711', name: '日月光', role: '封裝測試',   hot: true },
-      { code: '2330', name: '台積電', role: '先進製程客戶' },
-      { code: '2303', name: '聯電',   role: 'IC 客戶' },
-    ],
-  },
-
-  Robot: {
-    title: '人形機器人供應鏈',
-    upstream: [
-      { code: 'TSLA', name: 'Tesla',     role: 'Optimus 主導', type: 'us' },
-      { code: 'FIGR', name: 'Figure AI', role: '人形機器人',   type: 'us' },
-      { code: 'BDNC', name: 'Boston Dyn',role: '機器人技術',   type: 'us' },
-    ],
-    midstream: [
-      { code: '2049', name: '上銀',   role: '精密滾珠螺桿', hot: true },
-      { code: '2454', name: '聯發科', role: 'AI 邊緣運算',  hot: true },
-      { code: '1537', name: '廣隆',   role: '伺服馬達' },
-      { code: '2059', name: '川湖',   role: '精密傳動件' },
-      { code: '1590', name: '亞德客', role: '氣動元件' },
-    ],
-    downstream: [
-      { code: '2382', name: '廣達',   role: '機器人整機組裝' },
-      { code: '2317', name: '鴻海',   role: '機器人代工', hot: true },
-      { code: '6213', name: '聯茂',   role: '關節 PCB' },
-    ],
-  },
-
-  EV: {
-    title: '電動車 / 車用電子供應鏈',
-    upstream: [
-      { code: 'TSLA', name: 'Tesla', role: 'EV 整車',   type: 'us' },
-      { code: 'BYD',  name: 'BYD',   role: 'EV 整車',   type: 'cn' },
-      { code: 'NIO',  name: 'NIO',   role: '智慧電動車', type: 'cn' },
-    ],
-    midstream: [
-      { code: '2330', name: '台積電', role: '車用晶片代工', hot: true },
-      { code: '2454', name: '聯發科', role: '車用 SoC' },
-      { code: '6278', name: '台表科', role: '車用 MLCC' },
-      { code: '2327', name: '國巨',   role: '車用被動元件' },
-    ],
-    downstream: [
-      { code: '2308', name: '台達電', role: '車載電源 / OBC', hot: true },
-      { code: '3044', name: '健鼎',   role: '車用 PCB' },
-      { code: '2204', name: '中華汽車',role: '電動商用車' },
-    ],
-  },
-
-  Solar: {
-    title: '太陽能 / 儲能供應鏈',
-    upstream: [
-      { code: 'ENPH', name: 'Enphase',    role: '微型逆變器',  type: 'us' },
-      { code: 'FSLR', name: 'First Solar', role: '薄膜電池',   type: 'us' },
-    ],
-    midstream: [
-      { code: '3533', name: '嘉澤',    role: '太陽能端子',  hot: true },
-      { code: '3452', name: '益通',    role: '太陽能電池' },
-      { code: '3576', name: '聯合再生', role: '太陽能模組' },
-      { code: '3703', name: '欣弘',    role: '接線盒' },
-    ],
-    downstream: [
-      { code: '2308', name: '台達電', role: '儲能逆變器',  hot: true },
-      { code: '1504', name: '東元',   role: '儲能系統' },
-      { code: '6592', name: '和潤企業',role: '太陽能租賃' },
-    ],
-  },
-
-  Satellite: {
-    title: '低軌衛星 / 衛星通訊供應鏈',
-    upstream: [
-      { code: 'SPCX', name: 'SpaceX',    role: 'Starlink 主導', type: 'us' },
-      { code: 'AST',  name: 'AST Space',  role: '手機直連衛星',  type: 'us' },
-      { code: 'AMZN', name: 'Amazon',     role: 'Kuiper 計畫',   type: 'us' },
-    ],
-    midstream: [
-      { code: '4966', name: '譜瑞',   role: '高速 SerDes IC',  hot: true },
-      { code: '5388', name: '中磊',   role: '衛星 CPE 設備' },
-      { code: '3484', name: '崇越電', role: '衛星天線元件' },
-      { code: '2328', name: '廣輝',   role: 'RF 元件' },
-    ],
-    downstream: [
-      { code: '3045', name: '台灣大', role: '地面站 / 頻寬', hot: true },
-      { code: '3706', name: '神達',   role: '衛星定位裝置' },
-      { code: '2409', name: '友達',   role: '終端顯示器' },
-    ],
-  },
-
-  Apple: {
-    title: '蘋果供應鏈',
-    upstream: [
-      { code: 'AAPL', name: 'Apple', role: '系統整合 / 設計', type: 'us' },
-    ],
-    midstream: [
-      { code: '2330', name: '台積電', role: 'A18 Pro 代工',   hot: true },
-      { code: '2317', name: '鴻海',   role: 'iPhone 組裝',    hot: true },
-      { code: '2474', name: '可成',   role: '金屬機殼' },
-      { code: '3008', name: '大立光', role: '鏡頭模組',       hot: true },
-      { code: '3034', name: '聯詠',   role: '顯示驅動 IC' },
-    ],
-    downstream: [
-      { code: '2454', name: '聯發科', role: '連接 / Modem IC' },
-      { code: '3711', name: '日月光', role: '封裝測試' },
-      { code: '2498', name: '宏達電', role: '零組件' },
-    ],
-  },
-
+/* ─── Colors ─── */
+const _M3C = {
+  root:       '#e6edf3',
+  upstream:   '#f59e0b',
+  midstream:  '#60a5fa',
+  downstream: '#94a3b8',
 };
 
-let currentChain = 'GPU_AI';
+/* ═══════════════════════════════════════
+   Init
+═══════════════════════════════════════ */
+async function initSupply() {
+  try {
+    const res = await fetch('/industry_map.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    _m3Data = await res.json();
+  } catch (e) {
+    console.error('[M3] JSON fetch failed:', e);
+    const el = document.getElementById('m3-chain-list');
+    if (el) el.innerHTML = '<div style="color:var(--red);padding:8px;font-size:12px;">資料載入失敗</div>';
+    return;
+  }
+  _m3RenderCatTabs();
+  _m3FilterList('全部');
+  if (_m3Data.industries.length > 0) _m3SelectChain(_m3Data.industries[0]);
+}
 
-/* ─────────────────────────────────────────
-   切換產業鏈
-───────────────────────────────────────── */
-function selectChain(key, el) {
-  document.querySelectorAll('.chain-btn').forEach(b => {
-    b.className = 'btn btn-ghost btn-sm chain-btn';
+/* ═══════════════════════════════════════
+   Category Tabs
+═══════════════════════════════════════ */
+const _M3_CAT_SHORT = {
+  '全部': '全部',
+  'AI / 算力': 'AI/算力',
+  '半導體基礎': '半導體',
+  '被動元件 / 零組件': '被動元件',
+  '散熱 / 熱管理': '散熱',
+  '電池 / 儲能': '電池/儲能',
+  '電源供應': '電源',
+  '系統整機': '系統整機',
+  '機器人 / 自動化': '機器人',
+  '電動車 / 能源': '電動車/能源',
+  '通訊': '通訊',
+  '消費電子': '消費電子',
+  '其他': '其他',
+};
+
+function _m3RenderCatTabs() {
+  const el = document.getElementById('m3-cat-tabs');
+  if (!el) return;
+
+  const counts = { '全部': _m3Data.industries.length };
+  _m3Data.industries.forEach(i => {
+    counts[i.category] = (counts[i.category] || 0) + 1;
   });
-  if (el) el.className = 'btn btn-primary btn-sm chain-btn active-chain';
-  currentChain = key;
-  loadChain(key);
+
+  const tabs = ['全部', ..._m3Data.meta.categories];
+  el.innerHTML = tabs.map(c => {
+    const short = _M3_CAT_SHORT[c] || c;
+    const cnt   = counts[c] || 0;
+    return `<button class="m3-cat-tab${c === '全部' ? ' active' : ''}" onclick="_m3ClickCat('${_m3EscAttr(c)}',this)">${short} ${cnt}</button>`;
+  }).join('');
 }
 
-function loadChain(key) {
-  const chain = chains[key];
-  if (!chain) return;
-  renderChainHTML(chain);
+function _m3ClickCat(cat, el) {
+  document.querySelectorAll('.m3-cat-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  _m3Cat = cat;
+  _m3FilterList(cat);
 }
 
-/* ─────────────────────────────────────────
-   HTML div 欄位式顯示（取代 SVG，更穩定）
-───────────────────────────────────────── */
-function renderChainHTML(chain) {
-  const wrap = document.getElementById('chain-svg-wrap');
-  if (!wrap) return;
+/* ═══════════════════════════════════════
+   Left Sidebar List
+═══════════════════════════════════════ */
+function _m3FilterList(cat) {
+  const list = cat === '全部'
+    ? _m3Data.industries
+    : _m3Data.industries.filter(i => i.category === cat);
+
+  const el = document.getElementById('m3-chain-list');
+  if (!el) return;
+  el.innerHTML = list.map(ind =>
+    `<div class="m3-chain-item${_m3Chain?.id === ind.id ? ' active' : ''}" onclick="_m3ClickChain('${ind.id}',this)">${ind.emoji} ${ind.name}</div>`
+  ).join('');
+
+  if (list.length > 0 && !list.find(i => i.id === _m3Chain?.id)) {
+    _m3SelectChain(list[0]);
+  }
+}
+
+function _m3ClickChain(id, el) {
+  document.querySelectorAll('.m3-chain-item').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const chain = _m3Data.industries.find(i => i.id === id);
+  if (chain) _m3SelectChain(chain);
+}
+
+/* ═══════════════════════════════════════
+   Select Chain
+═══════════════════════════════════════ */
+function _m3SelectChain(chain) {
+  _m3Chain = chain;
+  _m3RenderChainInfo(chain);
+  _m3HideNodeDetail();
+  if (window.innerWidth < 768) {
+    document.getElementById('m3-mindmap-wrap').innerHTML = '';
+    _m3RenderMobileCards(chain);
+  } else {
+    document.getElementById('m3-mobile-cards').innerHTML = '';
+    _m3RenderMindMap(chain);
+  }
+}
+
+/* ═══════════════════════════════════════
+   Chain Info Card
+═══════════════════════════════════════ */
+function _m3RenderChainInfo(chain) {
+  const el = document.getElementById('m3-chain-info');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="ci-name">${chain.emoji} ${chain.name}</div>
+    <div class="ci-row">
+      <span><span class="ci-label">市場規模：</span>${chain.market_size}</span>
+      <span><span class="ci-label">成長率：</span><span style="color:var(--green)">${chain.growth_rate}</span></span>
+    </div>
+    <div style="margin-bottom:4px;line-height:1.5;"><span class="ci-label">主題：</span>${chain.key_theme}</div>
+    <div style="line-height:1.5;"><span style="color:var(--orange);">⚠️ 風險：</span><span style="color:var(--text2)">${chain.key_risk}</span></div>`;
+}
+
+/* ═══════════════════════════════════════
+   D3 Mind Map（電腦版）
+═══════════════════════════════════════ */
+function _m3RenderMindMap(chain) {
+  if (typeof d3 === 'undefined') {
+    document.getElementById('m3-mindmap-wrap').innerHTML =
+      '<div style="padding:30px;color:var(--text2);text-align:center;">D3.js 載入中，請稍後重試</div>';
+    return;
+  }
+  if (_m3Sim) { _m3Sim.stop(); _m3Sim = null; }
+
+  const wrap = document.getElementById('m3-mindmap-wrap');
+  wrap.innerHTML = '';
+  const W = Math.max(wrap.clientWidth || 0, 500);
+  const H = 460;
+
+  const svg = d3.select('#m3-mindmap-wrap').append('svg')
+    .attr('width', W).attr('height', H)
+    .style('background', 'var(--bg3)')
+    .style('border-radius', '8px');
+
+  /* arrow marker for relationship links */
+  svg.append('defs').append('marker')
+    .attr('id', 'm3-arrow')
+    .attr('viewBox', '0 -5 10 10')
+    .attr('refX', 24).attr('refY', 0)
+    .attr('markerWidth', 5).attr('markerHeight', 5)
+    .attr('orient', 'auto')
+    .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', '#6b7280');
+
+  const g = svg.append('g');
+  svg.call(d3.zoom().scaleExtent([0.25, 3]).on('zoom', e => g.attr('transform', e.transform)));
+
+  /* ── Build nodes ── */
+  const nodes = [
+    { id: '__root__', name: chain.name, ticker: null, role: '', group: 'root' }
+  ];
+  const pushGroup = (arr, group) =>
+    (arr || []).forEach((item, i) => nodes.push({
+      id: `${group}_${i}`,
+      name: item.name,
+      ticker: item.ticker,
+      role: item.role || '',
+      group,
+    }));
+  pushGroup(chain.upstream,   'upstream');
+  pushGroup(chain.midstream,  'midstream');
+  pushGroup(chain.downstream, 'downstream');
+
+  /* ── Build links ── */
+  const links = nodes.slice(1).map(n => ({ source: '__root__', target: n.id }));
+
+  /* relationship links (dashed + arrow) */
+  (chain.relationships || []).forEach(r => {
+    const relType = r.type || r.role || '';
+    const fromKey = (r.from || '').split(' ')[0];
+    const toKey   = (r.to   || '').split(' ')[0];
+    const src = nodes.find(n => n.group !== 'root' && n.name.includes(fromKey));
+    const tgt = nodes.find(n => n.group !== 'root' && n.name.includes(toKey));
+    if (src && tgt && src.id !== tgt.id) {
+      links.push({ source: src.id, target: tgt.id, rel: relType, isRel: true });
+    }
+  });
+
+  /* ── Initial positions ── */
+  const cx = W / 2, cy = H / 2;
+  const groupX = { root: cx, upstream: W * 0.17, midstream: W * 0.5, downstream: W * 0.83 };
+  nodes.forEach(n => {
+    n.x = groupX[n.group] + (Math.random() - 0.5) * 30;
+    n.y = cy + (Math.random() - 0.5) * 80;
+  });
+  /* fix root at center */
+  nodes[0].fx = cx;
+  nodes[0].fy = cy;
+
+  /* ── Force simulation ── */
+  _m3Sim = d3.forceSimulation(nodes)
+    .force('link',    d3.forceLink(links).id(d => d.id).distance(d => d.isRel ? 90 : 105).strength(0.55))
+    .force('charge',  d3.forceManyBody().strength(-240))
+    .force('x',       d3.forceX(d => groupX[d.group] || cx).strength(0.42))
+    .force('y',       d3.forceY(cy).strength(0.08))
+    .force('collide', d3.forceCollide(40));
+
+  /* ── Draw links ── */
+  const linkSel = g.append('g').selectAll('line').data(links).join('line')
+    .attr('stroke', d => d.isRel ? '#4b5563' : '#2d333b')
+    .attr('stroke-width', d => d.isRel ? 1.5 : 1)
+    .attr('stroke-dasharray', d => d.isRel ? '5,3' : '3,2')
+    .attr('marker-end', d => d.isRel ? 'url(#m3-arrow)' : null);
+
+  const relLabelSel = g.append('g')
+    .selectAll('text')
+    .data(links.filter(d => d.isRel))
+    .join('text')
+    .attr('fill', '#6b7280')
+    .attr('font-size', 9)
+    .attr('text-anchor', 'middle')
+    .text(d => d.rel || '');
+
+  /* ── Draw nodes ── */
+  const color  = d => _M3C[d.group] || '#fff';
+  const radius = d => d.group === 'root' ? 34 : 22;
+
+  const nodeSel = g.append('g').selectAll('g').data(nodes).join('g')
+    .attr('cursor', d => d.ticker ? 'pointer' : 'default')
+    .call(d3.drag()
+      .on('start', (e, d) => { if (!e.active) _m3Sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag',  (e, d) => { d.fx = e.x; d.fy = e.y; })
+      .on('end',   (e, d) => { if (!e.active) _m3Sim.alphaTarget(0); if (d.group !== 'root') { d.fx = null; d.fy = null; } })
+    )
+    .on('click', (e, d) => { if (d.ticker) _m3ShowNodeDetail(d); });
+
+  /* circle */
+  nodeSel.append('circle')
+    .attr('r', radius)
+    .attr('fill', d => {
+      if (d.group === 'root') return 'rgba(255,255,255,0.08)';
+      return d.ticker ? color(d) + '22' : 'transparent';
+    })
+    .attr('stroke', color)
+    .attr('stroke-width', d => d.group === 'root' ? 2 : 1.5)
+    .attr('stroke-dasharray', d => (!d.ticker && d.group !== 'root') ? '4,2' : null);
+
+  /* root node: emoji + short name (two tspans) */
+  nodeSel.filter(d => d.group === 'root').append('text')
+    .attr('text-anchor', 'middle')
+    .attr('fill', '#e6edf3')
+    .attr('font-size', 10)
+    .attr('font-weight', 700)
+    .selectAll('tspan')
+    .data(d => {
+      const parts = d.name.split(' / ');
+      const line1 = parts[0].length > 8 ? parts[0].slice(0, 8) : parts[0];
+      const line2 = parts.length > 1 ? (parts.slice(1).join('/').length > 8 ? parts.slice(1).join('/').slice(0, 8) : parts.slice(1).join('/')) : null;
+      return line2 ? [line1, line2] : [line1];
+    })
+    .join('tspan')
+    .attr('x', 0)
+    .attr('dy', (_, i) => i === 0 ? '-0.35em' : '1.3em')
+    .text(d => d);
+
+  /* taiwan stock: ticker inside circle */
+  nodeSel.filter(d => d.group !== 'root' && d.ticker).append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .attr('fill', color)
+    .attr('font-size', 9.5)
+    .attr('font-weight', 700)
+    .text(d => d.ticker);
+
+  /* foreign company: short name inside circle */
+  nodeSel.filter(d => d.group !== 'root' && !d.ticker).append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '0.35em')
+    .attr('fill', '#94a3b8')
+    .attr('font-size', 8)
+    .attr('font-weight', 600)
+    .text(d => { const n = d.name; return n.length > 6 ? n.slice(0, 6) + '…' : n; });
+
+  /* company name below circle (taiwan only) */
+  nodeSel.filter(d => d.group !== 'root' && d.ticker).append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', '36')
+    .attr('fill', color)
+    .attr('font-size', 8.5)
+    .text(d => { const n = d.name; return n.length > 5 ? n.slice(0, 5) : n; });
+
+  /* role text below (all non-root) */
+  nodeSel.filter(d => d.group !== 'root').append('text')
+    .attr('text-anchor', 'middle')
+    .attr('dy', d => d.ticker ? '47' : '36')
+    .attr('fill', '#484f58')
+    .attr('font-size', 7.5)
+    .text(d => { const r = d.role; return r.length > 10 ? r.slice(0, 10) + '…' : r; });
+
+  /* hover tooltip via title */
+  nodeSel.append('title').text(d =>
+    d.group === 'root' ? d.name : `${d.ticker ? d.ticker + ' ' : ''}${d.name}\n${d.role}`
+  );
+
+  /* ── Tick ── */
+  _m3Sim.on('tick', () => {
+    linkSel
+      .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    relLabelSel
+      .attr('x', d => (d.source.x + d.target.x) / 2)
+      .attr('y', d => (d.source.y + d.target.y) / 2 - 4);
+    nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
+
+/* ═══════════════════════════════════════
+   Mobile Folding Cards（< 768px）
+═══════════════════════════════════════ */
+function _m3RenderMobileCards(chain) {
+  const el = document.getElementById('m3-mobile-cards');
+  if (!el) return;
 
   const LANES = [
-    { label: '上游', key: 'upstream',   color: '#bc8cff', bg: 'rgba(188,140,255,0.07)', bd: 'rgba(188,140,255,0.28)' },
-    { label: '中游', key: 'midstream',  color: '#58a6ff', bg: 'rgba(88,166,255,0.07)',  bd: 'rgba(88,166,255,0.28)' },
-    { label: '下游', key: 'downstream', color: '#3fb950', bg: 'rgba(63,185,80,0.07)',   bd: 'rgba(63,185,80,0.28)' },
+    { label: '上游', key: 'upstream',   color: '#f59e0b' },
+    { label: '中游', key: 'midstream',  color: '#60a5fa' },
+    { label: '下游', key: 'downstream', color: '#94a3b8' },
   ];
 
-  const laneHTMLArr = LANES.map((lm, idx) => {
-    const nodes = chain[lm.key] || [];
-    const nodesHTML = nodes.map(n => {
-      const isOverseas = ['us', 'kr', 'jp', 'cn'].includes(n.type);
-      const lbl = isOverseas ? n.name : `${n.code} ${n.name}`;
-      const hotBadge = n.hot
-        ? '<span style="position:absolute;top:4px;right:4px;background:' + lm.color + ';color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;">熱</span>'
-        : '';
-      return '<div style="position:relative;background:' + (n.hot ? lm.color + '1e' : '#21262d') + ';'
-        + 'border:1px solid ' + (n.hot ? lm.color : lm.color + '50') + ';'
-        + 'border-radius:6px;padding:7px 8px;margin-bottom:6px;">'
-        + hotBadge
-        + '<div style="font-size:11px;font-weight:600;color:' + (n.hot ? lm.color : '#e6edf3') + ';'
-        + 'padding-right:' + (n.hot ? '22px' : '0') + ';">' + lbl + '</div>'
-        + '<div style="font-size:10px;color:#8b949e;margin-top:2px;">' + n.role + '</div>'
-        + '</div>';
-    }).join('');
-
-    const arrow = idx < LANES.length - 1
-      ? '<div style="display:flex;align-items:center;align-self:center;padding:0 4px;font-size:22px;color:#484f58;flex-shrink:0;">›</div>'
-      : '';
-
-    return '<div style="flex:1;min-width:0;background:' + lm.bg + ';border:1px solid ' + lm.bd + ';'
-      + 'border-radius:8px;padding:10px;">'
-      + '<div style="text-align:center;font-size:12px;font-weight:700;color:' + lm.color + ';'
-      + 'margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid ' + lm.bd + ';">' + lm.label + '</div>'
-      + nodesHTML + '</div>' + arrow;
-  });
-
-  wrap.innerHTML = '<div style="font-size:10px;color:var(--text3);text-align:center;padding:8px 0 4px;">' + chain.title + '</div>'
-    + '<div style="display:flex;align-items:flex-start;gap:0;padding:0 4px 12px;">' + laneHTMLArr.join('') + '</div>';
+  el.innerHTML = LANES.map(lane => {
+    const companies = chain[lane.key] || [];
+    const rows = companies.map((c, i) =>
+      `<div class="m3-company-item" onclick="_m3ClickCompanyMobile('${lane.key}',${i})">
+        <span style="font-weight:600;color:${c.ticker ? lane.color : 'var(--text2)'}">
+          ${c.ticker ? c.ticker + ' ' : ''}${c.name}
+        </span>
+        <span style="color:var(--text3);font-size:10px;margin-left:6px">${c.role.length > 22 ? c.role.slice(0, 22) + '…' : c.role}</span>
+      </div>`
+    ).join('');
+    return `
+      <div class="m3-mobile-card">
+        <div class="m3-lane-header" onclick="_m3ToggleLane(this)" style="color:${lane.color}">
+          <span>▶ ${lane.label}（${companies.length}家）</span>
+        </div>
+        <div class="m3-lane-body" data-lane="${lane.key}">${rows}</div>
+      </div>`;
+  }).join('');
 }
 
-const signalData = [
-  { code: '3711', name: '日月光',  reason: 'CoWoS 封裝需求激增，月增 +25%，外資連買', strength: 3, type: 'buy' },
-  { code: '3017', name: '奇鋐',    reason: '液冷散熱新訂單確認，法人連買 5 日',        strength: 3, type: 'buy' },
-  { code: '2049', name: '上銀',    reason: '人形機器人訂單能見度提升，機構調升目標',   strength: 2, type: 'buy' },
-  { code: '6230', name: '超眾',    reason: 'AI 伺服器熱管需求旺季提前',               strength: 2, type: 'buy' },
-  { code: '4966', name: '譜瑞',    reason: 'CPO / 衛星通訊兩頭受惠，近期量增',       strength: 2, type: 'buy' },
-  { code: '2034', name: '新光電',  reason: 'CPO 認證延遲，短期觀望',                  strength: 1, type: 'watch' },
-];
+function _m3ToggleLane(headerEl) {
+  const body = headerEl.nextElementSibling;
+  const isOpen = body.classList.toggle('open');
+  const sp = headerEl.querySelector('span');
+  sp.textContent = sp.textContent.replace(isOpen ? '▶' : '▼', isOpen ? '▼' : '▶');
+}
 
-function renderSignals() {
-  const el  = document.getElementById('preposition-signals');
-  const cnt = document.getElementById('signal-count');
+function _m3ClickCompanyMobile(laneKey, idx) {
+  if (!_m3Chain) return;
+  const c = _m3Chain[laneKey]?.[idx];
+  if (!c || !c.ticker) return;
+  _m3ShowNodeDetail({ ticker: c.ticker, name: c.name, role: c.role, group: laneKey });
+}
+
+/* ═══════════════════════════════════════
+   Node Detail Panel
+═══════════════════════════════════════ */
+function _m3ShowNodeDetail(d) {
+  const el = document.getElementById('m3-node-detail');
   if (!el) return;
-  const buyCount = signalData.filter(s => s.type === 'buy').length;
-  if (cnt) cnt.textContent = `${buyCount} 機會`;
-  el.innerHTML = signalData.map(s => `
-    <div class="signal-card ${s.type === 'watch' ? 'warn' : ''}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-        <span style="font-weight:600;">${s.code} ${s.name}</span>
-        <span>${'★'.repeat(s.strength)}${'☆'.repeat(3 - s.strength)}</span>
-      </div>
-      <div style="color:var(--text2)">${s.reason}</div>
-    </div>`).join('');
+  const groupLabel = { upstream: '上游', midstream: '中游', downstream: '下游' }[d.group] || '';
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="nd-name">${d.ticker} ${d.name} <span style="font-size:11px;font-weight:400;color:var(--text2)">${groupLabel}</span></div>
+    <div class="nd-row"><span>角色</span><span style="color:var(--text2);text-align:right;max-width:65%">${d.role}</span></div>
+    <div class="nd-row"><span>現價</span><span id="m3-nd-price" style="color:var(--text2)">—</span></div>
+    <div class="nd-row"><span>今日漲跌</span><span id="m3-nd-change">—</span></div>
+    <div class="nd-row" style="border-bottom:none"><span>外資買賣超</span><span id="m3-nd-foreign" style="color:var(--text2)">—</span></div>
+    <div style="margin-top:10px;text-align:right">
+      <button class="btn btn-ghost btn-sm" onclick="_m3HideNodeDetail()">✕ 關閉</button>
+    </div>`;
+
+  API.getStockQuote(d.ticker).then(q => {
+    if (!q) return;
+    const priceEl  = document.getElementById('m3-nd-price');
+    const changeEl = document.getElementById('m3-nd-change');
+    if (priceEl && q.price && q.price > 0) {
+      priceEl.textContent = Number(q.price).toFixed(2);
+    }
+    if (changeEl && q.change != null) {
+      const sign = Number(q.change) >= 0 ? '+' : '';
+      const pct  = q.change_pct != null ? ` (${sign}${Number(q.change_pct).toFixed(2)}%)` : '';
+      changeEl.textContent = `${sign}${Number(q.change).toFixed(2)}${pct}`;
+      changeEl.style.color = Number(q.change) >= 0 ? 'var(--red)' : 'var(--green)';
+    }
+  }).catch(() => {});
 }
 
-function initSupply() {
-  loadChain('GPU_AI');
-  renderSignals();
+function _m3HideNodeDetail() {
+  const el = document.getElementById('m3-node-detail');
+  if (el) el.style.display = 'none';
+}
+
+/* ─── Util ─── */
+function _m3EscAttr(s) {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }

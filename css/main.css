@@ -255,13 +255,39 @@ body {
 .launch-table th { padding: 6px 12px; color: var(--text3); text-align: left; border-bottom: 1px solid var(--border); }
 .launch-table td { padding: 8px 12px; border-bottom: 1px solid var(--bg3); }
 
-/* ── M3 Supply Chain SVG ── */
-.chain { display: block; width: 100%; background: var(--bg3); border-radius: 8px; }
-.chain-btn { transition: background .15s, color .15s; }
-.chain-btn.active-chain { background: var(--blue) !important; color: #fff !important; border-color: var(--blue) !important; }
-.signal-card { padding: 10px 12px; border-left: 3px solid var(--green); background: var(--bg3); border-radius: 6px; margin-bottom: 8px; font-size: 12px; }
-.signal-card.warn { border-color: var(--orange); }
-.signal-card.danger { border-color: var(--red); }
+/* ── M3 Supply Chain Mind Map ── */
+.m3-cat-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.m3-cat-tab { padding: 3px 10px; border-radius: 14px; font-size: 11px; cursor: pointer; border: 1px solid var(--border); background: var(--bg3); color: var(--text2); transition: all .15s; white-space: nowrap; }
+.m3-cat-tab:hover { border-color: var(--blue); color: var(--text); }
+.m3-cat-tab.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.m3-body { display: flex; gap: 12px; align-items: flex-start; }
+.m3-sidebar { width: 152px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; max-height: 620px; overflow-y: auto; padding-right: 2px; }
+.m3-sidebar::-webkit-scrollbar { width: 3px; }
+.m3-sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.m3-chain-item { padding: 6px 9px; border-radius: 5px; font-size: 11px; cursor: pointer; border: 1px solid transparent; color: var(--text2); transition: all .12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m3-chain-item:hover { background: var(--bg3); color: var(--text); }
+.m3-chain-item.active { background: rgba(88,166,255,.1); border-color: var(--blue); color: var(--blue); }
+.m3-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.m3-chain-info { padding: 12px 14px !important; font-size: 12px; }
+.m3-chain-info .ci-name { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+.m3-chain-info .ci-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 5px; }
+.ci-label { color: var(--text3); }
+.m3-content-wrap { padding: 0 !important; overflow: hidden; }
+.m3-node-detail { padding: 12px 14px !important; font-size: 12px; }
+.m3-node-detail .nd-name { font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+.m3-node-detail .nd-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.m3-mobile-card { border: 1px solid var(--border); border-radius: 7px; margin-bottom: 8px; overflow: hidden; background: var(--bg3); }
+.m3-lane-header { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; cursor: pointer; font-size: 12px; font-weight: 600; user-select: none; }
+.m3-lane-body { display: none; padding: 4px 12px 10px; }
+.m3-lane-body.open { display: block; }
+.m3-company-item { padding: 6px 0; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 12px; }
+.m3-company-item:last-child { border-bottom: none; }
+.m3-company-item:hover { opacity: 0.8; }
+@media (max-width: 767px) {
+  .m3-body { flex-direction: column; }
+  .m3-sidebar { width: 100%; max-height: 96px; flex-direction: row; flex-wrap: nowrap; overflow-y: hidden; overflow-x: auto; }
+  .m3-chain-item { flex-shrink: 0; }
+}
 
 /* ── M4 Strategy ── */
 .strategy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
