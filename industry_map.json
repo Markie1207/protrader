@@ -2,7 +2,7 @@
   "meta": {
     "version": "1.0",
     "generated_at": "2026-06-20",
-    "total_industries": 44,
+    "total_industries": 47,
     "description": "ProTrader 產業鏈地圖底稿，供人工審核用，後續由 Grok 定時更新",
     "categories": [
       "AI / 算力",
@@ -2782,6 +2782,185 @@
       "upstream": [],
       "midstream": [],
       "downstream": [],
+      "relationships": []
+    },
+    {
+      "id": "ai_pc",
+      "name": "AI PC",
+      "emoji": "💻",
+      "category": "系統整機",
+      "why_hot": "AI PC 搭載專用 NPU，能在終端裝置上執行 AI 運算，預測 2026 年滲透率將過半，帶動換機潮。",
+      "market_size": "預測 2026 年 AI PC 滲透率將過半，市場規模龐大。",
+      "growth_rate": "YoY +45%（AI PC 換機潮驅動）",
+      "key_theme": "AI PC 普及帶動 PC 產業換機潮，晶圓代工、IC 設計、組裝廠、散熱模組等供應鏈受惠。",
+      "key_risk": "AI 功能採用率不如預期，Arm 架構與 x86 架構平台競爭可能影響市場發展。",
+      "upstream": [
+        {
+          "ticker": "2330",
+          "name": "台積電",
+          "role": "晶圓代工"
+        },
+        {
+          "ticker": "2454",
+          "name": "聯發科",
+          "role": "IC 設計"
+        },
+        {
+          "ticker": "3711",
+          "name": "日月光投控",
+          "role": "先進封裝"
+        },
+        {
+          "ticker": "2449",
+          "name": "京元電",
+          "role": "測試廠"
+        }
+      ],
+      "midstream": [
+        {
+          "ticker": "2382",
+          "name": "廣達",
+          "role": "整機代工"
+        },
+        {
+          "ticker": "2324",
+          "name": "仁寶",
+          "role": "整機代工"
+        },
+        {
+          "ticker": "3231",
+          "name": "緯創",
+          "role": "整機代工"
+        },
+        {
+          "ticker": "2356",
+          "name": "英業達",
+          "role": "整機代工"
+        },
+        {
+          "ticker": "4938",
+          "name": "和碩",
+          "role": "整機代工"
+        }
+      ],
+      "downstream": [
+        {
+          "ticker": null,
+          "name": "Intel / AMD / Qualcomm",
+          "role": "AI PC 晶片供應商"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "adas",
+      "name": "先進駕駛輔助系統（ADAS）",
+      "emoji": "🚗",
+      "category": "電動車/能源",
+      "why_hot": "全球車用電子加速智慧化，ADAS 需求攀升，台灣 IC 設計業者加速佈局車用市場。",
+      "market_size": "自駕車市場規模預計從 2022 年 570 億美元成長至 2030 年 3,240 億美元。",
+      "growth_rate": "CAGR +24%（2022-2030）",
+      "key_theme": "聯發科、義隆電等業者在 ADAS 領域從運算平台、感測應用到邊緣 AI 系統全面切入，提升台 IC 設計業者車用半導體地位。",
+      "key_risk": "車規認證門檻高，國際大廠競爭激烈，全球汽車產業景氣波動可能影響需求。",
+      "upstream": [
+        {
+          "ticker": "2454",
+          "name": "聯發科",
+          "role": "車用系統單晶片"
+        },
+        {
+          "ticker": "2388",
+          "name": "義隆電",
+          "role": "感測與人機介面"
+        },
+        {
+          "ticker": "3711",
+          "name": "日月光投控",
+          "role": "車用半導體封測"
+        }
+      ],
+      "midstream": [
+        {
+          "ticker": "2317",
+          "name": "鴻海",
+          "role": "ADAS 系統開發"
+        },
+        {
+          "ticker": "2324",
+          "name": "仁寶",
+          "role": "ADAS 產品佈局"
+        },
+        {
+          "ticker": "6150",
+          "name": "撼訊",
+          "role": "車用 AI 晶片"
+        }
+      ],
+      "downstream": [
+        {
+          "ticker": "2231",
+          "name": "為昇",
+          "role": "車用感測器"
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "id": "biotech_medical",
+      "name": "生技醫療",
+      "emoji": "🧬",
+      "category": "其他",
+      "why_hot": "台灣生技醫療產業 2026 年迎來結構性成長，AI 加速整合，CDMO 領域因全球供應鏈重組受惠。",
+      "market_size": "台灣生技整體市值預估突破新台幣 1.5 兆元。",
+      "growth_rate": "YoY +15%（CDMO 高成長驅動）",
+      "key_theme": "新藥研發、高階醫療器材、CDMO 及學名藥是四大領域，其中 CDMO 因全球供應鏈重組受惠，具備高成長動能。",
+      "key_risk": "新藥研發投資風險高，醫療器材市場競爭激烈，法規變動可能影響產業發展。",
+      "upstream": [
+        {
+          "ticker": "6472",
+          "name": "保瑞藥業",
+          "role": "CDMO"
+        },
+        {
+          "ticker": "4726",
+          "name": "永昕",
+          "role": "生物藥 CDMO"
+        },
+        {
+          "ticker": "6589",
+          "name": "台康生技",
+          "role": "CDMO"
+        }
+      ],
+      "midstream": [
+        {
+          "ticker": "1736",
+          "name": "喬山",
+          "role": "醫療器材"
+        },
+        {
+          "ticker": "4106",
+          "name": "雅博",
+          "role": "醫療器材"
+        },
+        {
+          "ticker": "4126",
+          "name": "太醫",
+          "role": "醫療器材"
+        }
+      ],
+      "downstream": [
+        {
+          "ticker": "6576",
+          "name": "逸達生物",
+          "role": "新藥研發"
+        },
+        {
+          "ticker": "6620",
+          "name": "漢達",
+          "role": "新藥研發"
+        }
+      ],
       "relationships": []
     }
   ]
