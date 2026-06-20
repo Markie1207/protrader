@@ -536,6 +536,47 @@ def get_themes() -> dict | None:
         return None
 
 
+def apply_chains_to_draft(chains: list[dict]) -> dict:
+    """直接將提供的 chain 物件加入草稿（不需要 themes 檔）"""
+    import copy
+    if not chains:
+        return {'ok': False, 'error': '未提供任何產業鏈資料'}
+
+    draft = get_draft_data()
+    base  = copy.deepcopy(draft) if draft else copy.deepcopy(get_data())
+
+    existing_ids = {c['id'] for c in base.get('industries', [])}
+    to_add = [c for c in chains if c.get('id') and c['id'] not in existing_ids]
+
+    if not to_add:
+        return {'ok': False, 'error': '所有提供的產業鏈 ID 已存在'}
+
+    base.setdefault('industries', []).extend(to_add)
+    base.setdefault('meta', {})
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+    base['meta']['draft_generated_at'] = now_str
+    base['meta']['draft_note'] = (
+        f'手動加入 {len(to_add)} 條產業鏈：'
+        f'{", ".join(c["name"] for c in to_add)}'
+    )
+    base['meta']['total_industries'] = len(base['industries'])
+
+    try:
+        content = json.dumps(base, ensure_ascii=False, indent=2)
+        with open(_DRAFT_PATH, 'w', encoding='utf-8') as f:
+            f.write(content)
+        github_storage.commit_file(
+            _REPO_DRAFT_PATH, content,
+            f'[ProTrader] 手動加入產業鏈草稿 {now_str}',
+        )
+        log.info(f'[Gemini] 手動加入 {len(to_add)} 條產業鏈到草稿')
+        return {'ok': True, 'added': len(to_add), 'total': len(base['industries']),
+                'chains': [c['name'] for c in to_add]}
+    except Exception as e:
+        log.error(f'[Gemini] 手動加入失敗：{e}')
+        return {'ok': False, 'error': str(e)}
+
+
 def apply_themes_to_draft(chain_ids: list[str]) -> dict:
     """
     將 themes 結果中選定的產業鏈加入草稿。

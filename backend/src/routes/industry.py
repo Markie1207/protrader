@@ -119,11 +119,17 @@ def get_themes():
 
 @industry_bp.post('/themes/apply')
 def apply_themes():
-    """將 themes 中選定的產業鏈加入草稿，body: {"ids": ["ai_pc", "adas", ...]}"""
-    body = request.get_json(silent=True) or {}
-    ids  = body.get('ids', [])
-    if not ids:
-        return jsonify({'error': True, 'message': 'body 需包含 ids 陣列'}), 400
-    result = grok_updater.apply_themes_to_draft(ids)
+    """將 themes 中選定的產業鏈加入草稿
+    body: {"ids": [...]} 或 {"chains": [{完整chain物件}, ...]}
+    """
+    body   = request.get_json(silent=True) or {}
+    ids    = body.get('ids', [])
+    chains = body.get('chains', [])
+    if chains:
+        result = grok_updater.apply_chains_to_draft(chains)
+    elif ids:
+        result = grok_updater.apply_themes_to_draft(ids)
+    else:
+        return jsonify({'error': True, 'message': 'body 需包含 ids 或 chains 陣列'}), 400
     code = 200 if result.get('ok') else 400
     return jsonify(result), code
