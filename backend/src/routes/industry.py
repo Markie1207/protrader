@@ -95,10 +95,17 @@ def test_search():
 
 @industry_bp.post('/discover-themes')
 def discover_themes():
-    """背景執行：用 Google Search grounding 搜尋最新熱門台股題材"""
-    t = threading.Thread(target=grok_updater.run_discover_themes, daemon=True)
-    t.start()
-    return jsonify({'status': 'started', 'message': '題材搜尋已在背景執行（約 15-30 秒），完成後請呼叫 GET /api/industry-map/themes 查看結果'})
+    """同步執行：用 Google Search grounding 搜尋最新熱門台股題材（約 30-60 秒）"""
+    result = grok_updater.run_discover_themes()
+    if result is None:
+        return jsonify({'error': True, 'message': '題材搜尋失敗，請確認 GEMINI_API_KEY 與 GEMINI_SEARCH_MODEL 設定'}), 500
+    return jsonify({
+        'status': 'ok',
+        'chains_found': len(result.get('chains', [])),
+        'generated_at': result.get('generated_at'),
+        'chains': [{'id': c['id'], 'name': c['name'], 'why_hot': c.get('why_hot', '')}
+                   for c in result.get('chains', [])],
+    })
 
 
 @industry_bp.get('/themes')
