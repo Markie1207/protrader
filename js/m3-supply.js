@@ -268,7 +268,7 @@ function _m3RenderMindMap(chain) {
   const wrap = document.getElementById('m3-mindmap-wrap');
   wrap.innerHTML = '';
   const W = Math.max(wrap.clientWidth || 0, 500);
-  const H = 460;
+  const H = Math.max(Math.round(W * 0.56), 480);
 
   const svg = d3.select('#m3-mindmap-wrap').append('svg')
     .attr('width', W).attr('height', H)
@@ -285,7 +285,8 @@ function _m3RenderMindMap(chain) {
     .append('path').attr('d', 'M0,-5L10,0L0,5').attr('fill', '#6b7280');
 
   const g = svg.append('g');
-  svg.call(d3.zoom().scaleExtent([0.25, 3]).on('zoom', e => g.attr('transform', e.transform)));
+  const zoom = d3.zoom().scaleExtent([0.25, 3]).on('zoom', e => g.attr('transform', e.transform));
+  svg.call(zoom);
 
   /* ── Legend（固定右上角，不隨縮放移動）── */
   const legendItems = [
@@ -458,6 +459,20 @@ function _m3RenderMindMap(chain) {
       .attr('x', d => (d.source.x + d.target.x) / 2)
       .attr('y', d => (d.source.y + d.target.y) / 2 - 4);
     nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  /* ── Auto-fit：模擬結束後縮放置中，確保所有節點可見 ── */
+  _m3Sim.on('end', () => {
+    const pad = 55;
+    const xs = nodes.map(n => n.x);
+    const ys = nodes.map(n => n.y);
+    const x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad;
+    const y0 = Math.min(...ys) - pad, y1 = Math.max(...ys) + pad;
+    const scl = Math.min(W / (x1 - x0), H / (y1 - y0), 1.1) * 0.9;
+    const tx  = W / 2 - scl * (x0 + x1) / 2;
+    const ty  = H / 2 - scl * (y0 + y1) / 2;
+    svg.transition().duration(500)
+      .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scl));
   });
 }
 
