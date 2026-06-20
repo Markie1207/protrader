@@ -83,3 +83,28 @@ def test_github():
     result = github_storage.test_connection()
     code = 200 if result.get('ok') else 400
     return jsonify(result), code
+
+
+@industry_bp.get('/test-search')
+def test_search():
+    """測試 Google Search grounding 連線（約 5-10 秒）"""
+    result = grok_updater.test_search_connection()
+    code = 200 if result.get('ok') else 400
+    return jsonify(result), code
+
+
+@industry_bp.post('/discover-themes')
+def discover_themes():
+    """背景執行：用 Google Search grounding 搜尋最新熱門台股題材"""
+    t = threading.Thread(target=grok_updater.run_discover_themes, daemon=True)
+    t.start()
+    return jsonify({'status': 'started', 'message': '題材搜尋已在背景執行（約 15-30 秒），完成後請呼叫 GET /api/industry-map/themes 查看結果'})
+
+
+@industry_bp.get('/themes')
+def get_themes():
+    """取得最近一次 discover-themes 的結果"""
+    result = grok_updater.get_themes()
+    if result is None:
+        return jsonify({'error': True, 'message': '尚未執行 discover-themes'}), 404
+    return jsonify(result)

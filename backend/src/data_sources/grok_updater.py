@@ -23,9 +23,13 @@ _DRAFT_PATH = Path(__file__).parent.parent.parent / 'industry_map_draft.json'
 # GitHub 上的對應路徑（根目錄，供 Vercel 靜態服務）
 _REPO_JSON_PATH  = 'industry_map.json'
 _REPO_DRAFT_PATH = 'industry_map_draft.json'
-# Gemini OpenAI-compatible 端點，Auth 格式與 OpenAI 相同
+# Gemini OpenAI-compatible 端點（描述更新 / 公司更新用）
 _AI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
 _MODEL  = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
+# Gemini native API（Google Search grounding 用）
+_NATIVE_URL   = 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
+_SEARCH_MODEL = os.getenv('GEMINI_SEARCH_MODEL', 'gemini-2.5-flash-lite')
+_THEMES_PATH  = Path(__file__).parent.parent.parent / 'industry_themes.json'
 _BATCH_DESC = 7   # 描述更新每批幾條
 _BATCH_CO   = 4   # 公司更新每批幾條（內容更多，批次縮小）
 
@@ -373,6 +377,140 @@ def _strip_md(text: str) -> str:
         end = -1 if lines[-1] == '```' else len(lines)
         text = '\n'.join(lines[start:end])
     return text.strip()
+
+
+# ──────────────────────────────────────────
+# Google Search Grounding（native Gemini API）
+# ──────────────────────────────────────────
+
+def _call_ai_with_search(prompt: str, api_key: str, max_tokens: int = 3000) -> tuple[str, list]:
+    """
+    呼叫 Gemini native API + Google Search grounding。
+    回傳 (text, sources)，sources 為搜尋來源清單。
+    """
+    url = _NATIVE_URL.format(model=_SEARCH_MODEL)
+    resp = requests.post(
+        url,
+        params={'key': api_key},
+        json={
+            'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
+            'tools': [{'google_search': {}}],
+            'generationConfig': {
+                'temperature': 0.3,
+                'maxOutputTokens': max_tokens,
+            },
+        },
+        timeout=120,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    candidate = data['candidates'][0]
+    text = ''.join(p.get('text', '') for p in candidate['content']['parts'])
+    sources = []
+    for chunk in candidate.get('groundingMetadata', {}).get('groundingChunks', []):
+        web = chunk.get('web', {})
+        if web.get('uri'):
+            sources.append({'title': web.get('title', ''), 'url': web['uri']})
+    return text.strip(), sources
+
+
+def test_search_connection() -> dict:
+    """測試 Google Search grounding 連線，回傳詳細結果"""
+    api_key = os.getenv('GEMINI_API_KEY', '').strip()
+    if not api_key:
+        return {'ok': False, 'error': 'GEMINI_API_KEY 未設定', 'model': _SEARCH_MODEL}
+    try:
+        now_str = datetime.now().strftime('%Y年%m月')
+        text, sources = _call_ai_with_search(
+            f'搜尋 {now_str} 台股最熱門的一個投資題材，用一句話回答。',
+            api_key,
+            max_tokens=200,
+        )
+        return {
+            'ok': True,
+            'model': _SEARCH_MODEL,
+            'reply': text[:300],
+            'sources_count': len(sources),
+            'sources': sources[:3],
+        }
+    except Exception as e:
+        return {'ok': False, 'model': _SEARCH_MODEL, 'error': str(e)}
+
+
+def run_discover_themes() -> dict | None:
+    """
+    使用 Google Search grounding 搜尋最新台股熱門題材。
+    回傳建議清單並儲存到 industry_themes.json。
+    """
+    api_key = os.getenv('GEMINI_API_KEY', '').strip()
+    if not api_key:
+        log.warning('[Gemini+Search] GEMINI_API_KEY 未設定')
+        return None
+
+    data = get_data()
+    existing_names = [c['name'] for c in data.get('industries', [])]
+    now_str = datetime.now().strftime('%Y年%m月')
+
+    prompt = f"""請搜尋 {now_str} 台灣股市最新熱門的投資題材與新興產業鏈。
+
+已有的產業鏈（不需重複建議）：
+{json.dumps(existing_names, ensure_ascii=False)}
+
+根據最新新聞與市場動態，建議 3-5 條目前最受資金關注但清單中沒有的台股產業鏈。
+
+直接回傳 JSON 陣列，不要 markdown 或說明：
+[
+  {{
+    "id": "snake_case_id",
+    "name": "產業鏈中文名稱",
+    "emoji": "適合的 emoji",
+    "category": "從這些選一個：AI/算力, 半導體, 被動元件, 散熱, 電池/儲能, 電源, 系統整機, 機器人, 電動車/能源, 通訊, 消費電子, 其他",
+    "why_hot": "根據最新新聞說明熱門原因（一句話）",
+    "market_size": "市場規模描述",
+    "growth_rate": "YoY 成長率",
+    "key_theme": "投資主題（1-2 句）",
+    "key_risk": "主要風險（1-2 句）",
+    "upstream": [{{"ticker": "台股4碼或null", "name": "公司名", "role": "角色"}}],
+    "midstream": [{{"ticker": "台股4碼或null", "name": "公司名", "role": "角色"}}],
+    "downstream": [{{"ticker": "台股4碼或null", "name": "公司名", "role": "角色"}}],
+    "relationships": []
+  }}
+]"""
+
+    try:
+        text, sources = _call_ai_with_search(prompt, api_key, max_tokens=4000)
+        chains = json.loads(_strip_md(text))
+        if not isinstance(chains, list):
+            raise ValueError('回傳不是 JSON 陣列')
+        chains = [c for c in chains if c.get('id') and c.get('name')]
+
+        result = {
+            'chains': chains,
+            'sources': sources[:10],
+            'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+            'model': _SEARCH_MODEL,
+        }
+
+        # 儲存到本地
+        with open(_THEMES_PATH, 'w', encoding='utf-8') as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+
+        log.info(f'[Gemini+Search] 發現 {len(chains)} 條熱門題材，來源 {len(sources)} 則')
+        return result
+    except Exception as e:
+        log.error(f'[Gemini+Search] 題材發現失敗：{e}')
+        return None
+
+
+def get_themes() -> dict | None:
+    """取得最近一次 discover_themes 的結果"""
+    if not _THEMES_PATH.exists():
+        return None
+    try:
+        with open(_THEMES_PATH, encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return None
 
 
 def _save_live(data: dict):
