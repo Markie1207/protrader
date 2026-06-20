@@ -21,8 +21,9 @@ log = logging.getLogger(__name__)
 _DATA_PATH  = Path(__file__).parent.parent.parent / 'industry_map.json'
 _DRAFT_PATH = Path(__file__).parent.parent.parent / 'industry_map_draft.json'
 # GitHub 上的對應路徑（根目錄，供 Vercel 靜態服務）
-_REPO_JSON_PATH  = 'industry_map.json'
-_REPO_DRAFT_PATH = 'industry_map_draft.json'
+_REPO_JSON_PATH   = 'industry_map.json'
+_REPO_DRAFT_PATH  = 'industry_map_draft.json'
+_REPO_THEMES_PATH = 'industry_themes.json'
 # Gemini OpenAI-compatible 端點（描述更新 / 公司更新用）
 _AI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
 _MODEL  = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
@@ -53,6 +54,7 @@ def load_data() -> dict:
             _cache = data
             log.info(f'[Gemini] 從 GitHub 載入 {len(_cache.get("industries", []))} 條產業鏈')
             _restore_draft_from_github()
+            _restore_themes_from_github()
             return _cache
     except Exception as e:
         log.warning(f'[Gemini] GitHub 載入失敗，改用本地檔案：{e}')
@@ -71,7 +73,7 @@ def load_data() -> dict:
 def _restore_draft_from_github():
     """啟動時從 GitHub 還原草稿，避免 Railway 重啟後草稿消失"""
     if _DRAFT_PATH.exists():
-        return  # 本地已有草稿，不覆蓋
+        return
     try:
         content = github_storage.fetch_file(_REPO_DRAFT_PATH)
         if content:
@@ -80,6 +82,20 @@ def _restore_draft_from_github():
             log.info('[Gemini] 從 GitHub 還原草稿')
     except Exception as e:
         log.warning(f'[Gemini] 草稿還原失敗：{e}')
+
+
+def _restore_themes_from_github():
+    """啟動時從 GitHub 還原題材搜尋結果，避免 Railway 重啟後消失"""
+    if _THEMES_PATH.exists():
+        return
+    try:
+        content = github_storage.fetch_file(_REPO_THEMES_PATH)
+        if content:
+            with open(_THEMES_PATH, 'w', encoding='utf-8') as f:
+                f.write(content)
+            log.info('[Gemini] 從 GitHub 還原題材搜尋結果')
+    except Exception as e:
+        log.warning(f'[Gemini] 題材還原失敗：{e}')
 
 
 def get_data() -> dict:
@@ -491,9 +507,16 @@ def run_discover_themes() -> dict | None:
             'model': _SEARCH_MODEL,
         }
 
-        # 儲存到本地
+        # 儲存到本地，並 commit 到 GitHub 防重啟遺失
+        content = json.dumps(result, ensure_ascii=False, indent=2)
         with open(_THEMES_PATH, 'w', encoding='utf-8') as f:
-            json.dump(result, f, ensure_ascii=False, indent=2)
+            f.write(content)
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+        github_storage.commit_file(
+            _REPO_THEMES_PATH,
+            content,
+            f'[ProTrader] Grounding 題材搜尋結果 {now_str}',
+        )
 
         log.info(f'[Gemini+Search] 發現 {len(chains)} 條熱門題材，來源 {len(sources)} 則')
         return result
