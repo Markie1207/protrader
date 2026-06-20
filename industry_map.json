@@ -1,9 +1,5 @@
 {
   "meta": {
-    "version": "1.0",
-    "generated_at": "2026-06-20",
-    "total_industries": 47,
-    "description": "ProTrader 產業鏈地圖底稿，供人工審核用，後續由 Grok 定時更新",
     "categories": [
       "AI / 算力",
       "半導體基礎",
@@ -17,79 +13,66 @@
       "通訊",
       "消費電子",
       "其他"
-    ]
+    ],
+    "description": "ProTrader 產業鏈地圖底稿，供人工審核用，後續由 Grok 定時更新",
+    "generated_at": "2026-06-20",
+    "total_industries": 47,
+    "version": "1.0"
   },
   "industries": [
     {
-      "id": "gpu_ai",
-      "name": "GPU / AI 算力",
-      "emoji": "🖥",
       "category": "AI / 算力",
-      "market_size": "全球 AI 伺服器市場 2025 年約 $1,500 億美元",
-      "growth_rate": "YoY +40%+",
-      "key_theme": "輝達 GB200/GB300 供應鏈核心受惠族群",
-      "key_risk": "輝達出口限制、客戶資本支出縮減",
-      "upstream": [
-        {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "CoWoS 先進封裝、H100/B200 晶片代工"
-        },
-        {
-          "ticker": "3711",
-          "name": "日月光投控",
-          "role": "封裝測試"
-        },
-        {
-          "ticker": "6271",
-          "name": "同欣電",
-          "role": "感測器封裝"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "6669",
-          "name": "緯穎",
-          "role": "AI 伺服器 ODM，輝達 HGX 最大台廠組裝商"
-        },
-        {
-          "ticker": "2356",
-          "name": "英業達",
-          "role": "AI 伺服器 ODM"
-        },
-        {
-          "ticker": "2382",
-          "name": "廣達",
-          "role": "AI 伺服器 ODM，Meta/Google 主力供應商"
-        },
-        {
-          "ticker": "2317",
-          "name": "鴻海",
-          "role": "AI 伺服器組裝、GB200 NVL72 機櫃"
-        },
-        {
-          "ticker": "2353",
-          "name": "宏碁",
-          "role": "AI 工作站"
-        }
-      ],
       "downstream": [
         {
-          "ticker": null,
           "name": "輝達 NVIDIA",
-          "role": "GPU 設計（美國）"
+          "role": "GPU 設計（美國）",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "AWS / Azure / GCP",
-          "role": "雲端資料中心採購商"
+          "role": "雲端資料中心採購商",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "Meta / Google",
-          "role": "超大規模資料中心採購商"
+          "role": "超大規模資料中心採購商",
+          "ticker": null
         }
       ],
+      "emoji": "🖥",
+      "growth_rate": "YoY +40%+",
+      "id": "gpu_ai",
+      "key_risk": "輝達出口限制、客戶資本支出縮減",
+      "key_theme": "輝達 GB200/GB300 供應鏈核心受惠族群",
+      "market_size": "全球 AI 伺服器市場 2025 年約 $1,500 億美元",
+      "midstream": [
+        {
+          "name": "緯穎",
+          "role": "AI 伺服器 ODM，輝達 HGX 最大台廠組裝商",
+          "ticker": "6669"
+        },
+        {
+          "name": "英業達",
+          "role": "AI 伺服器 ODM",
+          "ticker": "2356"
+        },
+        {
+          "name": "廣達",
+          "role": "AI 伺服器 ODM，Meta/Google 主力供應商",
+          "ticker": "2382"
+        },
+        {
+          "name": "鴻海",
+          "role": "AI 伺服器組裝、GB200 NVL72 機櫃",
+          "ticker": "2317"
+        },
+        {
+          "name": "宏碁",
+          "role": "AI 工作站",
+          "ticker": "2353"
+        }
+      ],
+      "name": "GPU / AI 算力",
       "relationships": [
         {
           "from": "台積電",
@@ -111,68 +94,69 @@
           "to": "輝達",
           "type": "GB200 機櫃組裝"
         }
-      ]
-    },
-    {
-      "id": "hbm",
-      "name": "HBM 記憶體",
-      "emoji": "💾",
-      "category": "AI / 算力",
-      "market_size": "全球 HBM 市場 2025 年約 $200 億美元",
-      "growth_rate": "YoY +80%+",
-      "key_theme": "AI GPU 必需品，SK 海力士/三星主導，台廠切入封裝",
-      "key_risk": "南韓廠技術壟斷、良率問題",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "SK 海力士",
-          "role": "HBM3E 全球最大供應商（南韓）"
-        },
-        {
-          "ticker": null,
-          "name": "三星電子",
-          "role": "HBM3 供應商（南韓）"
-        },
-        {
-          "ticker": "5347",
-          "name": "世界先進",
-          "role": "DRAM 週邊製程"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "2330",
           "name": "台積電",
-          "role": "CoWoS-S HBM 封裝整合"
+          "role": "CoWoS 先進封裝、H100/B200 晶片代工",
+          "ticker": "2330"
         },
         {
-          "ticker": "3711",
           "name": "日月光投控",
-          "role": "HBM 封測"
+          "role": "封裝測試",
+          "ticker": "3711"
         },
         {
-          "ticker": "2408",
-          "name": "南亞科",
-          "role": "DDR5/LPDDR5，HBM 技術追趕中"
-        },
-        {
-          "ticker": "2344",
-          "name": "華邦電",
-          "role": "NOR Flash，HBM 週邊"
+          "name": "同欣電",
+          "role": "感測器封裝",
+          "ticker": "6271"
         }
       ],
+      "hot_rank": 1
+    },
+    {
+      "category": "AI / 算力",
       "downstream": [
         {
-          "ticker": null,
           "name": "輝達 H100/B200",
-          "role": "HBM3E 最大消費者"
+          "role": "HBM3E 最大消費者",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "AMD MI300X",
-          "role": "HBM3 消費者"
+          "role": "HBM3 消費者",
+          "ticker": null
         }
       ],
+      "emoji": "💾",
+      "growth_rate": "YoY +80%+",
+      "id": "hbm",
+      "key_risk": "南韓廠技術壟斷、良率問題",
+      "key_theme": "AI GPU 必需品，SK 海力士/三星主導，台廠切入封裝",
+      "market_size": "全球 HBM 市場 2025 年約 $200 億美元",
+      "midstream": [
+        {
+          "name": "台積電",
+          "role": "CoWoS-S HBM 封裝整合",
+          "ticker": "2330"
+        },
+        {
+          "name": "日月光投控",
+          "role": "HBM 封測",
+          "ticker": "3711"
+        },
+        {
+          "name": "南亞科",
+          "role": "DDR5/LPDDR5，HBM 技術追趕中",
+          "ticker": "2408"
+        },
+        {
+          "name": "華邦電",
+          "role": "NOR Flash，HBM 週邊",
+          "ticker": "2344"
+        }
+      ],
+      "name": "HBM 記憶體",
       "relationships": [
         {
           "from": "SK 海力士",
@@ -184,63 +168,59 @@
           "to": "輝達",
           "type": "封裝完成品交付"
         }
-      ]
-    },
-    {
-      "id": "cowos",
-      "name": "CoWoS 先進封裝",
-      "emoji": "📦",
-      "category": "AI / 算力",
-      "market_size": "先進封裝市場 2025 年約 $450 億美元",
-      "growth_rate": "YoY +25%",
-      "key_theme": "AI 晶片異質整合核心技術，台積電主導",
-      "key_risk": "產能供不應求、競爭者追趕（Intel 18A）",
+      ],
       "upstream": [
         {
-          "ticker": "3037",
-          "name": "欣興",
-          "role": "ABF 載板供應"
+          "name": "SK 海力士",
+          "role": "HBM3E 全球最大供應商（南韓）",
+          "ticker": null
         },
         {
-          "ticker": "8046",
-          "name": "南電",
-          "role": "ABF 載板供應"
+          "name": "三星電子",
+          "role": "HBM3 供應商（南韓）",
+          "ticker": null
         },
         {
-          "ticker": "3189",
-          "name": "景碩",
-          "role": "IC 載板"
-        },
-        {
-          "ticker": "6690",
-          "name": "台勝科",
-          "role": "矽晶圓材料"
+          "name": "世界先進",
+          "role": "DRAM 週邊製程",
+          "ticker": "5347"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "CoWoS-S/L/R 技術主導者"
-        },
-        {
-          "ticker": "3711",
-          "name": "日月光投控",
-          "role": "SoIC、Fan-Out 封裝"
-        },
-        {
-          "ticker": "2325",
-          "name": "矽品精密",
-          "role": "先進封裝服務"
-        }
-      ],
+      "hot_rank": 2
+    },
+    {
+      "category": "AI / 算力",
       "downstream": [
         {
-          "ticker": null,
           "name": "輝達 / AMD / Apple",
-          "role": "先進封裝晶片買家"
+          "role": "先進封裝晶片買家",
+          "ticker": null
         }
       ],
+      "emoji": "📦",
+      "growth_rate": "YoY +25%",
+      "id": "cowos",
+      "key_risk": "產能供不應求、競爭者追趕（Intel 18A）",
+      "key_theme": "AI 晶片異質整合核心技術，台積電主導",
+      "market_size": "先進封裝市場 2025 年約 $450 億美元",
+      "midstream": [
+        {
+          "name": "台積電",
+          "role": "CoWoS-S/L/R 技術主導者",
+          "ticker": "2330"
+        },
+        {
+          "name": "日月光投控",
+          "role": "SoIC、Fan-Out 封裝",
+          "ticker": "3711"
+        },
+        {
+          "name": "矽品精密",
+          "role": "先進封裝服務",
+          "ticker": "2325"
+        }
+      ],
+      "name": "CoWoS 先進封裝",
       "relationships": [
         {
           "from": "欣興",
@@ -252,126 +232,138 @@
           "to": "輝達",
           "type": "CoWoS 封裝完成品"
         }
-      ]
-    },
-    {
-      "id": "cpo",
-      "name": "CPO 光學",
-      "emoji": "🔆",
-      "category": "AI / 算力",
-      "market_size": "CPO 市場 2027 年預估 $30 億美元",
-      "growth_rate": "YoY +60%+",
-      "key_theme": "資料中心光互連，取代銅纜，800G/1.6T 趨勢",
-      "key_risk": "技術轉換期長、客戶導入慢",
+      ],
       "upstream": [
         {
-          "ticker": "3491",
-          "name": "聯亞",
-          "role": "光通訊 IC、驅動晶片"
+          "name": "欣興",
+          "role": "ABF 載板供應",
+          "ticker": "3037"
         },
         {
-          "ticker": "6176",
-          "name": "瑞儀",
-          "role": "光學元件"
+          "name": "南電",
+          "role": "ABF 載板供應",
+          "ticker": "8046"
+        },
+        {
+          "name": "景碩",
+          "role": "IC 載板",
+          "ticker": "3189"
+        },
+        {
+          "name": "台勝科",
+          "role": "矽晶圓材料",
+          "ticker": "6690"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "3163",
-          "name": "波若威",
-          "role": "CPO 光引擎、高速光收發模組"
-        },
-        {
-          "ticker": "6547",
-          "name": "光環新網",
-          "role": "光纖模組"
-        },
-        {
-          "ticker": "3491",
-          "name": "聯亞",
-          "role": "高速光收發模組"
-        },
-        {
-          "ticker": "2455",
-          "name": "全新",
-          "role": "雷射二極體"
-        }
-      ],
+      "hot_rank": 3
+    },
+    {
+      "category": "AI / 算力",
       "downstream": [
         {
-          "ticker": null,
           "name": "Arista / Cisco",
-          "role": "交換器整合"
+          "role": "交換器整合",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "輝達",
-          "role": "NVLink 光互連整合"
+          "role": "NVLink 光互連整合",
+          "ticker": null
         }
       ],
+      "emoji": "🔆",
+      "growth_rate": "YoY +60%+",
+      "id": "cpo",
+      "key_risk": "技術轉換期長、客戶導入慢",
+      "key_theme": "資料中心光互連，取代銅纜，800G/1.6T 趨勢",
+      "market_size": "CPO 市場 2027 年預估 $30 億美元",
+      "midstream": [
+        {
+          "name": "波若威",
+          "role": "CPO 光引擎、高速光收發模組",
+          "ticker": "3163"
+        },
+        {
+          "name": "光環新網",
+          "role": "光纖模組",
+          "ticker": "6547"
+        },
+        {
+          "name": "聯亞",
+          "role": "高速光收發模組",
+          "ticker": "3491"
+        },
+        {
+          "name": "全新",
+          "role": "雷射二極體",
+          "ticker": "2455"
+        }
+      ],
+      "name": "CPO 光學",
       "relationships": [
         {
           "from": "聯亞",
           "to": "Arista",
           "type": "CPO 模組供貨"
         }
-      ]
-    },
-    {
-      "id": "liquid_cooling_datacenter",
-      "name": "液冷散熱（AI 機房）",
-      "emoji": "❄️",
-      "category": "AI / 算力",
-      "market_size": "資料中心液冷市場 2025 年約 $80 億美元",
-      "growth_rate": "YoY +50%+",
-      "key_theme": "GB200 功耗 1000W+，風冷不足，液冷成剛需",
-      "key_risk": "導入成本高、機房改建週期長",
+      ],
       "upstream": [
         {
-          "ticker": "1563",
-          "name": "巧新",
-          "role": "鋁擠散熱片"
+          "name": "聯亞",
+          "role": "光通訊 IC、驅動晶片",
+          "ticker": "3491"
         },
         {
-          "ticker": null,
-          "name": "銅管材料商",
-          "role": "銅管、熱管原材料"
+          "name": "瑞儀",
+          "role": "光學元件",
+          "ticker": "6176"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "3017",
-          "name": "奇鋐",
-          "role": "液冷板、CDU 冷卻分配單元"
-        },
-        {
-          "ticker": "3376",
-          "name": "雙鴻",
-          "role": "液冷模組、浸沒式冷卻"
-        },
-        {
-          "ticker": "3504",
-          "name": "揚博",
-          "role": "液冷系統"
-        },
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "液冷 CDU、機房整合方案"
-        }
-      ],
+      "hot_rank": 4
+    },
+    {
+      "category": "AI / 算力",
       "downstream": [
         {
-          "ticker": "6669",
           "name": "緯穎",
-          "role": "AI 伺服器整機整合"
+          "role": "AI 伺服器整機整合",
+          "ticker": "6669"
         },
         {
-          "ticker": "2317",
           "name": "鴻海",
-          "role": "GB200 NVL72 機櫃液冷整合"
+          "role": "GB200 NVL72 機櫃液冷整合",
+          "ticker": "2317"
         }
       ],
+      "emoji": "❄️",
+      "growth_rate": "YoY +50%+",
+      "id": "liquid_cooling_datacenter",
+      "key_risk": "導入成本高、機房改建週期長",
+      "key_theme": "GB200 功耗 1000W+，風冷不足，液冷成剛需",
+      "market_size": "資料中心液冷市場 2025 年約 $80 億美元",
+      "midstream": [
+        {
+          "name": "奇鋐",
+          "role": "液冷板、CDU 冷卻分配單元",
+          "ticker": "3017"
+        },
+        {
+          "name": "雙鴻",
+          "role": "液冷模組、浸沒式冷卻",
+          "ticker": "3376"
+        },
+        {
+          "name": "揚博",
+          "role": "液冷系統",
+          "ticker": "3504"
+        },
+        {
+          "name": "台達電",
+          "role": "液冷 CDU、機房整合方案",
+          "ticker": "2308"
+        }
+      ],
+      "name": "液冷散熱（AI 機房）",
       "relationships": [
         {
           "from": "奇鋐",
@@ -383,68 +375,69 @@
           "to": "鴻海",
           "type": "液冷模組供貨"
         }
-      ]
-    },
-    {
-      "id": "pcb_substrate",
-      "name": "PCB / 載板",
-      "emoji": "📐",
-      "category": "AI / 算力",
-      "market_size": "全球 PCB 市場 2025 年約 $800 億美元",
-      "growth_rate": "YoY +8%",
-      "key_theme": "AI 伺服器帶動高階 ABF 載板需求爆發",
-      "key_risk": "ABF 載板供過於求循環風險",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "松下電工",
-          "role": "ABF 樹脂材料（日本壟斷）"
+          "name": "巧新",
+          "role": "鋁擠散熱片",
+          "ticker": "1563"
         },
         {
-          "ticker": "1712",
-          "name": "興勤",
-          "role": "銅箔基板"
+          "name": "銅管材料商",
+          "role": "銅管、熱管原材料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "3037",
-          "name": "欣興",
-          "role": "ABF 載板龍頭"
-        },
-        {
-          "ticker": "8046",
-          "name": "南電",
-          "role": "ABF 載板"
-        },
-        {
-          "ticker": "3189",
-          "name": "景碩",
-          "role": "BGA 載板"
-        },
-        {
-          "ticker": "2383",
-          "name": "台光電",
-          "role": "高頻高速銅箔基板"
-        },
-        {
-          "ticker": "6185",
-          "name": "幸康",
-          "role": "HDI PCB"
-        }
-      ],
+      "hot_rank": 5
+    },
+    {
+      "category": "AI / 算力",
       "downstream": [
         {
-          "ticker": "2330",
           "name": "台積電",
-          "role": "CoWoS 封裝用載板"
+          "role": "CoWoS 封裝用載板",
+          "ticker": "2330"
         },
         {
-          "ticker": "6669",
           "name": "緯穎",
-          "role": "伺服器主板用 PCB"
+          "role": "伺服器主板用 PCB",
+          "ticker": "6669"
         }
       ],
+      "emoji": "📐",
+      "growth_rate": "YoY +8%",
+      "id": "pcb_substrate",
+      "key_risk": "ABF 載板供過於求循環風險",
+      "key_theme": "AI 伺服器帶動高階 ABF 載板需求爆發",
+      "market_size": "全球 PCB 市場 2025 年約 $800 億美元",
+      "midstream": [
+        {
+          "name": "欣興",
+          "role": "ABF 載板龍頭",
+          "ticker": "3037"
+        },
+        {
+          "name": "南電",
+          "role": "ABF 載板",
+          "ticker": "8046"
+        },
+        {
+          "name": "景碩",
+          "role": "BGA 載板",
+          "ticker": "3189"
+        },
+        {
+          "name": "台光電",
+          "role": "高頻高速銅箔基板",
+          "ticker": "2383"
+        },
+        {
+          "name": "幸康",
+          "role": "HDI PCB",
+          "ticker": "6185"
+        }
+      ],
+      "name": "PCB / 載板",
       "relationships": [
         {
           "from": "欣興",
@@ -456,48 +449,54 @@
           "to": "台積電",
           "type": "ABF 載板供貨"
         }
-      ]
-    },
-    {
-      "id": "asic",
-      "name": "ASIC 晶片",
-      "emoji": "⚙️",
-      "category": "AI / 算力",
-      "market_size": "自研 AI ASIC 市場 2025 年約 $200 億美元",
-      "growth_rate": "YoY +35%",
-      "key_theme": "Google TPU、Amazon Trainium、Meta MTIA 等科技巨頭自研 AI 晶片",
-      "key_risk": "輝達反制、設計週期長",
+      ],
       "upstream": [
         {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "3nm/5nm 製程代工"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "3443",
-          "name": "創意電子",
-          "role": "ASIC 設計服務（台積電子公司）"
+          "name": "松下電工",
+          "role": "ABF 樹脂材料（日本壟斷）",
+          "ticker": null
         },
         {
-          "ticker": "3661",
-          "name": "世芯-KY",
-          "role": "ASIC 設計服務，Google/Amazon 主要合作方"
-        },
-        {
-          "ticker": "6770",
-          "name": "力積電",
-          "role": "成熟製程 ASIC 代工"
+          "name": "興勤",
+          "role": "銅箔基板",
+          "ticker": "1712"
         }
       ],
+      "hot_rank": 6
+    },
+    {
+      "category": "AI / 算力",
       "downstream": [
         {
-          "ticker": null,
           "name": "Google / Amazon / Meta",
-          "role": "自研 AI 晶片客戶"
+          "role": "自研 AI 晶片客戶",
+          "ticker": null
         }
       ],
+      "emoji": "⚙️",
+      "growth_rate": "YoY +35%",
+      "id": "asic",
+      "key_risk": "輝達反制、設計週期長",
+      "key_theme": "Google TPU、Amazon Trainium、Meta MTIA 等科技巨頭自研 AI 晶片",
+      "market_size": "自研 AI ASIC 市場 2025 年約 $200 億美元",
+      "midstream": [
+        {
+          "name": "創意電子",
+          "role": "ASIC 設計服務（台積電子公司）",
+          "ticker": "3443"
+        },
+        {
+          "name": "世芯-KY",
+          "role": "ASIC 設計服務，Google/Amazon 主要合作方",
+          "ticker": "3661"
+        },
+        {
+          "name": "力積電",
+          "role": "成熟製程 ASIC 代工",
+          "ticker": "6770"
+        }
+      ],
+      "name": "ASIC 晶片",
       "relationships": [
         {
           "from": "世芯",
@@ -509,121 +508,118 @@
           "to": "台積電",
           "type": "設計後送台積代工"
         }
-      ]
-    },
-    {
-      "id": "edge_ai",
-      "name": "邊緣 AI / AIoT",
-      "emoji": "📡",
-      "category": "AI / 算力",
-      "market_size": "全球邊緣 AI 市場 2025 年約 $200 億美元",
-      "growth_rate": "YoY +25%",
-      "key_theme": "端側推論、智慧製造、AI PC、AI 手機",
-      "key_risk": "殺手級應用未明確",
+      ],
       "upstream": [
         {
-          "ticker": "2330",
           "name": "台積電",
-          "role": "3nm/5nm 製程"
+          "role": "3nm/5nm 製程代工",
+          "ticker": "2330"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "Dimensity AI 手機 SoC、AI PC 晶片"
-        },
-        {
-          "ticker": "2379",
-          "name": "瑞昱",
-          "role": "AIoT 網路晶片"
-        },
-        {
-          "ticker": "2344",
-          "name": "華邦電",
-          "role": "AIoT 記憶體"
-        },
-        {
-          "ticker": "3034",
-          "name": "聯詠",
-          "role": "AI 顯示驅動 IC"
-        }
-      ],
+      "hot_rank": 7
+    },
+    {
+      "category": "AI / 算力",
       "downstream": [
         {
-          "ticker": "2357",
           "name": "華碩",
-          "role": "AI PC 整機"
+          "role": "AI PC 整機",
+          "ticker": "2357"
         },
         {
-          "ticker": "2353",
           "name": "宏碁",
-          "role": "AI PC 整機"
+          "role": "AI PC 整機",
+          "ticker": "2353"
         }
       ],
+      "emoji": "📡",
+      "growth_rate": "YoY +25%",
+      "id": "edge_ai",
+      "key_risk": "殺手級應用未明確",
+      "key_theme": "端側推論、智慧製造、AI PC、AI 手機",
+      "market_size": "全球邊緣 AI 市場 2025 年約 $200 億美元",
+      "midstream": [
+        {
+          "name": "聯發科",
+          "role": "Dimensity AI 手機 SoC、AI PC 晶片",
+          "ticker": "2454"
+        },
+        {
+          "name": "瑞昱",
+          "role": "AIoT 網路晶片",
+          "ticker": "2379"
+        },
+        {
+          "name": "華邦電",
+          "role": "AIoT 記憶體",
+          "ticker": "2344"
+        },
+        {
+          "name": "聯詠",
+          "role": "AI 顯示驅動 IC",
+          "ticker": "3034"
+        }
+      ],
+      "name": "邊緣 AI / AIoT",
       "relationships": [
         {
           "from": "聯發科",
           "to": "華碩",
           "type": "AI PC 晶片供貨"
         }
-      ]
-    },
-    {
-      "id": "foundry",
-      "name": "晶圓代工",
-      "emoji": "🏭",
-      "category": "半導體基礎",
-      "market_size": "全球晶圓代工市場 2025 年約 $1,400 億美元",
-      "growth_rate": "YoY +15%",
-      "key_theme": "台積電 3nm/2nm 領先，成熟製程需求平穩",
-      "key_risk": "中國產能擴張衝擊成熟製程、地緣政治風險",
+      ],
       "upstream": [
         {
-          "ticker": "6690",
-          "name": "台勝科",
-          "role": "矽晶圓供應"
-        },
-        {
-          "ticker": "5483",
-          "name": "中美晶",
-          "role": "矽晶圓供應"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "2330",
           "name": "台積電",
-          "role": "全球最大晶圓代工，3nm/2nm 技術領先"
-        },
-        {
-          "ticker": "2303",
-          "name": "聯電",
-          "role": "成熟製程（28nm 以上）"
-        },
-        {
-          "ticker": "5347",
-          "name": "世界先進",
-          "role": "8吋晶圓、PMIC 製程"
-        },
-        {
-          "ticker": "6770",
-          "name": "力積電",
-          "role": "記憶體代工、成熟邏輯"
+          "role": "3nm/5nm 製程",
+          "ticker": "2330"
         }
       ],
+      "hot_rank": 8
+    },
+    {
+      "category": "半導體基礎",
       "downstream": [
         {
-          "ticker": "2454",
           "name": "聯發科",
-          "role": "IC 設計客戶"
+          "role": "IC 設計客戶",
+          "ticker": "2454"
         },
         {
-          "ticker": null,
           "name": "輝達 / AMD / Apple",
-          "role": "先進製程客戶"
+          "role": "先進製程客戶",
+          "ticker": null
         }
       ],
+      "emoji": "🏭",
+      "growth_rate": "YoY +15%",
+      "id": "foundry",
+      "key_risk": "中國產能擴張衝擊成熟製程、地緣政治風險",
+      "key_theme": "台積電 3nm/2nm 領先，成熟製程需求平穩",
+      "market_size": "全球晶圓代工市場 2025 年約 $1,400 億美元",
+      "midstream": [
+        {
+          "name": "台積電",
+          "role": "全球最大晶圓代工，3nm/2nm 技術領先",
+          "ticker": "2330"
+        },
+        {
+          "name": "聯電",
+          "role": "成熟製程（28nm 以上）",
+          "ticker": "2303"
+        },
+        {
+          "name": "世界先進",
+          "role": "8吋晶圓、PMIC 製程",
+          "ticker": "5347"
+        },
+        {
+          "name": "力積電",
+          "role": "記憶體代工、成熟邏輯",
+          "ticker": "6770"
+        }
+      ],
+      "name": "晶圓代工",
       "relationships": [
         {
           "from": "台勝科",
@@ -635,63 +631,64 @@
           "to": "輝達",
           "type": "GPU 晶片代工"
         }
-      ]
-    },
-    {
-      "id": "silicon_wafer",
-      "name": "矽晶圓",
-      "emoji": "🔵",
-      "category": "半導體基礎",
-      "market_size": "全球矽晶圓市場 2025 年約 $170 億美元",
-      "growth_rate": "YoY +5%",
-      "key_theme": "AI 驅動先進製程矽晶圓需求，300mm 大矽晶圓供需偏緊",
-      "key_risk": "日本信越/SUMCO 壟斷高階產品",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "信越化學",
-          "role": "矽晶圓全球第一（日本）"
-        },
-        {
-          "ticker": null,
-          "name": "SUMCO",
-          "role": "矽晶圓全球第二（日本）"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "6690",
           "name": "台勝科",
-          "role": "300mm 矽晶圓，台積電主要供應商"
+          "role": "矽晶圓供應",
+          "ticker": "6690"
         },
         {
-          "ticker": "5483",
           "name": "中美晶",
-          "role": "8吋/12吋矽晶圓"
-        },
-        {
-          "ticker": "6182",
-          "name": "合晶",
-          "role": "8吋矽晶圓"
-        },
-        {
-          "ticker": "3016",
-          "name": "嘉晶",
-          "role": "磊晶片"
+          "role": "矽晶圓供應",
+          "ticker": "5483"
         }
       ],
+      "hot_rank": 9
+    },
+    {
+      "category": "半導體基礎",
       "downstream": [
         {
-          "ticker": "2330",
           "name": "台積電",
-          "role": "最大矽晶圓消費者"
+          "role": "最大矽晶圓消費者",
+          "ticker": "2330"
         },
         {
-          "ticker": "2303",
           "name": "聯電",
-          "role": "矽晶圓消費者"
+          "role": "矽晶圓消費者",
+          "ticker": "2303"
         }
       ],
+      "emoji": "🔵",
+      "growth_rate": "YoY +5%",
+      "id": "silicon_wafer",
+      "key_risk": "日本信越/SUMCO 壟斷高階產品",
+      "key_theme": "AI 驅動先進製程矽晶圓需求，300mm 大矽晶圓供需偏緊",
+      "market_size": "全球矽晶圓市場 2025 年約 $170 億美元",
+      "midstream": [
+        {
+          "name": "台勝科",
+          "role": "300mm 矽晶圓，台積電主要供應商",
+          "ticker": "6690"
+        },
+        {
+          "name": "中美晶",
+          "role": "8吋/12吋矽晶圓",
+          "ticker": "5483"
+        },
+        {
+          "name": "合晶",
+          "role": "8吋矽晶圓",
+          "ticker": "6182"
+        },
+        {
+          "name": "嘉晶",
+          "role": "磊晶片",
+          "ticker": "3016"
+        }
+      ],
+      "name": "矽晶圓",
       "relationships": [
         {
           "from": "台勝科",
@@ -703,63 +700,64 @@
           "to": "聯電",
           "type": "矽晶圓供應"
         }
-      ]
-    },
-    {
-      "id": "osat",
-      "name": "封測廠",
-      "emoji": "🔬",
-      "category": "半導體基礎",
-      "market_size": "全球封測市場 2025 年約 $600 億美元",
-      "growth_rate": "YoY +10%",
-      "key_theme": "先進封裝（SiP、Fan-Out）需求強勁，傳統封測轉型",
-      "key_risk": "中國封測廠低價競爭成熟製程",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "導線架材料商",
-          "role": "銅導線架"
+          "name": "信越化學",
+          "role": "矽晶圓全球第一（日本）",
+          "ticker": null
         },
         {
-          "ticker": null,
-          "name": "基板材料商",
-          "role": "封裝基板"
+          "name": "SUMCO",
+          "role": "矽晶圓全球第二（日本）",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "3711",
-          "name": "日月光投控",
-          "role": "全球最大封測廠，先進封裝領先"
-        },
-        {
-          "ticker": "2325",
-          "name": "矽品精密",
-          "role": "日月光子公司，封測服務"
-        },
-        {
-          "ticker": "2059",
-          "name": "京元電子",
-          "role": "測試專業廠"
-        },
-        {
-          "ticker": "6274",
-          "name": "台燿",
-          "role": "IC 測試"
-        }
-      ],
+      "hot_rank": 10
+    },
+    {
+      "category": "半導體基礎",
       "downstream": [
         {
-          "ticker": "2454",
           "name": "聯發科",
-          "role": "封測客戶"
+          "role": "封測客戶",
+          "ticker": "2454"
         },
         {
-          "ticker": null,
           "name": "輝達 / AMD",
-          "role": "先進封裝客戶"
+          "role": "先進封裝客戶",
+          "ticker": null
         }
       ],
+      "emoji": "🔬",
+      "growth_rate": "YoY +10%",
+      "id": "osat",
+      "key_risk": "中國封測廠低價競爭成熟製程",
+      "key_theme": "先進封裝（SiP、Fan-Out）需求強勁，傳統封測轉型",
+      "market_size": "全球封測市場 2025 年約 $600 億美元",
+      "midstream": [
+        {
+          "name": "日月光投控",
+          "role": "全球最大封測廠，先進封裝領先",
+          "ticker": "3711"
+        },
+        {
+          "name": "矽品精密",
+          "role": "日月光子公司，封測服務",
+          "ticker": "2325"
+        },
+        {
+          "name": "京元電子",
+          "role": "測試專業廠",
+          "ticker": "2059"
+        },
+        {
+          "name": "台燿",
+          "role": "IC 測試",
+          "ticker": "6274"
+        }
+      ],
+      "name": "封測廠",
       "relationships": [
         {
           "from": "日月光",
@@ -771,111 +769,118 @@
           "to": "聯發科",
           "type": "晶片測試服務"
         }
-      ]
-    },
-    {
-      "id": "ic_design",
-      "name": "IC 設計",
-      "emoji": "💡",
-      "category": "半導體基礎",
-      "market_size": "台灣 IC 設計產值 2025 年約 $600 億美元",
-      "growth_rate": "YoY +18%",
-      "key_theme": "AI 晶片、高速網路 IC、車用 IC 需求強勁",
-      "key_risk": "美國出口管制影響中國市場",
+      ],
       "upstream": [
         {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "製程代工"
+          "name": "導線架材料商",
+          "role": "銅導線架",
+          "ticker": null
         },
         {
-          "ticker": null,
-          "name": "ARM / Synopsys",
-          "role": "IP 授權（英美）"
+          "name": "基板材料商",
+          "role": "封裝基板",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "手機 SoC、WiFi、AI 晶片，全球前五大 IC 設計"
-        },
-        {
-          "ticker": "2379",
-          "name": "瑞昱",
-          "role": "網路 IC、音效 IC"
-        },
-        {
-          "ticker": "3034",
-          "name": "聯詠",
-          "role": "顯示驅動 IC 全球第一"
-        },
-        {
-          "ticker": "2408",
-          "name": "南亞科",
-          "role": "DRAM 設計製造"
-        },
-        {
-          "ticker": "6770",
-          "name": "力積電",
-          "role": "記憶體 IC"
-        }
-      ],
+      "hot_rank": 11
+    },
+    {
+      "category": "半導體基礎",
       "downstream": [
         {
-          "ticker": null,
           "name": "Samsung / Apple / 小米",
-          "role": "手機品牌客戶"
+          "role": "手機品牌客戶",
+          "ticker": null
         }
       ],
+      "emoji": "💡",
+      "growth_rate": "YoY +18%",
+      "id": "ic_design",
+      "key_risk": "美國出口管制影響中國市場",
+      "key_theme": "AI 晶片、高速網路 IC、車用 IC 需求強勁",
+      "market_size": "台灣 IC 設計產值 2025 年約 $600 億美元",
+      "midstream": [
+        {
+          "name": "聯發科",
+          "role": "手機 SoC、WiFi、AI 晶片，全球前五大 IC 設計",
+          "ticker": "2454"
+        },
+        {
+          "name": "瑞昱",
+          "role": "網路 IC、音效 IC",
+          "ticker": "2379"
+        },
+        {
+          "name": "聯詠",
+          "role": "顯示驅動 IC 全球第一",
+          "ticker": "3034"
+        },
+        {
+          "name": "南亞科",
+          "role": "DRAM 設計製造",
+          "ticker": "2408"
+        },
+        {
+          "name": "力積電",
+          "role": "記憶體 IC",
+          "ticker": "6770"
+        }
+      ],
+      "name": "IC 設計",
       "relationships": [
         {
           "from": "聯發科",
           "to": "台積電",
           "type": "晶片設計後送代工"
         }
-      ]
-    },
-    {
-      "id": "ic_distribution",
-      "name": "IC 通路",
-      "emoji": "🔗",
-      "category": "半導體基礎",
-      "market_size": "全球半導體通路市場 2025 年約 $1,200 億美元",
-      "growth_rate": "YoY +5%",
-      "key_theme": "AI 伺服器元件採購集中化，通路商議價力提升",
-      "key_risk": "庫存調整循環風險",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "TI / ADI / 英飛凌",
-          "role": "原廠委託銷售"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "3702",
-          "name": "大聯大",
-          "role": "亞洲最大 IC 通路商"
+          "name": "台積電",
+          "role": "製程代工",
+          "ticker": "2330"
         },
         {
-          "ticker": "2383",
-          "name": "台光電",
-          "role": "PCB 材料通路"
-        },
-        {
-          "ticker": "3036",
-          "name": "文曄",
-          "role": "IC 通路，TI 台灣最大代理商"
+          "name": "ARM / Synopsys",
+          "role": "IP 授權（英美）",
+          "ticker": null
         }
       ],
+      "hot_rank": 12
+    },
+    {
+      "category": "半導體基礎",
       "downstream": [
         {
-          "ticker": null,
           "name": "EMS/ODM 廠",
-          "role": "元件採購方"
+          "role": "元件採購方",
+          "ticker": null
         }
       ],
+      "emoji": "🔗",
+      "growth_rate": "YoY +5%",
+      "id": "ic_distribution",
+      "key_risk": "庫存調整循環風險",
+      "key_theme": "AI 伺服器元件採購集中化，通路商議價力提升",
+      "market_size": "全球半導體通路市場 2025 年約 $1,200 億美元",
+      "midstream": [
+        {
+          "name": "大聯大",
+          "role": "亞洲最大 IC 通路商",
+          "ticker": "3702"
+        },
+        {
+          "name": "台光電",
+          "role": "PCB 材料通路",
+          "ticker": "2383"
+        },
+        {
+          "name": "文曄",
+          "role": "IC 通路，TI 台灣最大代理商",
+          "ticker": "3036"
+        }
+      ],
+      "name": "IC 通路",
       "relationships": [
         {
           "from": "大聯大",
@@ -887,169 +892,172 @@
           "to": "緯穎",
           "type": "TI 元件供貨"
         }
-      ]
-    },
-    {
-      "id": "semi_equipment",
-      "name": "半導體設備",
-      "emoji": "🔧",
-      "category": "半導體基礎",
-      "market_size": "全球半導體設備市場 2025 年約 $1,200 億美元",
-      "growth_rate": "YoY +15%",
-      "key_theme": "台廠切入本土化設備，ASML 壟斷 EUV",
-      "key_risk": "ASML/應材壟斷關鍵設備，台廠僅能切入週邊",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "ASML",
-          "role": "EUV 微影設備（荷蘭壟斷）"
-        },
-        {
-          "ticker": null,
-          "name": "應用材料 / 科林研發",
-          "role": "CVD/蝕刻設備（美國）"
+          "name": "TI / ADI / 英飛凌",
+          "role": "原廠委託銷售",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "6203",
-          "name": "辛耘",
-          "role": "晶圓清洗設備"
-        },
-        {
-          "ticker": "6530",
-          "name": "弘塑",
-          "role": "化學品供應設備"
-        },
-        {
-          "ticker": "6153",
-          "name": "嘉聯益",
-          "role": "設備零組件"
-        },
-        {
-          "ticker": "3033",
-          "name": "威剛",
-          "role": "測試設備耗材"
-        }
-      ],
+      "hot_rank": 13
+    },
+    {
+      "category": "半導體基礎",
       "downstream": [
         {
-          "ticker": "2330",
           "name": "台積電",
-          "role": "最大設備買家"
+          "role": "最大設備買家",
+          "ticker": "2330"
         }
       ],
+      "emoji": "🔧",
+      "growth_rate": "YoY +15%",
+      "id": "semi_equipment",
+      "key_risk": "ASML/應材壟斷關鍵設備，台廠僅能切入週邊",
+      "key_theme": "台廠切入本土化設備，ASML 壟斷 EUV",
+      "market_size": "全球半導體設備市場 2025 年約 $1,200 億美元",
+      "midstream": [
+        {
+          "name": "辛耘",
+          "role": "晶圓清洗設備",
+          "ticker": "6203"
+        },
+        {
+          "name": "弘塑",
+          "role": "化學品供應設備",
+          "ticker": "6530"
+        },
+        {
+          "name": "嘉聯益",
+          "role": "設備零組件",
+          "ticker": "6153"
+        },
+        {
+          "name": "威剛",
+          "role": "測試設備耗材",
+          "ticker": "3033"
+        }
+      ],
+      "name": "半導體設備",
       "relationships": [
         {
           "from": "辛耘",
           "to": "台積電",
           "type": "清洗設備供應"
         }
-      ]
-    },
-    {
-      "id": "semi_material",
-      "name": "半導體材料",
-      "emoji": "🧪",
-      "category": "半導體基礎",
-      "market_size": "全球半導體材料市場 2025 年約 $700 億美元",
-      "growth_rate": "YoY +8%",
-      "key_theme": "光阻劑、特殊氣體、CMP 研磨液",
-      "key_risk": "日本材料商壟斷高階光阻",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "信越化學 / JSR",
-          "role": "EUV 光阻（日本）"
+          "name": "ASML",
+          "role": "EUV 微影設備（荷蘭壟斷）",
+          "ticker": null
+        },
+        {
+          "name": "應用材料 / 科林研發",
+          "role": "CVD/蝕刻設備（美國）",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "6690",
-          "name": "台勝科",
-          "role": "矽晶圓材料"
-        },
-        {
-          "ticker": "4904",
-          "name": "遠傳",
-          "role": "特殊氣體（電子級）"
-        },
-        {
-          "ticker": "1590",
-          "name": "亞德客-KY",
-          "role": "氣動元件"
-        },
-        {
-          "ticker": "5483",
-          "name": "中美晶",
-          "role": "磊晶片材料"
-        }
-      ],
+      "hot_rank": 14
+    },
+    {
+      "category": "半導體基礎",
       "downstream": [
         {
-          "ticker": "2330",
           "name": "台積電",
-          "role": "材料消費者"
+          "role": "材料消費者",
+          "ticker": "2330"
         }
       ],
+      "emoji": "🧪",
+      "growth_rate": "YoY +8%",
+      "id": "semi_material",
+      "key_risk": "日本材料商壟斷高階光阻",
+      "key_theme": "光阻劑、特殊氣體、CMP 研磨液",
+      "market_size": "全球半導體材料市場 2025 年約 $700 億美元",
+      "midstream": [
+        {
+          "name": "台勝科",
+          "role": "矽晶圓材料",
+          "ticker": "6690"
+        },
+        {
+          "name": "遠傳",
+          "role": "特殊氣體（電子級）",
+          "ticker": "4904"
+        },
+        {
+          "name": "亞德客-KY",
+          "role": "氣動元件",
+          "ticker": "1590"
+        },
+        {
+          "name": "中美晶",
+          "role": "磊晶片材料",
+          "ticker": "5483"
+        }
+      ],
+      "name": "半導體材料",
       "relationships": [
         {
           "from": "台勝科",
           "to": "台積電",
           "type": "矽晶圓材料供應"
         }
-      ]
-    },
-    {
-      "id": "passive_components",
-      "name": "被動元件（MLCC）",
-      "emoji": "🔩",
-      "category": "被動元件 / 零組件",
-      "market_size": "全球被動元件市場 2025 年約 $300 億美元",
-      "growth_rate": "YoY +6%",
-      "key_theme": "AI 伺服器、電動車帶動高規 MLCC 需求",
-      "key_risk": "中國競爭者低價壓力、庫存循環",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "鈦酸鋇材料商",
-          "role": "MLCC 介電材料"
+          "name": "信越化學 / JSR",
+          "role": "EUV 光阻（日本）",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2327",
-          "name": "國巨",
-          "role": "全球前三大被動元件廠，MLCC/電阻/電感"
-        },
-        {
-          "ticker": "2492",
-          "name": "華新科",
-          "role": "MLCC 台廠第二"
-        },
-        {
-          "ticker": "2456",
-          "name": "奇力新",
-          "role": "電感、功率元件"
-        },
-        {
-          "ticker": "2499",
-          "name": "東貝",
-          "role": "LED 被動元件"
-        }
-      ],
+      "hot_rank": 15
+    },
+    {
+      "category": "被動元件 / 零組件",
       "downstream": [
         {
-          "ticker": "6669",
           "name": "緯穎",
-          "role": "AI 伺服器採購"
+          "role": "AI 伺服器採購",
+          "ticker": "6669"
         },
         {
-          "ticker": "2317",
           "name": "鴻海",
-          "role": "電子製造採購"
+          "role": "電子製造採購",
+          "ticker": "2317"
         }
       ],
+      "emoji": "🔩",
+      "growth_rate": "YoY +6%",
+      "id": "passive_components",
+      "key_risk": "中國競爭者低價壓力、庫存循環",
+      "key_theme": "AI 伺服器、電動車帶動高規 MLCC 需求",
+      "market_size": "全球被動元件市場 2025 年約 $300 億美元",
+      "midstream": [
+        {
+          "name": "國巨",
+          "role": "全球前三大被動元件廠，MLCC/電阻/電感",
+          "ticker": "2327"
+        },
+        {
+          "name": "華新科",
+          "role": "MLCC 台廠第二",
+          "ticker": "2492"
+        },
+        {
+          "name": "奇力新",
+          "role": "電感、功率元件",
+          "ticker": "2456"
+        },
+        {
+          "name": "東貝",
+          "role": "LED 被動元件",
+          "ticker": "2499"
+        }
+      ],
+      "name": "被動元件（MLCC）",
       "relationships": [
         {
           "from": "國巨",
@@ -1061,58 +1069,59 @@
           "to": "緯穎",
           "type": "MLCC 供貨"
         }
-      ]
-    },
-    {
-      "id": "connector",
-      "name": "連接器",
-      "emoji": "🔌",
-      "category": "被動元件 / 零組件",
-      "market_size": "全球連接器市場 2025 年約 $900 億美元",
-      "growth_rate": "YoY +7%",
-      "key_theme": "AI 伺服器高速連接器（PCIe 5.0/6.0）、電動車連接器",
-      "key_risk": "安費諾/TE Connectivity 國際大廠競爭",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "銅合金材料商",
-          "role": "連接器原材料"
+          "name": "鈦酸鋇材料商",
+          "role": "MLCC 介電材料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2392",
-          "name": "正崴",
-          "role": "線纜連接器，AI 伺服器高速線纜"
-        },
-        {
-          "ticker": "3533",
-          "name": "嘉澤",
-          "role": "CPU/GPU socket 連接器"
-        },
-        {
-          "ticker": "5007",
-          "name": "三揚",
-          "role": "工業連接器"
-        },
-        {
-          "ticker": "2467",
-          "name": "志超",
-          "role": "FPC 軟性電路板"
-        }
-      ],
+      "hot_rank": 16
+    },
+    {
+      "category": "被動元件 / 零組件",
       "downstream": [
         {
-          "ticker": "6669",
           "name": "緯穎",
-          "role": "伺服器連接器採購"
+          "role": "伺服器連接器採購",
+          "ticker": "6669"
         },
         {
-          "ticker": "2317",
           "name": "鴻海",
-          "role": "EV 連接器採購"
+          "role": "EV 連接器採購",
+          "ticker": "2317"
         }
       ],
+      "emoji": "🔌",
+      "growth_rate": "YoY +7%",
+      "id": "connector",
+      "key_risk": "安費諾/TE Connectivity 國際大廠競爭",
+      "key_theme": "AI 伺服器高速連接器（PCIe 5.0/6.0）、電動車連接器",
+      "market_size": "全球連接器市場 2025 年約 $900 億美元",
+      "midstream": [
+        {
+          "name": "正崴",
+          "role": "線纜連接器，AI 伺服器高速線纜",
+          "ticker": "2392"
+        },
+        {
+          "name": "嘉澤",
+          "role": "CPU/GPU socket 連接器",
+          "ticker": "3533"
+        },
+        {
+          "name": "三揚",
+          "role": "工業連接器",
+          "ticker": "5007"
+        },
+        {
+          "name": "志超",
+          "role": "FPC 軟性電路板",
+          "ticker": "2467"
+        }
+      ],
+      "name": "連接器",
       "relationships": [
         {
           "from": "嘉澤",
@@ -1124,131 +1133,128 @@
           "to": "鴻海",
           "type": "高速線纜供貨"
         }
-      ]
-    },
-    {
-      "id": "pmic",
-      "name": "電源管理 IC（PMIC）",
-      "emoji": "⚡",
-      "category": "被動元件 / 零組件",
-      "market_size": "全球 PMIC 市場 2025 年約 $500 億美元",
-      "growth_rate": "YoY +10%",
-      "key_theme": "AI 伺服器電力效率要求提升，PMIC 規格大升級",
-      "key_risk": "TI/ADI 國際大廠主導高端市場",
+      ],
       "upstream": [
         {
-          "ticker": "5347",
-          "name": "世界先進",
-          "role": "PMIC 製程代工"
+          "name": "銅合金材料商",
+          "role": "連接器原材料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "6286",
-          "name": "立錡",
-          "role": "PMIC，聯發科集團"
-        },
-        {
-          "ticker": "6285",
-          "name": "啟碁",
-          "role": "電源模組"
-        },
-        {
-          "ticker": "6230",
-          "name": "超豐",
-          "role": "PMIC 封裝"
-        },
-        {
-          "ticker": "3491",
-          "name": "聯亞",
-          "role": "GaN 功率 IC"
-        }
-      ],
+      "hot_rank": 17
+    },
+    {
+      "category": "被動元件 / 零組件",
       "downstream": [
         {
-          "ticker": "2454",
           "name": "聯發科",
-          "role": "手機 SoC 搭配 PMIC"
+          "role": "手機 SoC 搭配 PMIC",
+          "ticker": "2454"
         },
         {
-          "ticker": "6669",
           "name": "緯穎",
-          "role": "伺服器電源管理"
+          "role": "伺服器電源管理",
+          "ticker": "6669"
         }
       ],
+      "emoji": "⚡",
+      "growth_rate": "YoY +10%",
+      "id": "pmic",
+      "key_risk": "TI/ADI 國際大廠主導高端市場",
+      "key_theme": "AI 伺服器電力效率要求提升，PMIC 規格大升級",
+      "market_size": "全球 PMIC 市場 2025 年約 $500 億美元",
+      "midstream": [
+        {
+          "name": "立錡",
+          "role": "PMIC，聯發科集團",
+          "ticker": "6286"
+        },
+        {
+          "name": "啟碁",
+          "role": "電源模組",
+          "ticker": "6285"
+        },
+        {
+          "name": "超豐",
+          "role": "PMIC 封裝",
+          "ticker": "6230"
+        },
+        {
+          "name": "聯亞",
+          "role": "GaN 功率 IC",
+          "ticker": "3491"
+        }
+      ],
+      "name": "電源管理 IC（PMIC）",
       "relationships": [
         {
           "from": "立錡",
           "to": "聯發科",
           "type": "配套 PMIC 供貨"
         }
-      ]
-    },
-    {
-      "id": "psu",
-      "name": "電源供應器（PSU）",
-      "emoji": "🔋",
-      "category": "電源供應",
-      "market_size": "全球伺服器 PSU 市場 2025 年約 $120 億美元",
-      "growth_rate": "YoY +30%",
-      "key_theme": "GB200 單機櫃耗電 120kW，PSU 效率/功率密度要求倍增，80 PLUS Titanium 成標配",
-      "key_risk": "原材料（磁性元件、電容）漲價壓力",
+      ],
       "upstream": [
         {
-          "ticker": "2327",
-          "name": "國巨",
-          "role": "電容、電阻等被動元件"
-        },
-        {
-          "ticker": "2456",
-          "name": "奇力新",
-          "role": "電感、磁性元件"
+          "name": "世界先進",
+          "role": "PMIC 製程代工",
+          "ticker": "5347"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "全球最大伺服器 PSU 廠，AI 伺服器最大受惠者之一"
-        },
-        {
-          "ticker": "2301",
-          "name": "光寶科技",
-          "role": "伺服器 PSU、UPS"
-        },
-        {
-          "ticker": "6139",
-          "name": "康舒",
-          "role": "伺服器/工業 PSU"
-        },
-        {
-          "ticker": "3622",
-          "name": "洛克",
-          "role": "電源供應器"
-        },
-        {
-          "ticker": "3680",
-          "name": "家登",
-          "role": "UPS 不斷電系統"
-        }
-      ],
+      "hot_rank": 18
+    },
+    {
+      "category": "電源供應",
       "downstream": [
         {
-          "ticker": "6669",
           "name": "緯穎",
-          "role": "AI 伺服器整機採購"
+          "role": "AI 伺服器整機採購",
+          "ticker": "6669"
         },
         {
-          "ticker": "2382",
           "name": "廣達",
-          "role": "伺服器 PSU 採購"
+          "role": "伺服器 PSU 採購",
+          "ticker": "2382"
         },
         {
-          "ticker": "2317",
           "name": "鴻海",
-          "role": "GB200 機櫃電源採購"
+          "role": "GB200 機櫃電源採購",
+          "ticker": "2317"
         }
       ],
+      "emoji": "🔋",
+      "growth_rate": "YoY +30%",
+      "id": "psu",
+      "key_risk": "原材料（磁性元件、電容）漲價壓力",
+      "key_theme": "GB200 單機櫃耗電 120kW，PSU 效率/功率密度要求倍增，80 PLUS Titanium 成標配",
+      "market_size": "全球伺服器 PSU 市場 2025 年約 $120 億美元",
+      "midstream": [
+        {
+          "name": "台達電",
+          "role": "全球最大伺服器 PSU 廠，AI 伺服器最大受惠者之一",
+          "ticker": "2308"
+        },
+        {
+          "name": "光寶科技",
+          "role": "伺服器 PSU、UPS",
+          "ticker": "2301"
+        },
+        {
+          "name": "康舒",
+          "role": "伺服器/工業 PSU",
+          "ticker": "6139"
+        },
+        {
+          "name": "洛克",
+          "role": "電源供應器",
+          "ticker": "3622"
+        },
+        {
+          "name": "家登",
+          "role": "UPS 不斷電系統",
+          "ticker": "3680"
+        }
+      ],
+      "name": "電源供應器（PSU）",
       "relationships": [
         {
           "from": "台達電",
@@ -1265,68 +1271,74 @@
           "to": "鴻海",
           "type": "PSU 供貨"
         }
-      ]
-    },
-    {
-      "id": "thermal_air",
-      "name": "散熱模組（風冷）",
-      "emoji": "💨",
-      "category": "散熱 / 熱管理",
-      "market_size": "全球散熱模組市場 2025 年約 $150 億美元",
-      "growth_rate": "YoY +12%",
-      "key_theme": "AI PC、消費電子散熱升級，VC 均熱板普及",
-      "key_risk": "液冷逐漸取代高端風冷市場",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "鋁擠/銅管材料商",
-          "role": "散熱原材料"
+          "name": "國巨",
+          "role": "電容、電阻等被動元件",
+          "ticker": "2327"
+        },
+        {
+          "name": "奇力新",
+          "role": "電感、磁性元件",
+          "ticker": "2456"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "3017",
-          "name": "奇鋐",
-          "role": "散熱模組龍頭，VC 均熱板、散熱器"
-        },
-        {
-          "ticker": "3376",
-          "name": "雙鴻",
-          "role": "散熱模組，VC 均熱板、液冷板"
-        },
-        {
-          "ticker": "3504",
-          "name": "超眾",
-          "role": "Heatpipe 熱管散熱模組"
-        },
-        {
-          "ticker": "6247",
-          "name": "健策",
-          "role": "VC 均熱板、導熱石墨片，AI 晶片散熱關鍵材料"
-        },
-        {
-          "ticker": "6244",
-          "name": "茂林-KY",
-          "role": "散熱片"
-        },
-        {
-          "ticker": "3657",
-          "name": "力致",
-          "role": "散熱風扇"
-        }
-      ],
+      "hot_rank": 19
+    },
+    {
+      "category": "散熱 / 熱管理",
       "downstream": [
         {
-          "ticker": "2357",
           "name": "華碩",
-          "role": "AI PC 散熱採購"
+          "role": "AI PC 散熱採購",
+          "ticker": "2357"
         },
         {
-          "ticker": "2353",
           "name": "宏碁",
-          "role": "NB 散熱採購"
+          "role": "NB 散熱採購",
+          "ticker": "2353"
         }
       ],
+      "emoji": "💨",
+      "growth_rate": "YoY +12%",
+      "id": "thermal_air",
+      "key_risk": "液冷逐漸取代高端風冷市場",
+      "key_theme": "AI PC、消費電子散熱升級，VC 均熱板普及",
+      "market_size": "全球散熱模組市場 2025 年約 $150 億美元",
+      "midstream": [
+        {
+          "name": "奇鋐",
+          "role": "散熱模組龍頭，VC 均熱板、散熱器",
+          "ticker": "3017"
+        },
+        {
+          "name": "雙鴻",
+          "role": "散熱模組，VC 均熱板、液冷板",
+          "ticker": "3376"
+        },
+        {
+          "name": "超眾",
+          "role": "Heatpipe 熱管散熱模組",
+          "ticker": "3504"
+        },
+        {
+          "name": "健策",
+          "role": "VC 均熱板、導熱石墨片，AI 晶片散熱關鍵材料",
+          "ticker": "6247"
+        },
+        {
+          "name": "茂林-KY",
+          "role": "散熱片",
+          "ticker": "6244"
+        },
+        {
+          "name": "力致",
+          "role": "散熱風扇",
+          "ticker": "3657"
+        }
+      ],
+      "name": "散熱模組（風冷）",
       "relationships": [
         {
           "from": "奇鋐",
@@ -1338,68 +1350,64 @@
           "to": "宏碁",
           "type": "散熱模組供貨"
         }
-      ]
-    },
-    {
-      "id": "water_cooling",
-      "name": "水冷 / 浸沒式冷卻",
-      "emoji": "💧",
-      "category": "散熱 / 熱管理",
-      "market_size": "全球水冷市場 2025 年約 $60 億美元",
-      "growth_rate": "YoY +45%",
-      "key_theme": "電競 PC 水冷、中小型伺服器水冷、浸沒式冷卻新興",
-      "key_risk": "導入成本高、機房改建週期",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "冷卻液化學品廠",
-          "role": "冷卻介質"
-        },
-        {
-          "ticker": null,
-          "name": "幫浦馬達廠",
-          "role": "水泵零件"
+          "name": "鋁擠/銅管材料商",
+          "role": "散熱原材料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "資料中心水冷 CDU、整合方案"
-        },
-        {
-          "ticker": "3376",
-          "name": "雙鴻",
-          "role": "浸沒式冷卻模組、液冷板"
-        },
-        {
-          "ticker": "1028",
-          "name": "建準",
-          "role": "水冷幫浦、風扇"
-        },
-        {
-          "ticker": "6691",
-          "name": "訊凱國際",
-          "role": "電競水冷 All-in-one、客製化水冷"
-        },
-        {
-          "ticker": "6279",
-          "name": "廣運",
-          "role": "浸沒式冷卻系統"
-        }
-      ],
+      "hot_rank": 20
+    },
+    {
+      "category": "散熱 / 熱管理",
       "downstream": [
         {
-          "ticker": "6669",
           "name": "緯穎",
-          "role": "AI 伺服器水冷整合"
+          "role": "AI 伺服器水冷整合",
+          "ticker": "6669"
         },
         {
-          "ticker": "2357",
           "name": "華碩",
-          "role": "電競 PC 水冷採購"
+          "role": "電競 PC 水冷採購",
+          "ticker": "2357"
         }
       ],
+      "emoji": "💧",
+      "growth_rate": "YoY +45%",
+      "id": "water_cooling",
+      "key_risk": "導入成本高、機房改建週期",
+      "key_theme": "電競 PC 水冷、中小型伺服器水冷、浸沒式冷卻新興",
+      "market_size": "全球水冷市場 2025 年約 $60 億美元",
+      "midstream": [
+        {
+          "name": "台達電",
+          "role": "資料中心水冷 CDU、整合方案",
+          "ticker": "2308"
+        },
+        {
+          "name": "雙鴻",
+          "role": "浸沒式冷卻模組、液冷板",
+          "ticker": "3376"
+        },
+        {
+          "name": "建準",
+          "role": "水冷幫浦、風扇",
+          "ticker": "1028"
+        },
+        {
+          "name": "訊凱國際",
+          "role": "電競水冷 All-in-one、客製化水冷",
+          "ticker": "6691"
+        },
+        {
+          "name": "廣運",
+          "role": "浸沒式冷卻系統",
+          "ticker": "6279"
+        }
+      ],
+      "name": "水冷 / 浸沒式冷卻",
       "relationships": [
         {
           "from": "台達電",
@@ -1411,68 +1419,69 @@
           "to": "華碩",
           "type": "電競水冷供貨"
         }
-      ]
-    },
-    {
-      "id": "battery",
-      "name": "電池芯 / 電池模組",
-      "emoji": "🔋",
-      "category": "電池 / 儲能",
-      "market_size": "全球消費電子電池市場 2025 年約 $200 億美元",
-      "growth_rate": "YoY +8%",
-      "key_theme": "AI 手機/NB 電池容量升級，電動車動力電池台廠機會",
-      "key_risk": "中國寧德時代/比亞迪主導動力電池",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "碳酸鋰材料商",
-          "role": "電池正極材料"
+          "name": "冷卻液化學品廠",
+          "role": "冷卻介質",
+          "ticker": null
         },
         {
-          "ticker": null,
-          "name": "石墨/矽碳負極廠",
-          "role": "電池負極材料"
+          "name": "幫浦馬達廠",
+          "role": "水泵零件",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "6121",
-          "name": "新普",
-          "role": "NB/電動機車電池模組"
-        },
-        {
-          "ticker": "3205",
-          "name": "順達",
-          "role": "電池模組，Smart BMS"
-        },
-        {
-          "ticker": "3515",
-          "name": "加百裕",
-          "role": "消費電子電池、電動工具電池"
-        },
-        {
-          "ticker": "1537",
-          "name": "廣隆",
-          "role": "電源轉換、充電器"
-        }
-      ],
+      "hot_rank": 21
+    },
+    {
+      "category": "電池 / 儲能",
       "downstream": [
         {
-          "ticker": "2353",
           "name": "宏碁",
-          "role": "NB 電池採購"
+          "role": "NB 電池採購",
+          "ticker": "2353"
         },
         {
-          "ticker": "2357",
           "name": "華碩",
-          "role": "NB 電池採購"
+          "role": "NB 電池採購",
+          "ticker": "2357"
         },
         {
-          "ticker": null,
           "name": "Apple",
-          "role": "iPhone 電池採購"
+          "role": "iPhone 電池採購",
+          "ticker": null
         }
       ],
+      "emoji": "🔋",
+      "growth_rate": "YoY +8%",
+      "id": "battery",
+      "key_risk": "中國寧德時代/比亞迪主導動力電池",
+      "key_theme": "AI 手機/NB 電池容量升級，電動車動力電池台廠機會",
+      "market_size": "全球消費電子電池市場 2025 年約 $200 億美元",
+      "midstream": [
+        {
+          "name": "新普",
+          "role": "NB/電動機車電池模組",
+          "ticker": "6121"
+        },
+        {
+          "name": "順達",
+          "role": "電池模組，Smart BMS",
+          "ticker": "3205"
+        },
+        {
+          "name": "加百裕",
+          "role": "消費電子電池、電動工具電池",
+          "ticker": "3515"
+        },
+        {
+          "name": "廣隆",
+          "role": "電源轉換、充電器",
+          "ticker": "1537"
+        }
+      ],
+      "name": "電池芯 / 電池模組",
       "relationships": [
         {
           "from": "新普",
@@ -1484,126 +1493,128 @@
           "to": "Apple",
           "type": "消費電池供貨"
         }
-      ]
-    },
-    {
-      "id": "ess",
-      "name": "儲能系統（ESS）",
-      "emoji": "⚡",
-      "category": "電池 / 儲能",
-      "market_size": "全球 ESS 市場 2025 年約 $500 億美元",
-      "growth_rate": "YoY +35%",
-      "key_theme": "AI 資料中心 UPS 儲能、太陽能配套儲能、電網調頻",
-      "key_risk": "中國競爭者低價策略",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "寧德時代 / BYD",
-          "role": "電芯供應（中國）"
+          "name": "碳酸鋰材料商",
+          "role": "電池正極材料",
+          "ticker": null
         },
         {
-          "ticker": "6121",
-          "name": "新普",
-          "role": "電池模組"
+          "name": "石墨/矽碳負極廠",
+          "role": "電池負極材料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "儲能系統整合，全球前五大 ESS 廠"
-        },
-        {
-          "ticker": "1560",
-          "name": "中興電",
-          "role": "電網儲能系統"
-        },
-        {
-          "ticker": "6191",
-          "name": "精聯",
-          "role": "UPS 儲能"
-        },
-        {
-          "ticker": "2308",
-          "name": "必翔",
-          "role": "電動車/ESS 電池模組"
-        }
-      ],
+      "hot_rank": 22
+    },
+    {
+      "category": "電池 / 儲能",
       "downstream": [
         {
-          "ticker": null,
           "name": "台電",
-          "role": "電網調頻採購"
+          "role": "電網調頻採購",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "Amazon AWS",
-          "role": "資料中心 UPS 採購"
+          "role": "資料中心 UPS 採購",
+          "ticker": null
         }
       ],
+      "emoji": "⚡",
+      "growth_rate": "YoY +35%",
+      "id": "ess",
+      "key_risk": "中國競爭者低價策略",
+      "key_theme": "AI 資料中心 UPS 儲能、太陽能配套儲能、電網調頻",
+      "market_size": "全球 ESS 市場 2025 年約 $500 億美元",
+      "midstream": [
+        {
+          "name": "台達電",
+          "role": "儲能系統整合，全球前五大 ESS 廠",
+          "ticker": "2308"
+        },
+        {
+          "name": "中興電",
+          "role": "電網儲能系統",
+          "ticker": "1560"
+        },
+        {
+          "name": "精聯",
+          "role": "UPS 儲能",
+          "ticker": "6191"
+        },
+        {
+          "name": "必翔",
+          "role": "電動車/ESS 電池模組",
+          "ticker": "2308"
+        }
+      ],
+      "name": "儲能系統（ESS）",
       "relationships": [
         {
           "from": "台達電",
           "to": "台電",
           "type": "電網儲能系統供貨"
         }
-      ]
-    },
-    {
-      "id": "pc_nb",
-      "name": "PC / NB 廠",
-      "emoji": "💻",
-      "category": "系統整機",
-      "market_size": "全球 PC 市場 2025 年約 $2,500 億美元",
-      "growth_rate": "YoY +5%（AI PC 換機潮）",
-      "key_theme": "AI PC 換機潮，Copilot+ PC，NPU 效能成關鍵",
-      "key_risk": "換機潮實際需求不如預期",
+      ],
       "upstream": [
         {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "AI PC 晶片（Arm 架構）"
+          "name": "寧德時代 / BYD",
+          "role": "電芯供應（中國）",
+          "ticker": null
         },
         {
-          "ticker": null,
-          "name": "Intel / AMD",
-          "role": "x86 CPU 供應"
+          "name": "新普",
+          "role": "電池模組",
+          "ticker": "6121"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2353",
-          "name": "宏碁",
-          "role": "PC/NB 品牌，全球第四大"
-        },
-        {
-          "ticker": "2357",
-          "name": "華碩",
-          "role": "PC/NB 品牌，電競/商用"
-        },
-        {
-          "ticker": "2324",
-          "name": "仁寶",
-          "role": "NB ODM 全球最大"
-        },
-        {
-          "ticker": "2382",
-          "name": "廣達",
-          "role": "NB ODM 全球第二"
-        },
-        {
-          "ticker": "2412",
-          "name": "中華電信",
-          "role": "企業 PC 採購通路"
-        }
-      ],
+      "hot_rank": 23
+    },
+    {
+      "category": "系統整機",
       "downstream": [
         {
-          "ticker": null,
           "name": "企業/消費者",
-          "role": "終端買家"
+          "role": "終端買家",
+          "ticker": null
         }
       ],
+      "emoji": "💻",
+      "growth_rate": "YoY +5%（AI PC 換機潮）",
+      "id": "pc_nb",
+      "key_risk": "換機潮實際需求不如預期",
+      "key_theme": "AI PC 換機潮，Copilot+ PC，NPU 效能成關鍵",
+      "market_size": "全球 PC 市場 2025 年約 $2,500 億美元",
+      "midstream": [
+        {
+          "name": "宏碁",
+          "role": "PC/NB 品牌，全球第四大",
+          "ticker": "2353"
+        },
+        {
+          "name": "華碩",
+          "role": "PC/NB 品牌，電競/商用",
+          "ticker": "2357"
+        },
+        {
+          "name": "仁寶",
+          "role": "NB ODM 全球最大",
+          "ticker": "2324"
+        },
+        {
+          "name": "廣達",
+          "role": "NB ODM 全球第二",
+          "ticker": "2382"
+        },
+        {
+          "name": "中華電信",
+          "role": "企業 PC 採購通路",
+          "ticker": "2412"
+        }
+      ],
+      "name": "PC / NB 廠",
       "relationships": [
         {
           "from": "仁寶",
@@ -1615,63 +1626,64 @@
           "to": "華碩",
           "type": "NB ODM 代工"
         }
-      ]
-    },
-    {
-      "id": "server_odm",
-      "name": "伺服器 / ODM",
-      "emoji": "🖥",
-      "category": "系統整機",
-      "market_size": "全球伺服器市場 2025 年約 $1,800 億美元",
-      "growth_rate": "YoY +25%",
-      "key_theme": "AI 伺服器需求爆發，台廠 ODM 為最大受惠族群",
-      "key_risk": "輝達 GPU 供應瓶頸影響出貨",
+      ],
       "upstream": [
         {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "GPU/CPU 代工"
+          "name": "聯發科",
+          "role": "AI PC 晶片（Arm 架構）",
+          "ticker": "2454"
         },
         {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "PSU/液冷供應"
+          "name": "Intel / AMD",
+          "role": "x86 CPU 供應",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "6669",
-          "name": "緯穎",
-          "role": "AI 伺服器 ODM 龍頭，輝達 HGX 主力"
-        },
-        {
-          "ticker": "2356",
-          "name": "英業達",
-          "role": "AI 伺服器 ODM"
-        },
-        {
-          "ticker": "2382",
-          "name": "廣達",
-          "role": "AI 伺服器 ODM，Google 主力"
-        },
-        {
-          "ticker": "2317",
-          "name": "鴻海",
-          "role": "AI 伺服器/GB200 機櫃"
-        },
-        {
-          "ticker": "3017",
-          "name": "奇鋐",
-          "role": "散熱模組配套"
-        }
-      ],
+      "hot_rank": 24
+    },
+    {
+      "category": "系統整機",
       "downstream": [
         {
-          "ticker": null,
           "name": "AWS / Azure / GCP / Meta",
-          "role": "雲端資料中心客戶"
+          "role": "雲端資料中心客戶",
+          "ticker": null
         }
       ],
+      "emoji": "🖥",
+      "growth_rate": "YoY +25%",
+      "id": "server_odm",
+      "key_risk": "輝達 GPU 供應瓶頸影響出貨",
+      "key_theme": "AI 伺服器需求爆發，台廠 ODM 為最大受惠族群",
+      "market_size": "全球伺服器市場 2025 年約 $1,800 億美元",
+      "midstream": [
+        {
+          "name": "緯穎",
+          "role": "AI 伺服器 ODM 龍頭，輝達 HGX 主力",
+          "ticker": "6669"
+        },
+        {
+          "name": "英業達",
+          "role": "AI 伺服器 ODM",
+          "ticker": "2356"
+        },
+        {
+          "name": "廣達",
+          "role": "AI 伺服器 ODM，Google 主力",
+          "ticker": "2382"
+        },
+        {
+          "name": "鴻海",
+          "role": "AI 伺服器/GB200 機櫃",
+          "ticker": "2317"
+        },
+        {
+          "name": "奇鋐",
+          "role": "散熱模組配套",
+          "ticker": "3017"
+        }
+      ],
+      "name": "伺服器 / ODM",
       "relationships": [
         {
           "from": "緯穎",
@@ -1683,58 +1695,59 @@
           "to": "GCP",
           "type": "AI 伺服器供貨"
         }
-      ]
-    },
-    {
-      "id": "networking",
-      "name": "網通設備",
-      "emoji": "📶",
-      "category": "系統整機",
-      "market_size": "全球網通設備市場 2025 年約 $600 億美元",
-      "growth_rate": "YoY +10%",
-      "key_theme": "AI 資料中心 400G/800G 交換器升級，Wi-Fi 7 普及",
-      "key_risk": "美國對中禁令影響全球供應鏈重組",
+      ],
       "upstream": [
         {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "Wi-Fi 7 晶片"
+          "name": "台積電",
+          "role": "GPU/CPU 代工",
+          "ticker": "2330"
         },
         {
-          "ticker": "2379",
-          "name": "瑞昱",
-          "role": "網通晶片"
+          "name": "台達電",
+          "role": "PSU/液冷供應",
+          "ticker": "2308"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2345",
-          "name": "智邦",
-          "role": "高速乙太網路交換器，AWS 主要供應商"
-        },
-        {
-          "ticker": "5388",
-          "name": "中磊",
-          "role": "CPE/Wi-Fi 路由器 ODM"
-        },
-        {
-          "ticker": "2391",
-          "name": "合勤",
-          "role": "企業網路設備品牌"
-        },
-        {
-          "ticker": "3708",
-          "name": "上詮",
-          "role": "光纖收發模組"
-        }
-      ],
+      "hot_rank": 25
+    },
+    {
+      "category": "系統整機",
       "downstream": [
         {
-          "ticker": null,
           "name": "AWS / Microsoft",
-          "role": "資料中心交換器採購"
+          "role": "資料中心交換器採購",
+          "ticker": null
         }
       ],
+      "emoji": "📶",
+      "growth_rate": "YoY +10%",
+      "id": "networking",
+      "key_risk": "美國對中禁令影響全球供應鏈重組",
+      "key_theme": "AI 資料中心 400G/800G 交換器升級，Wi-Fi 7 普及",
+      "market_size": "全球網通設備市場 2025 年約 $600 億美元",
+      "midstream": [
+        {
+          "name": "智邦",
+          "role": "高速乙太網路交換器，AWS 主要供應商",
+          "ticker": "2345"
+        },
+        {
+          "name": "中磊",
+          "role": "CPE/Wi-Fi 路由器 ODM",
+          "ticker": "5388"
+        },
+        {
+          "name": "合勤",
+          "role": "企業網路設備品牌",
+          "ticker": "2391"
+        },
+        {
+          "name": "上詮",
+          "role": "光纖收發模組",
+          "ticker": "3708"
+        }
+      ],
+      "name": "網通設備",
       "relationships": [
         {
           "from": "智邦",
@@ -1746,58 +1759,59 @@
           "to": "中磊",
           "type": "Wi-Fi 7 晶片供貨"
         }
-      ]
-    },
-    {
-      "id": "smartphone_supply",
-      "name": "手機供應鏈",
-      "emoji": "📱",
-      "category": "系統整機",
-      "market_size": "全球智慧手機市場 2025 年約 $5,000 億美元",
-      "growth_rate": "YoY +3%",
-      "key_theme": "AI 手機換機潮，台廠機殼/鏡頭/組裝受惠",
-      "key_risk": "中國競爭者壓縮台廠市占",
+      ],
       "upstream": [
         {
-          "ticker": "2454",
           "name": "聯發科",
-          "role": "Android 手機 SoC 最大供應商"
+          "role": "Wi-Fi 7 晶片",
+          "ticker": "2454"
         },
         {
-          "ticker": "3034",
-          "name": "聯詠",
-          "role": "OLED 顯示驅動 IC"
+          "name": "瑞昱",
+          "role": "網通晶片",
+          "ticker": "2379"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2317",
-          "name": "鴻海",
-          "role": "iPhone 最大組裝商（全球 70%）"
-        },
-        {
-          "ticker": "4938",
-          "name": "和碩",
-          "role": "iPhone 組裝商"
-        },
-        {
-          "ticker": "5284",
-          "name": "可成",
-          "role": "iPhone 金屬機殼"
-        },
-        {
-          "ticker": "3406",
-          "name": "玉晶光",
-          "role": "iPhone 鏡頭"
-        }
-      ],
+      "hot_rank": 26
+    },
+    {
+      "category": "系統整機",
       "downstream": [
         {
-          "ticker": null,
           "name": "Apple / 三星 / 小米",
-          "role": "品牌手機廠"
+          "role": "品牌手機廠",
+          "ticker": null
         }
       ],
+      "emoji": "📱",
+      "growth_rate": "YoY +3%",
+      "id": "smartphone_supply",
+      "key_risk": "中國競爭者壓縮台廠市占",
+      "key_theme": "AI 手機換機潮，台廠機殼/鏡頭/組裝受惠",
+      "market_size": "全球智慧手機市場 2025 年約 $5,000 億美元",
+      "midstream": [
+        {
+          "name": "鴻海",
+          "role": "iPhone 最大組裝商（全球 70%）",
+          "ticker": "2317"
+        },
+        {
+          "name": "和碩",
+          "role": "iPhone 組裝商",
+          "ticker": "4938"
+        },
+        {
+          "name": "可成",
+          "role": "iPhone 金屬機殼",
+          "ticker": "5284"
+        },
+        {
+          "name": "玉晶光",
+          "role": "iPhone 鏡頭",
+          "ticker": "3406"
+        }
+      ],
+      "name": "手機供應鏈",
       "relationships": [
         {
           "from": "鴻海",
@@ -1809,68 +1823,64 @@
           "to": "Apple",
           "type": "機殼供貨"
         }
-      ]
-    },
-    {
-      "id": "humanoid_robot",
-      "name": "人形機器人",
-      "emoji": "🤖",
-      "category": "機器人 / 自動化",
-      "market_size": "全球人形機器人市場 2030 年預估 $380 億美元",
-      "growth_rate": "2025 起商業化元年，YoY 高速成長",
-      "key_theme": "Tesla Optimus、Figure 02、1X 推動商業化，台廠供應鏈卡位",
-      "key_risk": "量產時程不確定性高",
+      ],
       "upstream": [
         {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "伺服馬達、驅動器"
+          "name": "聯發科",
+          "role": "Android 手機 SoC 最大供應商",
+          "ticker": "2454"
         },
         {
-          "ticker": "2049",
-          "name": "上銀",
-          "role": "精密滾珠螺桿、線性滑軌"
-        },
-        {
-          "ticker": "1536",
-          "name": "和大",
-          "role": "精密齒輪"
+          "name": "聯詠",
+          "role": "OLED 顯示驅動 IC",
+          "ticker": "3034"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2049",
-          "name": "上銀",
-          "role": "機器人關節核心零件"
-        },
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "機器人驅動系統"
-        },
-        {
-          "ticker": "2317",
-          "name": "鴻海",
-          "role": "機器人整機組裝，與輝達合作"
-        },
-        {
-          "ticker": "2049",
-          "name": "銀泰科技",
-          "role": "諧波減速機"
-        }
-      ],
+      "hot_rank": 27
+    },
+    {
+      "category": "機器人 / 自動化",
       "downstream": [
         {
-          "ticker": null,
           "name": "Tesla Optimus",
-          "role": "人形機器人整機（美國）"
+          "role": "人形機器人整機（美國）",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "Figure / 1X / Agility",
-          "role": "人形機器人新創（美國）"
+          "role": "人形機器人新創（美國）",
+          "ticker": null
         }
       ],
+      "emoji": "🤖",
+      "growth_rate": "2025 起商業化元年，YoY 高速成長",
+      "id": "humanoid_robot",
+      "key_risk": "量產時程不確定性高",
+      "key_theme": "Tesla Optimus、Figure 02、1X 推動商業化，台廠供應鏈卡位",
+      "market_size": "全球人形機器人市場 2030 年預估 $380 億美元",
+      "midstream": [
+        {
+          "name": "上銀",
+          "role": "機器人關節核心零件",
+          "ticker": "2049"
+        },
+        {
+          "name": "台達電",
+          "role": "機器人驅動系統",
+          "ticker": "2308"
+        },
+        {
+          "name": "鴻海",
+          "role": "機器人整機組裝，與輝達合作",
+          "ticker": "2317"
+        },
+        {
+          "name": "銀泰科技",
+          "role": "諧波減速機",
+          "ticker": "2049"
+        }
+      ],
+      "name": "人形機器人",
       "relationships": [
         {
           "from": "上銀",
@@ -1882,169 +1892,177 @@
           "to": "鴻海",
           "type": "驅動系統供貨"
         }
-      ]
-    },
-    {
-      "id": "industrial_robot",
-      "name": "工業機器人",
-      "emoji": "🏗",
-      "category": "機器人 / 自動化",
-      "market_size": "全球工業機器人市場 2025 年約 $700 億美元",
-      "growth_rate": "YoY +10%",
-      "key_theme": "智慧製造、台灣在地化生產需求，協作機器人（Cobot）崛起",
-      "key_risk": "日本發那科/安川主導高端市場",
+      ],
       "upstream": [
         {
-          "ticker": "2049",
-          "name": "上銀",
-          "role": "滾珠螺桿、線性傳動元件"
-        },
-        {
-          "ticker": "2308",
           "name": "台達電",
-          "role": "伺服馬達、驅動器"
-        }
-      ],
-      "midstream": [
+          "role": "伺服馬達、驅動器",
+          "ticker": "2308"
+        },
         {
-          "ticker": "2049",
           "name": "上銀",
-          "role": "工業機器人本體，協作機器人"
+          "role": "精密滾珠螺桿、線性滑軌",
+          "ticker": "2049"
         },
         {
-          "ticker": "1590",
-          "name": "亞德客-KY",
-          "role": "氣動元件、機器人末端執行器"
-        },
-        {
-          "ticker": "1536",
           "name": "和大",
-          "role": "精密齒輪箱"
+          "role": "精密齒輪",
+          "ticker": "1536"
         }
       ],
+      "hot_rank": 28
+    },
+    {
+      "category": "機器人 / 自動化",
       "downstream": [
         {
-          "ticker": null,
           "name": "台積電廠房",
-          "role": "半導體製造自動化"
+          "role": "半導體製造自動化",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "電子製造廠",
-          "role": "SMT 製程自動化"
+          "role": "SMT 製程自動化",
+          "ticker": null
         }
       ],
+      "emoji": "🏗",
+      "growth_rate": "YoY +10%",
+      "id": "industrial_robot",
+      "key_risk": "日本發那科/安川主導高端市場",
+      "key_theme": "智慧製造、台灣在地化生產需求，協作機器人（Cobot）崛起",
+      "market_size": "全球工業機器人市場 2025 年約 $700 億美元",
+      "midstream": [
+        {
+          "name": "上銀",
+          "role": "工業機器人本體，協作機器人",
+          "ticker": "2049"
+        },
+        {
+          "name": "亞德客-KY",
+          "role": "氣動元件、機器人末端執行器",
+          "ticker": "1590"
+        },
+        {
+          "name": "和大",
+          "role": "精密齒輪箱",
+          "ticker": "1536"
+        }
+      ],
+      "name": "工業機器人",
       "relationships": [
         {
           "from": "台達電",
-          "to": "上銀",
-          "role": "伺服馬達供貨"
+          "role": "伺服馬達供貨",
+          "to": "上銀"
         }
-      ]
-    },
-    {
-      "id": "uav",
-      "name": "無人機 / UAV",
-      "emoji": "🛸",
-      "category": "機器人 / 自動化",
-      "market_size": "全球無人機市場 2025 年約 $580 億美元",
-      "growth_rate": "YoY +15%",
-      "key_theme": "軍用無人機、物流無人機、農業無人機，台廠去中化受惠",
-      "key_risk": "大疆壟斷消費市場、供應鏈去中化挑戰",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "馬達/電池材料商",
-          "role": "無刷馬達、鋰電池"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "8064",
-          "name": "雷虎科技",
-          "role": "無人機整機，軍用/民用"
+          "name": "上銀",
+          "role": "滾珠螺桿、線性傳動元件",
+          "ticker": "2049"
         },
         {
-          "ticker": "2634",
-          "name": "漢翔",
-          "role": "無人機機體、軍用 UAV"
-        },
-        {
-          "ticker": "2308",
           "name": "台達電",
-          "role": "無人機電源/馬達驅動"
+          "role": "伺服馬達、驅動器",
+          "ticker": "2308"
         }
       ],
+      "hot_rank": 29
+    },
+    {
+      "category": "機器人 / 自動化",
       "downstream": [
         {
-          "ticker": null,
           "name": "台灣國防部",
-          "role": "軍用採購"
+          "role": "軍用採購",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "農委會",
-          "role": "農業噴藥無人機採購"
+          "role": "農業噴藥無人機採購",
+          "ticker": null
         }
       ],
+      "emoji": "🛸",
+      "growth_rate": "YoY +15%",
+      "id": "uav",
+      "key_risk": "大疆壟斷消費市場、供應鏈去中化挑戰",
+      "key_theme": "軍用無人機、物流無人機、農業無人機，台廠去中化受惠",
+      "market_size": "全球無人機市場 2025 年約 $580 億美元",
+      "midstream": [
+        {
+          "name": "雷虎科技",
+          "role": "無人機整機，軍用/民用",
+          "ticker": "8064"
+        },
+        {
+          "name": "漢翔",
+          "role": "無人機機體、軍用 UAV",
+          "ticker": "2634"
+        },
+        {
+          "name": "台達電",
+          "role": "無人機電源/馬達驅動",
+          "ticker": "2308"
+        }
+      ],
+      "name": "無人機 / UAV",
       "relationships": [
         {
           "from": "雷虎",
           "to": "台灣國防部",
           "type": "軍用無人機供貨"
         }
-      ]
-    },
-    {
-      "id": "ev_supply",
-      "name": "電動車供應鏈",
-      "emoji": "🚗",
-      "category": "電動車 / 能源",
-      "market_size": "全球電動車市場 2025 年約 $8,000 億美元",
-      "growth_rate": "YoY +20%",
-      "key_theme": "台廠供應 Tesla/Rivian/BMW 車電、充電模組、線束",
-      "key_risk": "中國電動車補貼競爭、原材料成本波動",
+      ],
       "upstream": [
         {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "車用 SoC、AI 車機晶片"
-        },
-        {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "車用晶片代工"
+          "name": "馬達/電池材料商",
+          "role": "無刷馬達、鋰電池",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "車載充電器（OBC）、車用電源全球龍頭"
-        },
-        {
-          "ticker": "1536",
-          "name": "和大",
-          "role": "電動車減速箱齒輪"
-        },
-        {
-          "ticker": "3045",
-          "name": "台灣大",
-          "role": "車聯網通訊"
-        },
-        {
-          "ticker": "3665",
-          "name": "貿聯-KY",
-          "role": "電動車高壓線束"
-        }
-      ],
+      "hot_rank": 30
+    },
+    {
+      "category": "電動車 / 能源",
       "downstream": [
         {
-          "ticker": null,
           "name": "Tesla / BMW / Rivian",
-          "role": "整車品牌客戶"
+          "role": "整車品牌客戶",
+          "ticker": null
         }
       ],
+      "emoji": "🚗",
+      "growth_rate": "YoY +20%",
+      "id": "ev_supply",
+      "key_risk": "中國電動車補貼競爭、原材料成本波動",
+      "key_theme": "台廠供應 Tesla/Rivian/BMW 車電、充電模組、線束",
+      "market_size": "全球電動車市場 2025 年約 $8,000 億美元",
+      "midstream": [
+        {
+          "name": "台達電",
+          "role": "車載充電器（OBC）、車用電源全球龍頭",
+          "ticker": "2308"
+        },
+        {
+          "name": "和大",
+          "role": "電動車減速箱齒輪",
+          "ticker": "1536"
+        },
+        {
+          "name": "台灣大",
+          "role": "車聯網通訊",
+          "ticker": "3045"
+        },
+        {
+          "name": "貿聯-KY",
+          "role": "電動車高壓線束",
+          "ticker": "3665"
+        }
+      ],
+      "name": "電動車供應鏈",
       "relationships": [
         {
           "from": "台達電",
@@ -2056,116 +2074,123 @@
           "to": "Tesla",
           "type": "減速箱齒輪供貨"
         }
-      ]
-    },
-    {
-      "id": "solar",
-      "name": "太陽能",
-      "emoji": "☀️",
-      "category": "電動車 / 能源",
-      "market_size": "全球太陽能市場 2025 年約 $3,000 億美元",
-      "growth_rate": "YoY +15%",
-      "key_theme": "AI 資料中心帶動再生能源需求，台廠模組/電池片出口",
-      "key_risk": "中國低價傾銷，美國 AD/CVD 關稅影響",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "多晶矽材料廠",
-          "role": "矽料（中國壟斷）"
+          "name": "聯發科",
+          "role": "車用 SoC、AI 車機晶片",
+          "ticker": "2454"
+        },
+        {
+          "name": "台積電",
+          "role": "車用晶片代工",
+          "ticker": "2330"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "6244",
-          "name": "元晶",
-          "role": "太陽能電池片、模組"
-        },
-        {
-          "ticker": "6244",
-          "name": "茂迪",
-          "role": "太陽能電池片"
-        },
-        {
-          "ticker": "3576",
-          "name": "新日光",
-          "role": "太陽能模組（聯合再生子公司）"
-        },
-        {
-          "ticker": "3576",
-          "name": "聯合再生能源",
-          "role": "太陽能模組整合商"
-        }
-      ],
+      "hot_rank": 31
+    },
+    {
+      "category": "電動車 / 能源",
       "downstream": [
         {
-          "ticker": null,
           "name": "台電",
-          "role": "再生能源躉購"
+          "role": "再生能源躉購",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "美國太陽能業者",
-          "role": "模組進口商"
+          "role": "模組進口商",
+          "ticker": null
         }
       ],
+      "emoji": "☀️",
+      "growth_rate": "YoY +15%",
+      "id": "solar",
+      "key_risk": "中國低價傾銷，美國 AD/CVD 關稅影響",
+      "key_theme": "AI 資料中心帶動再生能源需求，台廠模組/電池片出口",
+      "market_size": "全球太陽能市場 2025 年約 $3,000 億美元",
+      "midstream": [
+        {
+          "name": "元晶",
+          "role": "太陽能電池片、模組",
+          "ticker": "6244"
+        },
+        {
+          "name": "茂迪",
+          "role": "太陽能電池片",
+          "ticker": "6244"
+        },
+        {
+          "name": "新日光",
+          "role": "太陽能模組（聯合再生子公司）",
+          "ticker": "3576"
+        },
+        {
+          "name": "聯合再生能源",
+          "role": "太陽能模組整合商",
+          "ticker": "3576"
+        }
+      ],
+      "name": "太陽能",
       "relationships": [
         {
           "from": "元晶",
           "to": "台電",
           "type": "太陽能發電躉購"
         }
-      ]
-    },
-    {
-      "id": "smart_grid",
-      "name": "智慧電網",
-      "emoji": "⚡",
-      "category": "電動車 / 能源",
-      "market_size": "全球智慧電網市場 2025 年約 $600 億美元",
-      "growth_rate": "YoY +12%",
-      "key_theme": "AI 資料中心用電暴增，電網基礎設施升級迫切",
-      "key_risk": "台灣電力供應吃緊，政策推進速度",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "銅材料商",
-          "role": "電纜原材料"
+          "name": "多晶矽材料廠",
+          "role": "矽料（中國壟斷）",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "1558",
-          "name": "士電",
-          "role": "變壓器、配電設備"
-        },
-        {
-          "ticker": "1560",
-          "name": "中興電",
-          "role": "大型變壓器、高壓設備"
-        },
-        {
-          "ticker": "1519",
-          "name": "華城",
-          "role": "超高壓變壓器，台積電/資料中心主要供應商"
-        },
-        {
-          "ticker": "1590",
-          "name": "亞德客-KY",
-          "role": "工業自動化配套"
-        }
-      ],
+      "hot_rank": 32
+    },
+    {
+      "category": "電動車 / 能源",
       "downstream": [
         {
-          "ticker": null,
           "name": "台電",
-          "role": "電網基礎建設採購"
+          "role": "電網基礎建設採購",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "AWS/微軟台灣資料中心",
-          "role": "電力基礎設施採購"
+          "role": "電力基礎設施採購",
+          "ticker": null
         }
       ],
+      "emoji": "⚡",
+      "growth_rate": "YoY +12%",
+      "id": "smart_grid",
+      "key_risk": "台灣電力供應吃緊，政策推進速度",
+      "key_theme": "AI 資料中心用電暴增，電網基礎設施升級迫切",
+      "market_size": "全球智慧電網市場 2025 年約 $600 億美元",
+      "midstream": [
+        {
+          "name": "士電",
+          "role": "變壓器、配電設備",
+          "ticker": "1558"
+        },
+        {
+          "name": "中興電",
+          "role": "大型變壓器、高壓設備",
+          "ticker": "1560"
+        },
+        {
+          "name": "華城",
+          "role": "超高壓變壓器，台積電/資料中心主要供應商",
+          "ticker": "1519"
+        },
+        {
+          "name": "亞德客-KY",
+          "role": "工業自動化配套",
+          "ticker": "1590"
+        }
+      ],
+      "name": "智慧電網",
       "relationships": [
         {
           "from": "華城",
@@ -2177,270 +2202,275 @@
           "to": "台電",
           "type": "配電設備供貨"
         }
-      ]
-    },
-    {
-      "id": "wind_power",
-      "name": "風力發電",
-      "emoji": "🌬",
-      "category": "電動車 / 能源",
-      "market_size": "台灣離岸風電裝置目標 2025 年 5.6GW",
-      "growth_rate": "YoY +20%",
-      "key_theme": "台灣離岸風電第三階段，本土化要求帶動台廠機會",
-      "key_risk": "本土化政策執行難度、海事工程挑戰",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "Siemens Gamesa / Vestas",
-          "role": "風機整機（歐洲）"
+          "name": "銅材料商",
+          "role": "電纜原材料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2208",
-          "name": "台船",
-          "role": "離岸風電安裝船、水下基礎"
-        },
-        {
-          "ticker": "1519",
-          "name": "華城",
-          "role": "風電變壓器、升壓站"
-        },
-        {
-          "ticker": "1558",
-          "name": "士電",
-          "role": "風電配電設備"
-        },
-        {
-          "ticker": "1513",
-          "name": "中興電",
-          "role": "海底電纜"
-        }
-      ],
+      "hot_rank": 33
+    },
+    {
+      "category": "電動車 / 能源",
       "downstream": [
         {
-          "ticker": null,
           "name": "台電",
-          "role": "離岸風電躉購"
+          "role": "離岸風電躉購",
+          "ticker": null
         }
       ],
+      "emoji": "🌬",
+      "growth_rate": "YoY +20%",
+      "id": "wind_power",
+      "key_risk": "本土化政策執行難度、海事工程挑戰",
+      "key_theme": "台灣離岸風電第三階段，本土化要求帶動台廠機會",
+      "market_size": "台灣離岸風電裝置目標 2025 年 5.6GW",
+      "midstream": [
+        {
+          "name": "台船",
+          "role": "離岸風電安裝船、水下基礎",
+          "ticker": "2208"
+        },
+        {
+          "name": "華城",
+          "role": "風電變壓器、升壓站",
+          "ticker": "1519"
+        },
+        {
+          "name": "士電",
+          "role": "風電配電設備",
+          "ticker": "1558"
+        },
+        {
+          "name": "中興電",
+          "role": "海底電纜",
+          "ticker": "1513"
+        }
+      ],
+      "name": "風力發電",
       "relationships": [
         {
           "from": "台船",
           "to": "台電",
           "type": "離岸風電工程服務"
         }
-      ]
-    },
-    {
-      "id": "satellite",
-      "name": "衛星通訊",
-      "emoji": "🛰",
-      "category": "通訊",
-      "market_size": "全球衛星通訊市場 2025 年約 $1,000 億美元",
-      "growth_rate": "YoY +15%",
-      "key_theme": "Starlink 台灣落地、低軌衛星寬頻競爭加劇",
-      "key_risk": "法規開放速度、頻譜資源爭奪",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "SpaceX Starlink",
-          "role": "低軌衛星運營（美國）"
+          "name": "Siemens Gamesa / Vestas",
+          "role": "風機整機（歐洲）",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "4977",
-          "name": "台揚",
-          "role": "衛星天線、VSAT 設備"
-        },
-        {
-          "ticker": "6452",
-          "name": "昇達科",
-          "role": "衛星通訊設備"
-        },
-        {
-          "ticker": "3706",
-          "name": "神達",
-          "role": "衛星導航設備"
-        }
-      ],
+      "hot_rank": 34
+    },
+    {
+      "category": "通訊",
       "downstream": [
         {
-          "ticker": null,
           "name": "台灣企業/政府",
-          "role": "衛星寬頻採購"
+          "role": "衛星寬頻採購",
+          "ticker": null
         }
       ],
+      "emoji": "🛰",
+      "growth_rate": "YoY +15%",
+      "id": "satellite",
+      "key_risk": "法規開放速度、頻譜資源爭奪",
+      "key_theme": "Starlink 台灣落地、低軌衛星寬頻競爭加劇",
+      "market_size": "全球衛星通訊市場 2025 年約 $1,000 億美元",
+      "midstream": [
+        {
+          "name": "台揚",
+          "role": "衛星天線、VSAT 設備",
+          "ticker": "4977"
+        },
+        {
+          "name": "昇達科",
+          "role": "衛星通訊設備",
+          "ticker": "6452"
+        },
+        {
+          "name": "神達",
+          "role": "衛星導航設備",
+          "ticker": "3706"
+        }
+      ],
+      "name": "衛星通訊",
       "relationships": [
         {
           "from": "台揚",
           "to": "Starlink",
           "type": "天線設備供貨"
         }
-      ]
-    },
-    {
-      "id": "leo_satellite",
-      "name": "低軌衛星",
-      "emoji": "🛸",
-      "category": "通訊",
-      "market_size": "全球 LEO 衛星市場 2025 年約 $200 億美元",
-      "growth_rate": "YoY +40%",
-      "key_theme": "Starlink 供應鏈在台廠，射頻元件、天線模組需求大",
-      "key_risk": "SpaceX 自製比例提升壓縮台廠空間",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "砷化鎵材料商",
-          "role": "射頻元件材料"
+          "name": "SpaceX Starlink",
+          "role": "低軌衛星運營（美國）",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2451",
-          "name": "創見資訊",
-          "role": "衛星記憶體模組"
-        },
-        {
-          "ticker": "6271",
-          "name": "同欣電",
-          "role": "衛星射頻感測器封裝"
-        },
-        {
-          "ticker": "3705",
-          "name": "永信-KY",
-          "role": "相位陣列天線"
-        },
-        {
-          "ticker": "2492",
-          "name": "台表科",
-          "role": "衛星零組件"
-        }
-      ],
+      "hot_rank": 35
+    },
+    {
+      "category": "通訊",
       "downstream": [
         {
-          "ticker": null,
           "name": "SpaceX / OneWeb / Amazon Kuiper",
-          "role": "衛星運營商"
+          "role": "衛星運營商",
+          "ticker": null
         }
       ],
+      "emoji": "🛸",
+      "growth_rate": "YoY +40%",
+      "id": "leo_satellite",
+      "key_risk": "SpaceX 自製比例提升壓縮台廠空間",
+      "key_theme": "Starlink 供應鏈在台廠，射頻元件、天線模組需求大",
+      "market_size": "全球 LEO 衛星市場 2025 年約 $200 億美元",
+      "midstream": [
+        {
+          "name": "創見資訊",
+          "role": "衛星記憶體模組",
+          "ticker": "2451"
+        },
+        {
+          "name": "同欣電",
+          "role": "衛星射頻感測器封裝",
+          "ticker": "6271"
+        },
+        {
+          "name": "永信-KY",
+          "role": "相位陣列天線",
+          "ticker": "3705"
+        },
+        {
+          "name": "台表科",
+          "role": "衛星零組件",
+          "ticker": "2492"
+        }
+      ],
+      "name": "低軌衛星",
       "relationships": [
         {
           "from": "同欣電",
           "to": "SpaceX",
           "type": "射頻元件供貨"
         }
-      ]
-    },
-    {
-      "id": "5g_6g",
-      "name": "5G / 6G",
-      "emoji": "📡",
-      "category": "通訊",
-      "market_size": "全球 5G 設備市場 2025 年約 $300 億美元",
-      "growth_rate": "YoY +8%（5G 成熟期）",
-      "key_theme": "5G 企業專網、6G 研發啟動，Open RAN 台廠機會",
-      "key_risk": "中國華為禁令後市場重組",
+      ],
       "upstream": [
         {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "5G 基頻晶片"
-        },
-        {
-          "ticker": "2379",
-          "name": "瑞昱",
-          "role": "5G 小基站晶片"
+          "name": "砷化鎵材料商",
+          "role": "射頻元件材料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2345",
-          "name": "智邦",
-          "role": "5G Open RAN 白牌基站"
-        },
-        {
-          "ticker": "5388",
-          "name": "中磊",
-          "role": "5G CPE 設備"
-        },
-        {
-          "ticker": "3045",
-          "name": "台灣大哥大",
-          "role": "5G 網路運營"
-        },
-        {
-          "ticker": "4904",
-          "name": "遠傳電信",
-          "role": "5G 網路運營"
-        }
-      ],
+      "hot_rank": 36
+    },
+    {
+      "category": "通訊",
       "downstream": [
         {
-          "ticker": null,
           "name": "企業專網客戶",
-          "role": "工廠/港口 5G 採購"
+          "role": "工廠/港口 5G 採購",
+          "ticker": null
         }
       ],
+      "emoji": "📡",
+      "growth_rate": "YoY +8%（5G 成熟期）",
+      "id": "5g_6g",
+      "key_risk": "中國華為禁令後市場重組",
+      "key_theme": "5G 企業專網、6G 研發啟動，Open RAN 台廠機會",
+      "market_size": "全球 5G 設備市場 2025 年約 $300 億美元",
+      "midstream": [
+        {
+          "name": "智邦",
+          "role": "5G Open RAN 白牌基站",
+          "ticker": "2345"
+        },
+        {
+          "name": "中磊",
+          "role": "5G CPE 設備",
+          "ticker": "5388"
+        },
+        {
+          "name": "台灣大哥大",
+          "role": "5G 網路運營",
+          "ticker": "3045"
+        },
+        {
+          "name": "遠傳電信",
+          "role": "5G 網路運營",
+          "ticker": "4904"
+        }
+      ],
+      "name": "5G / 6G",
       "relationships": [
         {
           "from": "聯發科",
           "to": "中磊",
           "type": "5G 晶片供貨"
         }
-      ]
-    },
-    {
-      "id": "apple_supply",
-      "name": "蘋果供應鏈",
-      "emoji": "🍎",
-      "category": "消費電子",
-      "market_size": "Apple 年採購額約 $3,000 億美元",
-      "growth_rate": "YoY +5%",
-      "key_theme": "iPhone 17、Apple Intelligence、Vision Pro 2 供應鏈",
-      "key_risk": "蘋果供應鏈分散化、印度/越南轉移",
+      ],
       "upstream": [
         {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "A18/M4 晶片代工"
+          "name": "聯發科",
+          "role": "5G 基頻晶片",
+          "ticker": "2454"
+        },
+        {
+          "name": "瑞昱",
+          "role": "5G 小基站晶片",
+          "ticker": "2379"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2317",
-          "name": "鴻海",
-          "role": "iPhone 最大組裝商"
-        },
-        {
-          "ticker": "4938",
-          "name": "和碩",
-          "role": "iPhone/iPad 組裝"
-        },
-        {
-          "ticker": "5284",
-          "name": "可成",
-          "role": "iPhone 機殼"
-        },
-        {
-          "ticker": "3406",
-          "name": "玉晶光",
-          "role": "iPhone 鏡頭"
-        },
-        {
-          "ticker": "3231",
-          "name": "緯創",
-          "role": "iPad/MacBook 組裝"
-        }
-      ],
+      "hot_rank": 37
+    },
+    {
+      "category": "消費電子",
       "downstream": [
         {
-          "ticker": null,
           "name": "Apple",
-          "role": "品牌整機（美國）"
+          "role": "品牌整機（美國）",
+          "ticker": null
         }
       ],
+      "emoji": "🍎",
+      "growth_rate": "YoY +5%",
+      "id": "apple_supply",
+      "key_risk": "蘋果供應鏈分散化、印度/越南轉移",
+      "key_theme": "iPhone 17、Apple Intelligence、Vision Pro 2 供應鏈",
+      "market_size": "Apple 年採購額約 $3,000 億美元",
+      "midstream": [
+        {
+          "name": "鴻海",
+          "role": "iPhone 最大組裝商",
+          "ticker": "2317"
+        },
+        {
+          "name": "和碩",
+          "role": "iPhone/iPad 組裝",
+          "ticker": "4938"
+        },
+        {
+          "name": "可成",
+          "role": "iPhone 機殼",
+          "ticker": "5284"
+        },
+        {
+          "name": "玉晶光",
+          "role": "iPhone 鏡頭",
+          "ticker": "3406"
+        },
+        {
+          "name": "緯創",
+          "role": "iPad/MacBook 組裝",
+          "ticker": "3231"
+        }
+      ],
+      "name": "蘋果供應鏈",
       "relationships": [
         {
           "from": "台積電",
@@ -2452,58 +2482,54 @@
           "to": "Apple",
           "type": "iPhone 組裝"
         }
-      ]
-    },
-    {
-      "id": "display_arvr",
-      "name": "摺疊螢幕 / AR/VR",
-      "emoji": "🥽",
-      "category": "消費電子",
-      "market_size": "全球 AR/VR 市場 2025 年約 $400 億美元",
-      "growth_rate": "YoY +20%",
-      "key_theme": "Apple Vision Pro、Meta Quest、三星摺疊機帶動新型態顯示需求",
-      "key_risk": "殺手級應用不明、價格過高抑制普及",
+      ],
       "upstream": [
         {
-          "ticker": "3034",
-          "name": "聯詠",
-          "role": "OLED 驅動 IC"
-        },
-        {
-          "ticker": null,
-          "name": "三星顯示",
-          "role": "摺疊 OLED 面板（韓國）"
+          "name": "台積電",
+          "role": "A18/M4 晶片代工",
+          "ticker": "2330"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2409",
-          "name": "友達",
-          "role": "Micro OLED/Mini LED 面板"
-        },
-        {
-          "ticker": "3481",
-          "name": "群創",
-          "role": "LCD/OLED 面板"
-        },
-        {
-          "ticker": "3406",
-          "name": "玉晶光",
-          "role": "AR/VR 光學鏡頭"
-        },
-        {
-          "ticker": "6244",
-          "name": "立景創新",
-          "role": "AR 光學模組"
-        }
-      ],
+      "hot_rank": 38
+    },
+    {
+      "category": "消費電子",
       "downstream": [
         {
-          "ticker": null,
           "name": "Apple / Meta / Samsung",
-          "role": "AR/VR 裝置品牌"
+          "role": "AR/VR 裝置品牌",
+          "ticker": null
         }
       ],
+      "emoji": "🥽",
+      "growth_rate": "YoY +20%",
+      "id": "display_arvr",
+      "key_risk": "殺手級應用不明、價格過高抑制普及",
+      "key_theme": "Apple Vision Pro、Meta Quest、三星摺疊機帶動新型態顯示需求",
+      "market_size": "全球 AR/VR 市場 2025 年約 $400 億美元",
+      "midstream": [
+        {
+          "name": "友達",
+          "role": "Micro OLED/Mini LED 面板",
+          "ticker": "2409"
+        },
+        {
+          "name": "群創",
+          "role": "LCD/OLED 面板",
+          "ticker": "3481"
+        },
+        {
+          "name": "玉晶光",
+          "role": "AR/VR 光學鏡頭",
+          "ticker": "3406"
+        },
+        {
+          "name": "立景創新",
+          "role": "AR 光學模組",
+          "ticker": "6244"
+        }
+      ],
+      "name": "摺疊螢幕 / AR/VR",
       "relationships": [
         {
           "from": "友達",
@@ -2515,106 +2541,113 @@
           "to": "Apple",
           "type": "光學鏡頭供貨"
         }
-      ]
-    },
-    {
-      "id": "ai_pharma",
-      "name": "AI 製藥 / 生技",
-      "emoji": "💊",
-      "category": "其他",
-      "market_size": "全球 AI 製藥市場 2025 年約 $20 億美元",
-      "growth_rate": "YoY +30%",
-      "key_theme": "AI 加速新藥開發、蛋白質結構預測（AlphaFold 應用）",
-      "key_risk": "新藥開發失敗率高、法規審查週期長",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "CDMO 原料藥廠",
-          "role": "藥物原料"
+          "name": "聯詠",
+          "role": "OLED 驅動 IC",
+          "ticker": "3034"
+        },
+        {
+          "name": "三星顯示",
+          "role": "摺疊 OLED 面板（韓國）",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "4174",
-          "name": "浩鼎",
-          "role": "醣類新藥開發"
-        },
-        {
-          "ticker": "6547",
-          "name": "醣基生醫",
-          "role": "AI 輔助新藥設計"
-        },
-        {
-          "ticker": "4123",
-          "name": "晟德",
-          "role": "學名藥/新劑型開發"
-        },
-        {
-          "ticker": "6548",
-          "name": "長聖",
-          "role": "細胞治療"
-        }
-      ],
+      "hot_rank": 39
+    },
+    {
+      "category": "其他",
       "downstream": [
         {
-          "ticker": null,
           "name": "醫院/藥廠",
-          "role": "藥物採購"
+          "role": "藥物採購",
+          "ticker": null
         }
       ],
+      "emoji": "💊",
+      "growth_rate": "YoY +30%",
+      "id": "ai_pharma",
+      "key_risk": "新藥開發失敗率高、法規審查週期長",
+      "key_theme": "AI 加速新藥開發、蛋白質結構預測（AlphaFold 應用）",
+      "market_size": "全球 AI 製藥市場 2025 年約 $20 億美元",
+      "midstream": [
+        {
+          "name": "浩鼎",
+          "role": "醣類新藥開發",
+          "ticker": "4174"
+        },
+        {
+          "name": "醣基生醫",
+          "role": "AI 輔助新藥設計",
+          "ticker": "6547"
+        },
+        {
+          "name": "晟德",
+          "role": "學名藥/新劑型開發",
+          "ticker": "4123"
+        },
+        {
+          "name": "長聖",
+          "role": "細胞治療",
+          "ticker": "6548"
+        }
+      ],
+      "name": "AI 製藥 / 生技",
       "relationships": [
         {
           "from": "醣基",
           "to": "醫院",
           "type": "新藥授權"
         }
-      ]
-    },
-    {
-      "id": "defense",
-      "name": "軍工 / 國防",
-      "emoji": "🛡",
-      "category": "其他",
-      "market_size": "台灣國防預算 2025 年約 NT$6,470 億元",
-      "growth_rate": "YoY +13%",
-      "key_theme": "台灣自製武器加速，無人機、潛艦、飛彈本土化",
-      "key_risk": "政策預算、技術自主瓶頸",
+      ],
       "upstream": [
         {
-          "ticker": null,
-          "name": "國防部 / 中科院",
-          "role": "技術研發主導"
+          "name": "CDMO 原料藥廠",
+          "role": "藥物原料",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2634",
-          "name": "漢翔航空",
-          "role": "軍機、無人機機體製造"
-        },
-        {
-          "ticker": "2208",
-          "name": "台船",
-          "role": "潛艦國造、軍艦"
-        },
-        {
-          "ticker": "8064",
-          "name": "雷虎科技",
-          "role": "軍用無人機"
-        },
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "軍用電源系統"
-        }
-      ],
+      "hot_rank": 40
+    },
+    {
+      "category": "其他",
       "downstream": [
         {
-          "ticker": null,
           "name": "國防部",
-          "role": "採購方"
+          "role": "採購方",
+          "ticker": null
         }
       ],
+      "emoji": "🛡",
+      "growth_rate": "YoY +13%",
+      "id": "defense",
+      "key_risk": "政策預算、技術自主瓶頸",
+      "key_theme": "台灣自製武器加速，無人機、潛艦、飛彈本土化",
+      "market_size": "台灣國防預算 2025 年約 NT$6,470 億元",
+      "midstream": [
+        {
+          "name": "漢翔航空",
+          "role": "軍機、無人機機體製造",
+          "ticker": "2634"
+        },
+        {
+          "name": "台船",
+          "role": "潛艦國造、軍艦",
+          "ticker": "2208"
+        },
+        {
+          "name": "雷虎科技",
+          "role": "軍用無人機",
+          "ticker": "8064"
+        },
+        {
+          "name": "台達電",
+          "role": "軍用電源系統",
+          "ticker": "2308"
+        }
+      ],
+      "name": "軍工 / 國防",
       "relationships": [
         {
           "from": "漢翔",
@@ -2626,58 +2659,54 @@
           "to": "國防部",
           "type": "潛艦建造"
         }
-      ]
-    },
-    {
-      "id": "cloud_datacenter",
-      "name": "雲端資料中心",
-      "emoji": "☁️",
-      "category": "其他",
-      "market_size": "全球雲端市場 2025 年約 $7,000 億美元",
-      "growth_rate": "YoY +20%",
-      "key_theme": "AWS/Azure/GCP 台灣落地，本土雲端電信轉型",
-      "key_risk": "資安法規、供電不足",
+      ],
       "upstream": [
         {
-          "ticker": "6669",
-          "name": "緯穎",
-          "role": "AI 伺服器供應"
-        },
-        {
-          "ticker": "1519",
-          "name": "華城",
-          "role": "電力設備"
+          "name": "國防部 / 中科院",
+          "role": "技術研發主導",
+          "ticker": null
         }
       ],
-      "midstream": [
-        {
-          "ticker": "2412",
-          "name": "中華電信",
-          "role": "IDC 資料中心、HiCloud"
-        },
-        {
-          "ticker": "3045",
-          "name": "台灣大哥大",
-          "role": "企業雲端服務"
-        },
-        {
-          "ticker": "4904",
-          "name": "遠傳電信",
-          "role": "AI 雲端服務"
-        },
-        {
-          "ticker": "2345",
-          "name": "智邦",
-          "role": "資料中心網路設備"
-        }
-      ],
+      "hot_rank": 41
+    },
+    {
+      "category": "其他",
       "downstream": [
         {
-          "ticker": null,
           "name": "企業 IT 採購",
-          "role": "雲端服務客戶"
+          "role": "雲端服務客戶",
+          "ticker": null
         }
       ],
+      "emoji": "☁️",
+      "growth_rate": "YoY +20%",
+      "id": "cloud_datacenter",
+      "key_risk": "資安法規、供電不足",
+      "key_theme": "AWS/Azure/GCP 台灣落地，本土雲端電信轉型",
+      "market_size": "全球雲端市場 2025 年約 $7,000 億美元",
+      "midstream": [
+        {
+          "name": "中華電信",
+          "role": "IDC 資料中心、HiCloud",
+          "ticker": "2412"
+        },
+        {
+          "name": "台灣大哥大",
+          "role": "企業雲端服務",
+          "ticker": "3045"
+        },
+        {
+          "name": "遠傳電信",
+          "role": "AI 雲端服務",
+          "ticker": "4904"
+        },
+        {
+          "name": "智邦",
+          "role": "資料中心網路設備",
+          "ticker": "2345"
+        }
+      ],
+      "name": "雲端資料中心",
       "relationships": [
         {
           "from": "智邦",
@@ -2689,68 +2718,64 @@
           "to": "企業客戶",
           "type": "HiCloud 雲端服務"
         }
-      ]
-    },
-    {
-      "id": "ev_800v_sic",
-      "name": "800V 電動車 / SiC 碳化矽",
-      "emoji": "⚡",
-      "category": "電動車 / 能源",
-      "market_size": "全球 SiC 功率元件市場 2025 年約 $30 億美元，800V EV 占比快速提升",
-      "growth_rate": "YoY +40%+",
-      "key_theme": "800V 高壓平台成 EV 主流架構，SiC MOSFET 取代矽基 IGBT，台廠從基板到模組全面受惠",
-      "key_risk": "中國 SiC 廠商急速擴產、良率提升壓縮利潤",
+      ],
       "upstream": [
         {
-          "ticker": "3707",
-          "name": "漢磊",
-          "role": "SiC 磊晶片、GaN 功率元件"
+          "name": "緯穎",
+          "role": "AI 伺服器供應",
+          "ticker": "6669"
         },
         {
-          "ticker": "6488",
-          "name": "環球晶",
-          "role": "SiC 基板供應"
-        },
-        {
-          "ticker": "3016",
-          "name": "嘉晶",
-          "role": "SiC/GaN 磊晶片"
+          "name": "華城",
+          "role": "電力設備",
+          "ticker": "1519"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "6672",
-          "name": "朋程",
-          "role": "SiC 功率模組、整流器"
-        },
-        {
-          "ticker": "2308",
-          "name": "台達電",
-          "role": "800V 車載充電器（OBC）、DC-DC 轉換器"
-        },
-        {
-          "ticker": "6220",
-          "name": "飛宏",
-          "role": "800V 直流快充模組"
-        },
-        {
-          "ticker": "3665",
-          "name": "貿聯-KY",
-          "role": "800V 高壓線束、充電線纜"
-        }
-      ],
+      "hot_rank": 42
+    },
+    {
+      "category": "電動車 / 能源",
       "downstream": [
         {
-          "ticker": null,
           "name": "Porsche / Hyundai / GM",
-          "role": "800V 整車平台採購商"
+          "role": "800V 整車平台採購商",
+          "ticker": null
         },
         {
-          "ticker": null,
           "name": "BYD / 小鵬",
-          "role": "中國 800V EV 整車品牌"
+          "role": "中國 800V EV 整車品牌",
+          "ticker": null
         }
       ],
+      "emoji": "⚡",
+      "growth_rate": "YoY +40%+",
+      "id": "ev_800v_sic",
+      "key_risk": "中國 SiC 廠商急速擴產、良率提升壓縮利潤",
+      "key_theme": "800V 高壓平台成 EV 主流架構，SiC MOSFET 取代矽基 IGBT，台廠從基板到模組全面受惠",
+      "market_size": "全球 SiC 功率元件市場 2025 年約 $30 億美元，800V EV 占比快速提升",
+      "midstream": [
+        {
+          "name": "朋程",
+          "role": "SiC 功率模組、整流器",
+          "ticker": "6672"
+        },
+        {
+          "name": "台達電",
+          "role": "800V 車載充電器（OBC）、DC-DC 轉換器",
+          "ticker": "2308"
+        },
+        {
+          "name": "飛宏",
+          "role": "800V 直流快充模組",
+          "ticker": "6220"
+        },
+        {
+          "name": "貿聯-KY",
+          "role": "800V 高壓線束、充電線纜",
+          "ticker": "3665"
+        }
+      ],
+      "name": "800V 電動車 / SiC 碳化矽",
       "relationships": [
         {
           "from": "漢磊",
@@ -2767,201 +2792,223 @@
           "to": "GM",
           "type": "DC 快充模組供貨"
         }
-      ]
+      ],
+      "upstream": [
+        {
+          "name": "漢磊",
+          "role": "SiC 磊晶片、GaN 功率元件",
+          "ticker": "3707"
+        },
+        {
+          "name": "環球晶",
+          "role": "SiC 基板供應",
+          "ticker": "6488"
+        },
+        {
+          "name": "嘉晶",
+          "role": "SiC/GaN 磊晶片",
+          "ticker": "3016"
+        }
+      ],
+      "hot_rank": 43
     },
     {
-      "id": "quantum_computing",
-      "name": "量子運算",
-      "emoji": "⚛️",
       "category": "其他",
-      "why_hot": "全球科技巨頭和政府積極投入研發，預期將帶來革命性的運算能力，台灣在半導體技術的優勢有望延伸至此領域。",
-      "market_size": "預計在未來十年內快速成長，成為下一代運算技術的關鍵。",
-      "growth_rate": "高速成長階段，具體數據仍在發展中。",
-      "key_theme": "探索量子霸權與解決現有運算瓶頸，為科學研究、藥物開發、金融建模等帶來突破。",
-      "key_risk": "技術成熟度尚待提升，商業化應用仍需時間，且存在高昂的研發成本與人才短缺問題。",
-      "upstream": [],
-      "midstream": [],
       "downstream": [],
-      "relationships": []
+      "emoji": "⚛️",
+      "growth_rate": "高速成長階段，具體數據仍在發展中。",
+      "id": "quantum_computing",
+      "key_risk": "量子位元穩定性差、錯誤率高、需極低溫運作環境，距大規模商用仍需 5-10 年。台股無直接受惠標的，需留意題材炒作風險。",
+      "key_theme": "量子運算在密碼學、藥物研發、AI 演算法加速及金融優化等領域長期具備革命性潛力。【注意】台股目前無純正量子運算上市標的，本鏈為前瞻題材追蹤用，台積電等廠商僅為間接技術供應商，不代表已投入量子運算商業量產。",
+      "market_size": "預計在未來十年內快速成長，成為下一代運算技術的關鍵。",
+      "midstream": [],
+      "name": "量子運算",
+      "relationships": [],
+      "upstream": [],
+      "why_hot": "全球科技巨頭和政府積極投入研發，預期將帶來革命性的運算能力，台灣在半導體技術的優勢有望延伸至此領域。",
+      "hot_rank": 44
     },
     {
-      "id": "ai_pc",
-      "name": "AI PC",
-      "emoji": "💻",
       "category": "系統整機",
-      "why_hot": "AI PC 搭載專用 NPU，能在終端裝置上執行 AI 運算，預測 2026 年滲透率將過半，帶動換機潮。",
-      "market_size": "預測 2026 年 AI PC 滲透率將過半，市場規模龐大。",
-      "growth_rate": "YoY +45%（AI PC 換機潮驅動）",
-      "key_theme": "AI PC 普及帶動 PC 產業換機潮，晶圓代工、IC 設計、組裝廠、散熱模組等供應鏈受惠。",
-      "key_risk": "AI 功能採用率不如預期，Arm 架構與 x86 架構平台競爭可能影響市場發展。",
-      "upstream": [
-        {
-          "ticker": "2330",
-          "name": "台積電",
-          "role": "晶圓代工"
-        },
-        {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "IC 設計"
-        },
-        {
-          "ticker": "3711",
-          "name": "日月光投控",
-          "role": "先進封裝"
-        },
-        {
-          "ticker": "2449",
-          "name": "京元電",
-          "role": "測試廠"
-        }
-      ],
-      "midstream": [
-        {
-          "ticker": "2382",
-          "name": "廣達",
-          "role": "整機代工"
-        },
-        {
-          "ticker": "2324",
-          "name": "仁寶",
-          "role": "整機代工"
-        },
-        {
-          "ticker": "3231",
-          "name": "緯創",
-          "role": "整機代工"
-        },
-        {
-          "ticker": "2356",
-          "name": "英業達",
-          "role": "整機代工"
-        },
-        {
-          "ticker": "4938",
-          "name": "和碩",
-          "role": "整機代工"
-        }
-      ],
       "downstream": [
         {
-          "ticker": null,
           "name": "Intel / AMD / Qualcomm",
-          "role": "AI PC 晶片供應商"
+          "role": "AI PC 晶片供應商",
+          "ticker": null
         }
       ],
-      "relationships": []
-    },
-    {
-      "id": "adas",
-      "name": "先進駕駛輔助系統（ADAS）",
-      "emoji": "🚗",
-      "category": "電動車/能源",
-      "why_hot": "全球車用電子加速智慧化，ADAS 需求攀升，台灣 IC 設計業者加速佈局車用市場。",
-      "market_size": "自駕車市場規模預計從 2022 年 570 億美元成長至 2030 年 3,240 億美元。",
-      "growth_rate": "CAGR +24%（2022-2030）",
-      "key_theme": "聯發科、義隆電等業者在 ADAS 領域從運算平台、感測應用到邊緣 AI 系統全面切入，提升台 IC 設計業者車用半導體地位。",
-      "key_risk": "車規認證門檻高，國際大廠競爭激烈，全球汽車產業景氣波動可能影響需求。",
-      "upstream": [
-        {
-          "ticker": "2454",
-          "name": "聯發科",
-          "role": "車用系統單晶片"
-        },
-        {
-          "ticker": "2388",
-          "name": "義隆電",
-          "role": "感測與人機介面"
-        },
-        {
-          "ticker": "3711",
-          "name": "日月光投控",
-          "role": "車用半導體封測"
-        }
-      ],
+      "emoji": "💻",
+      "growth_rate": "YoY +45%（AI PC 換機潮驅動）",
+      "id": "ai_pc",
+      "key_risk": "AI 功能採用率不如預期，Arm 架構與 x86 架構平台競爭可能影響市場發展。",
+      "key_theme": "AI PC 普及帶動 PC 產業換機潮，晶圓代工、IC 設計、組裝廠、散熱模組等供應鏈受惠。",
+      "market_size": "預測 2026 年 AI PC 滲透率將過半，市場規模龐大。",
       "midstream": [
         {
-          "ticker": "2317",
-          "name": "鴻海",
-          "role": "ADAS 系統開發"
+          "name": "廣達",
+          "role": "整機代工",
+          "ticker": "2382"
         },
         {
-          "ticker": "2324",
           "name": "仁寶",
-          "role": "ADAS 產品佈局"
+          "role": "整機代工",
+          "ticker": "2324"
         },
         {
-          "ticker": "6150",
-          "name": "撼訊",
-          "role": "車用 AI 晶片"
-        }
-      ],
-      "downstream": [
+          "name": "緯創",
+          "role": "整機代工",
+          "ticker": "3231"
+        },
         {
-          "ticker": "2231",
-          "name": "為昇",
-          "role": "車用感測器"
+          "name": "英業達",
+          "role": "整機代工",
+          "ticker": "2356"
+        },
+        {
+          "name": "和碩",
+          "role": "整機代工",
+          "ticker": "4938"
         }
       ],
-      "relationships": []
-    },
-    {
-      "id": "biotech_medical",
-      "name": "生技醫療",
-      "emoji": "🧬",
-      "category": "其他",
-      "why_hot": "台灣生技醫療產業 2026 年迎來結構性成長，AI 加速整合，CDMO 領域因全球供應鏈重組受惠。",
-      "market_size": "台灣生技整體市值預估突破新台幣 1.5 兆元。",
-      "growth_rate": "YoY +15%（CDMO 高成長驅動）",
-      "key_theme": "新藥研發、高階醫療器材、CDMO 及學名藥是四大領域，其中 CDMO 因全球供應鏈重組受惠，具備高成長動能。",
-      "key_risk": "新藥研發投資風險高，醫療器材市場競爭激烈，法規變動可能影響產業發展。",
+      "name": "AI PC",
+      "relationships": [],
       "upstream": [
         {
-          "ticker": "6472",
-          "name": "保瑞藥業",
-          "role": "CDMO"
+          "name": "台積電",
+          "role": "晶圓代工",
+          "ticker": "2330"
         },
         {
-          "ticker": "4726",
-          "name": "永昕",
-          "role": "生物藥 CDMO"
+          "name": "聯發科",
+          "role": "IC 設計",
+          "ticker": "2454"
         },
         {
-          "ticker": "6589",
-          "name": "台康生技",
-          "role": "CDMO"
+          "name": "日月光投控",
+          "role": "先進封裝",
+          "ticker": "3711"
+        },
+        {
+          "name": "京元電",
+          "role": "測試廠",
+          "ticker": "2449"
         }
       ],
-      "midstream": [
-        {
-          "ticker": "1736",
-          "name": "喬山",
-          "role": "醫療器材"
-        },
-        {
-          "ticker": "4106",
-          "name": "雅博",
-          "role": "醫療器材"
-        },
-        {
-          "ticker": "4126",
-          "name": "太醫",
-          "role": "醫療器材"
-        }
-      ],
+      "why_hot": "AI PC 搭載專用 NPU，能在終端裝置上執行 AI 運算，預測 2026 年滲透率將過半，帶動換機潮。",
+      "hot_rank": 45
+    },
+    {
+      "category": "電動車/能源",
       "downstream": [
         {
-          "ticker": "6576",
-          "name": "逸達生物",
-          "role": "新藥研發"
-        },
-        {
-          "ticker": "6620",
-          "name": "漢達",
-          "role": "新藥研發"
+          "name": "為昇",
+          "role": "車用感測器",
+          "ticker": "2231"
         }
       ],
-      "relationships": []
+      "emoji": "🚗",
+      "growth_rate": "CAGR +24%（2022-2030）",
+      "id": "adas",
+      "key_risk": "車規認證門檻高，國際大廠競爭激烈，全球汽車產業景氣波動可能影響需求。",
+      "key_theme": "聯發科、義隆電等業者在 ADAS 領域從運算平台、感測應用到邊緣 AI 系統全面切入，提升台 IC 設計業者車用半導體地位。",
+      "market_size": "自駕車市場規模預計從 2022 年 570 億美元成長至 2030 年 3,240 億美元。",
+      "midstream": [
+        {
+          "name": "鴻海",
+          "role": "ADAS 系統開發",
+          "ticker": "2317"
+        },
+        {
+          "name": "仁寶",
+          "role": "ADAS 產品佈局",
+          "ticker": "2324"
+        },
+        {
+          "name": "撼訊",
+          "role": "車用 AI 晶片",
+          "ticker": "6150"
+        }
+      ],
+      "name": "先進駕駛輔助系統（ADAS）",
+      "relationships": [],
+      "upstream": [
+        {
+          "name": "聯發科",
+          "role": "車用系統單晶片",
+          "ticker": "2454"
+        },
+        {
+          "name": "義隆電",
+          "role": "感測與人機介面",
+          "ticker": "2388"
+        },
+        {
+          "name": "日月光投控",
+          "role": "車用半導體封測",
+          "ticker": "3711"
+        }
+      ],
+      "why_hot": "全球車用電子加速智慧化，ADAS 需求攀升，台灣 IC 設計業者加速佈局車用市場。",
+      "hot_rank": 46
+    },
+    {
+      "category": "其他",
+      "downstream": [
+        {
+          "name": "逸達生物",
+          "role": "新藥研發",
+          "ticker": "6576"
+        },
+        {
+          "name": "漢達",
+          "role": "新藥研發",
+          "ticker": "6620"
+        }
+      ],
+      "emoji": "🧬",
+      "growth_rate": "YoY +15%（CDMO 高成長驅動）",
+      "id": "biotech_medical",
+      "key_risk": "新藥研發投資風險高，醫療器材市場競爭激烈，法規變動可能影響產業發展。",
+      "key_theme": "新藥研發、高階醫療器材、CDMO 及學名藥是四大領域，其中 CDMO 因全球供應鏈重組受惠，具備高成長動能。",
+      "market_size": "台灣生技整體市值預估突破新台幣 1.5 兆元。",
+      "midstream": [
+        {
+          "name": "喬山",
+          "role": "醫療器材",
+          "ticker": "1736"
+        },
+        {
+          "name": "雅博",
+          "role": "醫療器材",
+          "ticker": "4106"
+        },
+        {
+          "name": "太醫",
+          "role": "醫療器材",
+          "ticker": "4126"
+        }
+      ],
+      "name": "生技醫療",
+      "relationships": [],
+      "upstream": [
+        {
+          "name": "保瑞藥業",
+          "role": "CDMO",
+          "ticker": "6472"
+        },
+        {
+          "name": "永昕",
+          "role": "生物藥 CDMO",
+          "ticker": "4726"
+        },
+        {
+          "name": "台康生技",
+          "role": "CDMO",
+          "ticker": "6589"
+        }
+      ],
+      "why_hot": "台灣生技醫療產業 2026 年迎來結構性成長，AI 加速整合，CDMO 領域因全球供應鏈重組受惠。",
+      "hot_rank": 47
     }
   ]
 }
