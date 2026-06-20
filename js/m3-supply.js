@@ -287,6 +287,21 @@ function _m3RenderMindMap(chain) {
   const g = svg.append('g');
   svg.call(d3.zoom().scaleExtent([0.25, 3]).on('zoom', e => g.attr('transform', e.transform)));
 
+  /* ── Legend（固定右上角，不隨縮放移動）── */
+  const legendItems = [
+    { label: '上游', color: _M3C.upstream },
+    { label: '中游', color: _M3C.midstream },
+    { label: '下游', color: _M3C.downstream },
+  ];
+  const lg = svg.append('g').attr('transform', `translate(${W - 10}, 10)`);
+  legendItems.forEach((item, i) => {
+    const row = lg.append('g').attr('transform', `translate(0, ${i * 18})`);
+    row.append('circle').attr('r', 5).attr('cx', -62).attr('cy', 5).attr('fill', item.color);
+    row.append('text').attr('x', -54).attr('y', 9)
+      .attr('fill', '#94a3b8').attr('font-size', 11)
+      .text(item.label);
+  });
+
   /* ── Build nodes ── */
   const nodes = [
     { id: '__root__', name: chain.name, ticker: null, role: '', group: 'root' }
