@@ -11,7 +11,7 @@ POST /api/industry-map/refresh-full  手動觸發公司+新鏈更新（背景，
 """
 
 import threading
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from src.data_sources import grok_updater
 
 industry_bp = Blueprint('industry', __name__, url_prefix='/api/industry-map')
@@ -108,3 +108,15 @@ def get_themes():
     if result is None:
         return jsonify({'error': True, 'message': '尚未執行 discover-themes'}), 404
     return jsonify(result)
+
+
+@industry_bp.post('/themes/apply')
+def apply_themes():
+    """將 themes 中選定的產業鏈加入草稿，body: {"ids": ["ai_pc", "adas", ...]}"""
+    body = request.get_json(silent=True) or {}
+    ids  = body.get('ids', [])
+    if not ids:
+        return jsonify({'error': True, 'message': 'body 需包含 ids 陣列'}), 400
+    result = grok_updater.apply_themes_to_draft(ids)
+    code = 200 if result.get('ok') else 400
+    return jsonify(result), code

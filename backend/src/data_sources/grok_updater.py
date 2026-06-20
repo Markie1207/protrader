@@ -513,6 +513,64 @@ def get_themes() -> dict | None:
         return None
 
 
+def apply_themes_to_draft(chain_ids: list[str]) -> dict:
+    """
+    將 themes 結果中選定的產業鏈加入草稿。
+    若草稿已存在則追加，否則以當前正式資料為基底建立新草稿。
+    回傳 {'ok': bool, 'added': int, 'total': int}
+    """
+    import copy
+
+    themes = get_themes()
+    if not themes:
+        return {'ok': False, 'error': '尚未執行 discover-themes，找不到題材資料'}
+
+    # 從 themes 中篩選指定 ID
+    selected = [c for c in themes.get('chains', []) if c.get('id') in chain_ids]
+    if not selected:
+        return {'ok': False, 'error': f'找不到指定的產業鏈 ID：{chain_ids}'}
+
+    # 取得草稿（若存在）或以正式資料為基底
+    draft = get_draft_data()
+    if draft:
+        base = copy.deepcopy(draft)
+    else:
+        base = copy.deepcopy(get_data())
+
+    # 避免重複加入（以 id 判斷）
+    existing_ids = {c['id'] for c in base.get('industries', [])}
+    to_add = [c for c in selected if c.get('id') not in existing_ids]
+
+    if not to_add:
+        return {'ok': False, 'error': '選定的產業鏈已存在於草稿或正式資料中'}
+
+    base.setdefault('industries', []).extend(to_add)
+    base.setdefault('meta', {})
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+    base['meta']['draft_generated_at'] = now_str
+    base['meta']['draft_note'] = (
+        f'加入 {len(to_add)} 條 Grounding 搜尋題材：'
+        f'{", ".join(c["name"] for c in to_add)}'
+    )
+    base['meta']['total_industries'] = len(base['industries'])
+
+    try:
+        content = json.dumps(base, ensure_ascii=False, indent=2)
+        with open(_DRAFT_PATH, 'w', encoding='utf-8') as f:
+            f.write(content)
+        github_storage.commit_file(
+            _REPO_DRAFT_PATH,
+            content,
+            f'[ProTrader] 加入 Grounding 題材草稿 {now_str}',
+        )
+        log.info(f'[Gemini+Search] 已將 {len(to_add)} 條題材加入草稿')
+        return {'ok': True, 'added': len(to_add), 'total': len(base['industries']),
+                'chains': [c['name'] for c in to_add]}
+    except Exception as e:
+        log.error(f'[Gemini+Search] 加入草稿失敗：{e}')
+        return {'ok': False, 'error': str(e)}
+
+
 def _save_live(data: dict):
     """寫回正式資料、更新快取，並 commit industry_map.json 到 GitHub"""
     global _cache
