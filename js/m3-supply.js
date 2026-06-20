@@ -268,7 +268,10 @@ function _m3RenderMindMap(chain) {
   const wrap = document.getElementById('m3-mindmap-wrap');
   wrap.innerHTML = '';
   const W = Math.max(wrap.clientWidth || 0, 500);
-  const H = Math.max(Math.round(W * 0.56), 480);
+  // H：以 W 的 56% 為理想值，但不超過視窗可用高度（避免 SVG 超出螢幕）
+  const _wrapTop = wrap.getBoundingClientRect().top || 300;
+  const _availH  = Math.max(window.innerHeight - _wrapTop - 30, 420);
+  const H = Math.min(Math.max(Math.round(W * 0.56), 480), _availH);
 
   const svg = d3.select('#m3-mindmap-wrap').append('svg')
     .attr('width', W).attr('height', H)
@@ -350,7 +353,7 @@ function _m3RenderMindMap(chain) {
     .force('link',    d3.forceLink(links).id(d => d.id).distance(d => d.isRel ? 90 : 105).strength(0.55))
     .force('charge',  d3.forceManyBody().strength(-240))
     .force('x',       d3.forceX(d => groupX[d.group] || cx).strength(0.42))
-    .force('y',       d3.forceY(cy).strength(0.08))
+    .force('y',       d3.forceY(cy).strength(0.18))
     .force('collide', d3.forceCollide(40));
 
   /* ── Draw links ── */
@@ -450,8 +453,11 @@ function _m3RenderMindMap(chain) {
     d.group === 'root' ? d.name : `${d.ticker ? d.ticker + ' ' : ''}${d.name}\n${d.role}`
   );
 
-  /* ── Tick ── */
-  _m3Sim.on('tick', () => {
+  /* ── 同步跑 300 tick 取得最終位置，再 auto-fit 置中 ──
+     避免 simulation.on('end') 在不同環境的時序問題 */
+  _m3Sim.tick(300).stop();
+
+  const _applyPositions = () => {
     linkSel
       .attr('x1', d => d.source.x).attr('y1', d => d.source.y)
       .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
@@ -459,21 +465,22 @@ function _m3RenderMindMap(chain) {
       .attr('x', d => (d.source.x + d.target.x) / 2)
       .attr('y', d => (d.source.y + d.target.y) / 2 - 4);
     nodeSel.attr('transform', d => `translate(${d.x},${d.y})`);
-  });
+  };
 
-  /* ── Auto-fit：模擬結束後縮放置中，確保所有節點可見 ── */
-  _m3Sim.on('end', () => {
+  const _fitView = () => {
     const pad = 55;
     const xs = nodes.map(n => n.x);
     const ys = nodes.map(n => n.y);
     const x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad;
     const y0 = Math.min(...ys) - pad, y1 = Math.max(...ys) + pad;
-    const scl = Math.min(W / (x1 - x0), H / (y1 - y0), 1.1) * 0.9;
+    const scl = Math.min(W / (x1 - x0), H / (y1 - y0), 2.0) * 0.9;
     const tx  = W / 2 - scl * (x0 + x1) / 2;
     const ty  = H / 2 - scl * (y0 + y1) / 2;
-    svg.transition().duration(500)
-      .call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scl));
-  });
+    svg.call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scl));
+  };
+
+  _applyPositions();
+  _fitView();
 }
 
 /* ═══════════════════════════════════════
