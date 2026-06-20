@@ -14,10 +14,15 @@ from pathlib import Path
 
 import requests
 
+from src.data_sources import github_storage
+
 log = logging.getLogger(__name__)
 
 _DATA_PATH  = Path(__file__).parent.parent.parent / 'industry_map.json'
 _DRAFT_PATH = Path(__file__).parent.parent.parent / 'industry_map_draft.json'
+# GitHub 上的對應路徑（根目錄，供 Vercel 靜態服務）
+_REPO_JSON_PATH  = 'industry_map.json'
+_REPO_DRAFT_PATH = 'industry_map_draft.json'
 # Gemini OpenAI-compatible 端點，Auth 格式與 OpenAI 相同
 _AI_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
 _MODEL  = os.getenv('GEMINI_MODEL', 'gemini-3.1-flash-lite')
@@ -32,16 +37,45 @@ _cache: dict = {}
 # ══════════════════════════════════════════
 
 def load_data() -> dict:
-    """從磁碟載入 industry_map.json 並更新快取"""
+    """從 GitHub（優先）或本地磁碟載入 industry_map.json 並更新快取"""
     global _cache
+    # 優先從 GitHub 取最新版本，解決 Railway 重啟後本地檔案過舊的問題
+    try:
+        content = github_storage.fetch_file(_REPO_JSON_PATH)
+        if content:
+            data = json.loads(content)
+            with open(_DATA_PATH, 'w', encoding='utf-8') as f:
+                f.write(content)
+            _cache = data
+            log.info(f'[Gemini] 從 GitHub 載入 {len(_cache.get("industries", []))} 條產業鏈')
+            _restore_draft_from_github()
+            return _cache
+    except Exception as e:
+        log.warning(f'[Gemini] GitHub 載入失敗，改用本地檔案：{e}')
+
+    # Fallback：本地檔案
     try:
         with open(_DATA_PATH, encoding='utf-8') as f:
             _cache = json.load(f)
-        log.info(f'[Gemini] 載入 {len(_cache.get("industries",[]))} 條產業鏈')
+        log.info(f'[Gemini] 從本地載入 {len(_cache.get("industries", []))} 條產業鏈')
     except FileNotFoundError:
         log.error(f'[Gemini] 找不到 {_DATA_PATH}')
         _cache = {'meta': {}, 'industries': []}
     return _cache
+
+
+def _restore_draft_from_github():
+    """啟動時從 GitHub 還原草稿，避免 Railway 重啟後草稿消失"""
+    if _DRAFT_PATH.exists():
+        return  # 本地已有草稿，不覆蓋
+    try:
+        content = github_storage.fetch_file(_REPO_DRAFT_PATH)
+        if content:
+            with open(_DRAFT_PATH, 'w', encoding='utf-8') as f:
+                f.write(content)
+            log.info('[Gemini] 從 GitHub 還原草稿')
+    except Exception as e:
+        log.warning(f'[Gemini] 草稿還原失敗：{e}')
 
 
 def get_data() -> dict:
@@ -81,8 +115,7 @@ def get_draft_data() -> dict | None:
 
 
 def approve_draft() -> bool:
-    """套用草稿：草稿 → 正式資料"""
-    global _cache
+    """套用草稿：草稿 → 正式資料，並同步到 GitHub"""
     draft = get_draft_data()
     if not draft:
         return False
@@ -90,10 +123,9 @@ def approve_draft() -> bool:
         draft['meta']['generated_at'] = datetime.now().strftime('%Y-%m-%d')
         draft['meta'].pop('draft_generated_at', None)
         draft['meta'].pop('draft_note', None)
-        with open(_DATA_PATH, 'w', encoding='utf-8') as f:
-            json.dump(draft, f, ensure_ascii=False, indent=2)
-        _cache = draft
+        _save_live(draft)  # 寫本地 + commit industry_map.json 到 GitHub
         _DRAFT_PATH.unlink(missing_ok=True)
+        github_storage.delete_file(_REPO_DRAFT_PATH, '[ProTrader] 草稿已套用，移除草稿檔')
         log.info('[Gemini] 草稿已套用')
         return True
     except Exception as e:
@@ -102,9 +134,10 @@ def approve_draft() -> bool:
 
 
 def reject_draft() -> bool:
-    """捨棄草稿"""
+    """捨棄草稿（本地 + GitHub）"""
     try:
         _DRAFT_PATH.unlink(missing_ok=True)
+        github_storage.delete_file(_REPO_DRAFT_PATH, '[ProTrader] 草稿已捨棄')
         log.info('[Gemini] 草稿已捨棄')
         return True
     except Exception:
@@ -220,8 +253,16 @@ def run_update_companies():
     draft['meta']['total_industries'] = len(draft_industries)
 
     try:
+        content = json.dumps(draft, ensure_ascii=False, indent=2)
         with open(_DRAFT_PATH, 'w', encoding='utf-8') as f:
-            json.dump(draft, f, ensure_ascii=False, indent=2)
+            f.write(content)
+        # 同步草稿到 GitHub，防止 Railway 重啟後遺失
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+        github_storage.commit_file(
+            _REPO_DRAFT_PATH,
+            content,
+            f'[ProTrader] Gemini 週更新草稿 {now_str}（{success}/{len(industries)} 條）',
+        )
         log.info(f'[Gemini] 草稿已儲存：{_DRAFT_PATH}，成功 {success}/{len(industries)} 條')
     except Exception as e:
         log.error(f'[Gemini] 草稿儲存失敗：{e}')
@@ -335,12 +376,19 @@ def _strip_md(text: str) -> str:
 
 
 def _save_live(data: dict):
-    """寫回正式資料並更新快取"""
+    """寫回正式資料、更新快取，並 commit industry_map.json 到 GitHub"""
     global _cache
     try:
+        content = json.dumps(data, ensure_ascii=False, indent=2)
         with open(_DATA_PATH, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.write(content)
         _cache = data
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+        github_storage.commit_file(
+            _REPO_JSON_PATH,
+            content,
+            f'[ProTrader] Gemini 自動更新產業鏈資料 {now_str}',
+        )
     except Exception as e:
         log.error(f'[Gemini] 寫入失敗：{e}')
 

@@ -74,3 +74,12 @@ def test_grok():
     result = grok_updater.test_connection()
     code = 200 if result.get('ok') else 400
     return jsonify(result), code
+
+
+@industry_bp.get('/test-github')
+def test_github():
+    """測試 GitHub API 連線：commit 測試檔後刪除，驗證 Token 與 Repo 設定"""
+    from src.data_sources import github_storage
+    result = github_storage.test_connection()
+    code = 200 if result.get('ok') else 400
+    return jsonify(result), code
