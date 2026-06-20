@@ -201,7 +201,7 @@ function _m3ClickCat(cat, el) {
 ═══════════════════════════════════════ */
 function _m3FilterList(cat) {
   const list = cat === '全部'
-    ? _m3Data.industries
+    ? [..._m3Data.industries].sort((a, b) => (a.hot_rank || 999) - (b.hot_rank || 999))
     : _m3Data.industries.filter(i => i.category === cat);
 
   const el = document.getElementById('m3-chain-list');

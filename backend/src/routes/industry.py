@@ -85,6 +85,13 @@ def test_github():
     return jsonify(result), code
 
 
+@industry_bp.post('/reload')
+def reload_data():
+    """強制從 GitHub 重新載入 industry_map.json（不需重啟 Railway）"""
+    data = grok_updater.load_data()
+    return jsonify({'status': 'ok', 'total_industries': len(data.get('industries', []))})
+
+
 @industry_bp.get('/test-search')
 def test_search():
     """測試 Google Search grounding 連線（約 5-10 秒）"""
