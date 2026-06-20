@@ -566,3 +566,15 @@ function _m3HideNodeDetail() {
 function _m3EscAttr(s) {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
+
+/* ── M3 tab 啟動時重繪，取得正確的 clientWidth ──
+   initSupply() 在 M3 page 為 display:none 時執行，wrap.clientWidth = 0，
+   W 會 fallback 到 500px。等 tab 被點擊（page 已 active）再重繪一次才是正確寬度。 */
+document.addEventListener('DOMContentLoaded', () => {
+  const supplyTab = document.querySelector('.nav-tab[onclick*="supply"]');
+  if (supplyTab) {
+    supplyTab.addEventListener('click', () => {
+      if (_m3Chain && window.innerWidth >= 768) _m3RenderMindMap(_m3Chain);
+    });
+  }
+});
