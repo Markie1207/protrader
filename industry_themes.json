@@ -1,0 +1,67 @@
+{
+  "chains": [
+    {
+      "id": "quantum_computing",
+      "name": "量子運算",
+      "emoji": "⚛️",
+      "category": "其他",
+      "why_hot": "全球科技巨頭和政府積極投入研發，預期將帶來革命性的運算能力，台灣在半導體技術的優勢有望延伸至此領域。",
+      "market_size": "預計在未來十年內快速成長，成為下一代運算技術的關鍵。",
+      "growth_rate": "高速成長階段，具體數據仍在發展中。",
+      "key_theme": "探索量子霸權與解決現有運算瓶頸，為科學研究、藥物開發、金融建模等帶來突破。",
+      "key_risk": "技術成熟度尚待提升，商業化應用仍需時間，且存在高昂的研發成本與人才短缺問題。",
+      "upstream": [],
+      "midstream": [],
+      "downstream": [],
+      "relationships": []
+    },
+    {
+      "id": "biotechnology_drug_discovery_ai",
+      "name": "AI 驅動新藥研發",
+      "emoji": "💊",
+      "category": "AI/算力",
+      "why_hot": "AI 在藥物發現、臨床試驗優化等方面的應用日益成熟，大幅縮短研發週期並降低成本，台灣生技與科技業的結合潛力受到關注。",
+      "market_size": "全球 AI 藥物發現市場規模持續擴大，預計未來幾年將呈現顯著增長。",
+      "growth_rate": "穩健增長，AI 應用滲透率不斷提升。",
+      "key_theme": "利用 AI 加速新藥開發流程，從靶點識別到候選藥物篩選，提升成功率與效率。",
+      "key_risk": "藥物研發的高失敗率、嚴格的法規審核、以及 AI 模型準確性的挑戰。",
+      "upstream": [],
+      "midstream": [],
+      "downstream": [],
+      "relationships": []
+    },
+    {
+      "id": "advanced_materials_for_semiconductors",
+      "name": "先進半導體材料",
+      "emoji": "💎",
+      "category": "半導體",
+      "why_hot": "隨著半導體製程不斷微縮與創新，對新型態、高性能的先進材料需求殷切，台灣在材料科學與半導體製造的整合能力備受期待。",
+      "market_size": "全球半導體材料市場規模龐大且持續增長，是半導體產業的基石。",
+      "growth_rate": "與半導體產業景氣連動，預期將維持穩定增長。",
+      "key_theme": "開發用於先進製程（如 EUV、奈米片架構）的新型材料，以提升晶片效能與功耗。",
+      "key_risk": "材料開發週期長、成本高，且需與先進製程緊密配合，技術門檻高。",
+      "upstream": [],
+      "midstream": [],
+      "downstream": [],
+      "relationships": []
+    },
+    {
+      "id": "cybersecurity_for_ai_iot",
+      "name": "AI 與物聯網資安",
+      "emoji": "🔒",
+      "category": "其他",
+      "why_hot": "AI 和物聯網的普及帶來海量數據和設備連接，也擴大了網路攻擊的潛在範圍，對資安解決方案的需求日益迫切，台灣在資安技術與硬體整合方面具有優勢。",
+      "market_size": "全球資安市場規模持續擴張，AI 與 IoT 領域的資安需求是重要成長動能。",
+      "growth_rate": "高於整體 IT 市場的成長率，尤其在特定應用領域。",
+      "key_theme": "保護 AI 模型免受攻擊，確保物聯網設備的數據安全與隱私，應對日益複雜的網路威脅。",
+      "key_risk": "攻擊手法不斷演進，資安技術需要持續更新，同時面臨人才短缺與法規遵循的挑戰。",
+      "upstream": [],
+      "midstream": [],
+      "downstream": [],
+      "relationships": []
+    }
+  ],
+  "sources": [],
+  "generated_at": "2026-06-20 14:58",
+  "model": "gemini-2.5-flash-lite"
+}
