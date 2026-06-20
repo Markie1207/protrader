@@ -12,10 +12,12 @@ let _lastPredData = null;  // 最後載入的預測資料（虛擬帳戶跟單�
 /* ── 初始化 ── */
 async function initPrediction() {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/prediction/stocks`);
-    _predStocks = await res.json();
+    const res  = await fetch(`${BACKEND_URL}/api/prediction/stocks`);
+    const json = await res.json();
+    // v2：回傳 {date, stocks, total}；舊版：直接是陣列
+    _predStocks = Array.isArray(json) ? json : (json.stocks || []);
     _buildStockSelector();
-    // 預設載入第一檔
+    _renderTopSignals(_predStocks);
     if (_predStocks.length > 0) {
       document.getElementById('pred-ticker-select').value = _predStocks[0].ticker;
       await loadPrediction(_predStocks[0].ticker);
@@ -28,9 +30,36 @@ async function initPrediction() {
 function _buildStockSelector() {
   const sel = document.getElementById('pred-ticker-select');
   if (!sel) return;
-  sel.innerHTML = _predStocks.map(s =>
-    `<option value="${s.ticker}">${s.ticker} ${s.name}</option>`
-  ).join('');
+  sel.innerHTML = _predStocks.map(s => {
+    const ind = s.industry ? ` [${s.industry}]` : '';
+    const conf = s.confidence ? ` ${(s.confidence*100).toFixed(0)}%` : '';
+    return `<option value="${s.ticker}">${s.ticker} ${s.name || s.ticker}${ind}${conf}</option>`;
+  }).join('');
+}
+
+function _renderTopSignals(stocks) {
+  const el = document.getElementById('pred-top-signals');
+  if (!el) return;
+  const top = stocks.filter(s => s.confidence >= 0.60).slice(0, 15);
+  if (top.length === 0) {
+    el.innerHTML = '<p style="color:var(--text2);font-size:.8rem;">目前無 P≥60% 高信心訊號</p>';
+    return;
+  }
+  el.innerHTML = top.map(s => {
+    const pct = (s.confidence * 100).toFixed(0);
+    const barW = Math.max(10, Math.min(100, (s.confidence - 0.5) * 200));
+    return `
+      <div class="top-sig-row" onclick="document.getElementById('pred-ticker-select').value='${s.ticker}';loadPrediction('${s.ticker}')"
+           style="cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);">
+        <span style="width:40px;font-size:.75rem;color:var(--text2)">${s.ticker}</span>
+        <span style="flex:1;font-size:.8rem">${s.name || s.ticker}</span>
+        <span style="font-size:.7rem;color:var(--text3);width:72px">${s.industry || ''}</span>
+        <div style="width:60px;background:var(--surface2);border-radius:3px;height:6px">
+          <div style="width:${barW}%;background:var(--up);height:6px;border-radius:3px"></div>
+        </div>
+        <span style="font-size:.8rem;color:var(--up);width:32px;text-align:right">${pct}%</span>
+      </div>`;
+  }).join('');
 }
 
 /* ── 載入預測資料 ── */
